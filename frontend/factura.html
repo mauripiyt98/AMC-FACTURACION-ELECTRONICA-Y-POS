@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Previsualización — Factura electrónica</title>
+  <script src="js/auth-check.js"></script>
+  <link rel="stylesheet" href="css/factura.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+</head>
+<body>
+
+<div class="preview-page">
+
+  <div class="preview-toolbar">
+    <a href="index.html" class="toolbar-back">← Volver al formulario</a>
+    <button type="button" class="toolbar-pdf" id="btn-pdf">Descargar PDF</button>
+  </div>
+
+  <article class="factura-doc" id="factura-documento">
+    <div class="factura-banner">
+      Representación gráfica — Factura electrónica de venta · Demostración académica DIAN Colombia
+    </div>
+
+    <div class="doc-inner">
+
+      <header class="factura-header">
+        <img id="logo-emisor" src="../assets/logo.png" alt="Logo emisor">
+        <div class="emisor">
+          <span class="dian-badge">Documento de demostración</span>
+          <h2 id="emisor-nombre">—</h2>
+          <p id="emisor-nit">—</p>
+          <p id="emisor-regimen">—</p>
+          <p>Resolución DIAN demo N° 18760000001 — Vigencia académica</p>
+        </div>
+        <div class="factura-meta">
+          <p><strong>FACTURA ELECTRÓNICA DE VENTA</strong></p>
+          <p class="numero" id="factura-numero">—</p>
+          <p id="factura-fecha">—</p>
+          <p class="cufe" id="cufe-texto">—</p>
+        </div>
+      </header>
+
+      <div class="factura-grid-2">
+        <div class="info-block">
+          <h4>Datos del emisor</h4>
+          <p><strong>ANDRES MAURICIO CAMPOS FIERRO</strong></p>
+          <p>NIT 1.110.591.592-3</p>
+          <p>Persona natural — Colombia</p>
+        </div>
+        <div class="info-block cliente-block">
+          <h4>Datos del adquirente (cliente)</h4>
+          <p id="cliente-nombre"><strong>—</strong></p>
+          <p id="cliente-doc"><span class="lbl">Documento / NIT:</span> —</p>
+          <p id="cliente-dir"><span class="lbl">Dirección:</span> —</p>
+          <p id="cliente-tel"><span class="lbl">Teléfono:</span> —</p>
+          <p id="cliente-email"><span class="lbl">Email:</span> —</p>
+        </div>
+      </div>
+
+      <table class="factura-table" aria-label="Detalle de ítems">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>U.M.</th>
+            <th>Cant.</th>
+            <th>V. unitario</th>
+            <th>Base</th>
+            <th>IVA %</th>
+            <th>Valor IVA</th>
+            <th>Rete. %</th>
+            <th>Valor rete.</th>
+            <th>Total neto</th>
+          </tr>
+        </thead>
+        <tbody id="lineas-detalle"></tbody>
+      </table>
+
+      <div class="totales-section">
+        <div class="desglose-iva">
+          <h4 style="margin:0 0 8px;font-size:9px;text-transform:uppercase;color:#08799d;">Desglose IVA</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Tarifa</th>
+                <th>Valor IVA</th>
+              </tr>
+            </thead>
+            <tbody id="desglose-iva-body"></tbody>
+          </table>
+        </div>
+
+        <div class="desglose-iva">
+          <h4 style="margin:0 0 8px;font-size:9px;text-transform:uppercase;color:#d94d6a;">Desglose retención</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Tarifa</th>
+                <th>Valor rete.</th>
+              </tr>
+            </thead>
+            <tbody id="desglose-retencion-body"></tbody>
+          </table>
+        </div>
+
+        <div class="totales-box">
+          <div class="row">
+            <span>Subtotal (base gravable)</span>
+            <span id="subtotal">$ 0</span>
+          </div>
+          <div class="row">
+            <span>Total impuestos (IVA)</span>
+            <span id="total-iva">$ 0</span>
+          </div>
+          <div class="row" style="color:#d94d6a;">
+            <span>Total retención en la fuente (–)</span>
+            <span id="total-retencion">$ 0</span>
+          </div>
+          <div class="row pago-row">
+            <span>Medio de pago</span>
+            <span id="medio-pago-texto">—</span>
+          </div>
+          <div class="row total-final">
+            <span>TOTAL A PAGAR</span>
+            <span id="total-pagar">$ 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="observaciones-contenedor" style="margin: 14px 0; border: 1px dashed #0b46eb; padding: 10px; border-radius: 8px; background: #f4fbff; display: none;">
+        <h4 style="margin: 0 0 6px; font-size: 10px; text-transform: uppercase; color: #0b46eb; font-weight: bold; letter-spacing: 0.05em;">Observaciones / Detalles de pago</h4>
+        <p id="observaciones-texto" style="margin: 0; font-size: 10px; color: #123344; white-space: pre-wrap; line-height: 1.4; font-family: inherit;"></p>
+      </div>
+
+      <div class="qr-section">
+        <img id="qr-imagen" src="../assets/qr.png" alt="Código QR demostración">
+        <div class="qr-leyenda">
+          <strong>Código QR — demostración académica</strong><br>
+          Este código QR es ficticio y no tiene validez fiscal ante la DIAN.
+          En un sistema productivo contendría el CUFE, NIT del emisor y valor total
+          para validación ante la autoridad tributaria.
+        </div>
+      </div>
+
+      <footer class="legal-footer">
+        Documento generado con AMC Facturación Electrónica y POS — Proyecto académico.
+        No sustituye factura electrónica validada por la DIAN.
+      </footer>
+
+    </div>
+  </article>
+
+</div>
+
+<script src="js/factura.js"></script>
+<script src="js/app-footer.js"></script>
+</body>
+</html>

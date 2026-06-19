@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrar Usuario - AMC Facturacion</title>
+  <!-- Redirección si no está autenticado -->
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    .wrap { max-width: 680px; margin: 0 auto; padding: 18px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 10px 0 16px; flex-wrap:wrap; }
+    .top-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn-save { background:#0032c8; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; }
+    .btn-save:hover { background:#001e82; }
+    .btn-sec { background:#001e82; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-sec:hover { background:#00155c; }
+    .btn-logout { background:#d94d6a; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-logout:hover { background:#b83650; }
+
+    .cardx { background:#f8fcff; border-radius:10px; box-shadow: 0 10px 18px rgba(0,0,0,.06); padding:20px; margin-bottom:14px; border: 1px solid #cde7f0; }
+    .grid { display:grid; grid-template-columns: 1fr; gap:16px; }
+    label { display:block; font-size:.82rem; color:#35586a; margin-bottom:6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+    input { width:100%; padding:11px 14px; border:1px solid #cde7f0; border-radius:8px; background: #f4fbff; font-family: inherit; font-size: 0.95rem; }
+    input:focus { outline: none; border-color: #0b46eb; box-shadow: 0 0 0 3px rgba(11, 70, 235, 0.18); background:#f8fcff; }
+    input[readonly] { background:#eaf4f9; color:#527083; font-weight:700; cursor:not-allowed; }
+    .hint { font-size:.8rem; color:#527083; margin: 6px 0 0; line-height: 1.4; }
+    .rules-list { margin: 6px 0 0; padding-left: 18px; font-size: 0.78rem; color: #527083; line-height: 1.45; }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h2 id="page-title" style="margin:0;color:#001e82;">Perfil del Desarrollador</h2>
+        <div class="hint">Administra las credenciales del usuario PRINCIPAL DESARROLLADOR para el acceso al sistema.</div>
+      </div>
+      <div class="top-actions">
+        <a class="btn-sec" href="../index.html">← Volver a factura</a>
+        <button type="button" class="btn-logout" id="btn-cerrar-sesion-perfil">Cerrar Sesión</button>
+      </div>
+    </div>
+
+    <div id="msg"></div>
+
+    <div class="cardx">
+      <h3 style="margin:0 0 16px;color:#001e82;border-bottom:1px solid #cde7f0;padding-bottom:10px;">Configuración de Credenciales</h3>
+      
+      <form id="usuario-form">
+        <div class="grid">
+          <div>
+            <label for="u-nombre">Nombre de Perfil</label>
+            <input id="u-nombre" type="text" value="PRINCIPAL DESARROLLADOR" readonly>
+            <div class="hint">Nombre fijo asignado al rol del administrador general.</div>
+          </div>
+          
+          <div>
+            <label for="u-codigo">Código de Usuario</label>
+            <input id="u-codigo" type="text" placeholder="Ej: 1110591592" required inputmode="numeric">
+            <div class="hint">Este código sirve como identificador para iniciar sesión.</div>
+            <ul class="rules-list">
+              <li>Debe contener únicamente números (sin letras ni espacios).</li>
+              <li>Debe tener entre 4 y 10 dígitos de longitud.</li>
+            </ul>
+          </div>
+          
+          <div>
+            <label for="u-clave">Contraseña</label>
+            <input id="u-clave" type="password" placeholder="Establecer nueva contraseña" required>
+            <div class="hint">Nueva clave de seguridad para el ingreso del desarrollador.</div>
+            <ul class="rules-list">
+              <li>Longitud mínima de 5 caracteres.</li>
+              <li>Debe incluir al menos un número (0-9).</li>
+              <li>Debe incluir al menos un carácter especial (ej: <code>*</code>, <code>+</code>, <code>@</code>, <code>#</code>, <code>$</code>, etc.).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; border-top: 1px dashed #cde7f0; padding-top: 18px;">
+          <button type="submit" class="btn-save" id="btn-guardar">Guardar cambios</button>
+          <a class="btn-sec" href="../index.html">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="usuario.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

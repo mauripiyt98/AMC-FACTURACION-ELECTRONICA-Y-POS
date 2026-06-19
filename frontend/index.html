@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AMC Facturación Electrónica y POS</title>
+  <script src="js/auth-check.js"></script>
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .btn-agregar-linea {
+      background: #0032c8;
+      color: #f8fcff;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .btn-agregar-linea:hover { background: #001e82; }
+
+    .lineas-table th, .lineas-table td { font-size: 0.82rem; padding: 6px 8px; }
+    .lineas-table .num { text-align: right; }
+    .lineas-table thead th { background: #001e82; color: #f8fcff; }
+    .lineas-table tbody tr:nth-child(even) { background: #eef9fd; }
+
+    .totals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 18px 0 10px;
+    }
+    .totals-grid .t-block { background:#eef9fd; border-radius:8px; padding:12px 16px; }
+    .totals-grid .t-block label { font-size:0.78rem; color:#527083; display:block; margin-bottom:4px; }
+    .totals-grid .t-block .t-val { font-size:1.15rem; font-weight:800; color:#001e82; }
+    .totals-grid .t-block.rojo .t-val { color:#d94d6a; }
+    .totals-grid .t-block.naranja .t-val { color:#0032c8; font-size:1.35rem; }
+
+    .ac-field { position: relative; }
+    .ac-dropdown {
+      position: absolute;
+      left: 0; right: 0; top: calc(100% + 4px);
+      z-index: 50;
+      background: #f8fcff;
+      border: 1px solid #cde7f0;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(11,70,235,.16);
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+    .ac-dropdown.visible { display: block; }
+    .ac-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #eaf5fa;
+      transition: background .12s;
+    }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item:hover, .ac-item.active { background: #eaf9fe; }
+    .ac-item strong { display: block; color: #001e82; font-size: .92rem; }
+    .ac-item span { display: block; color: #527083; font-size: .8rem; margin-top: 2px; }
+    .ac-empty { padding: 10px 12px; color: #638092; font-size: .85rem; }
+    .cliente-hint { font-size: .82rem; color: #638092; margin: 0 0 12px; }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <nav class="sidebar-menu" aria-label="Opciones del sistema" style="margin-top: 0; border-top: none; padding-top: 0;">
+      <h3>Opciones</h3>
+      <a href="productos/productos.html">Crear productos/servicios</a>
+      <a href="terceros/terceros.html">Crear cliente tercero</a>
+      <a href="facturas-generadas/facturas-generadas.html">Facturas generadas</a>
+      <a href="usuario/usuario.html">USUARIO (desarrollador)</a>
+      <a href="#" id="btn-cerrar-sesion" style="margin-top: 24px; color: var(--danger); font-weight: bold; border-color: var(--danger-light); background: var(--danger-light);">Cerrar Sesión</a>
+    </nav>
+
+    <div class="sidebar-support" style="margin-top: auto; padding-top: 18px; border-top: 1px solid var(--border);">
+      <h3>Soporte</h3>
+      <a href="#"><img src="../assets/wpp.png" class="icon" alt=""> WhatsApp</a>
+      <a href="#"><img src="../assets/telefono.png" class="icon" alt=""> Llamada</a>
+      <a href="#"><img src="../assets/instagram.png" class="icon" alt=""> Instagram</a>
+    </div>
+
+    <div class="logo-bottom" style="margin-top: 20px; padding-top: 0;">
+      <img src="../assets/logo.png" alt="AMC Logo">
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="container">
+
+      <header class="header">
+        <img src="../assets/logo.png" class="logo-img" alt="Logo">
+        <h1>AMC Facturación Electrónica y POS</h1>
+      </header>
+
+      <div id="mensaje"></div>
+
+      <div style="display:flex;justify-content:flex-end;margin:8px 0 14px;gap:10px;">
+        <button type="button" id="btn-crear-productos" class="btn-agregar-linea" style="padding:10px 18px;background:#001e82;">
+          Crear productos/servicios
+        </button>
+        <button type="button" id="btn-crear-clientes" class="btn-agregar-linea" style="padding:10px 18px;">
+          Crear terceros/clientes
+        </button>
+      </div>
+
+      <!-- Cliente -->
+      <section class="card">
+        <div class="card-header">
+          <h3>Datos del cliente</h3>
+          <span class="badge">Adquirente</span>
+        </div>
+        <p class="cliente-hint">Escriba al menos 3 letras del nombre o 3 números del documento para buscar y cargar un contacto guardado.</p>
+        <div class="form-grid">
+          <div class="full ac-field">
+            <label for="cliente-nombre">Nombre o razón social</label>
+            <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez / Empresa XYZ S.A.S." autocomplete="off">
+            <div id="ac-nombre" class="ac-dropdown" role="listbox"></div>
+          </div>
+          <div class="ac-field">
+            <label for="cliente-documento">Documento / NIT</label>
+            <input type="text" id="cliente-documento" placeholder="Ej: 1234567890" autocomplete="off">
+            <div id="ac-documento" class="ac-dropdown" role="listbox"></div>
+          </div>
+          <div>
+            <label for="cliente-telefono">Teléfono</label>
+            <input type="text" id="cliente-telefono" placeholder="Opcional">
+          </div>
+          <div class="full">
+            <label for="cliente-direccion">Dirección</label>
+            <input type="text" id="cliente-direccion" placeholder="Ciudad, dirección">
+          </div>
+          <div class="full">
+            <label for="cliente-email">Correo electrónico</label>
+            <input type="email" id="cliente-email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+      </section>
+
+      <!-- Producto / línea -->
+      <section class="card">
+        <div class="card-header">
+          <h3>Detalle de factura</h3>
+          <span class="badge">Productos y servicios</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="full ac-field">
+            <label for="producto">Producto o servicio</label>
+            <input type="text" id="producto" placeholder="Escriba el nombre o código para buscar..." autocomplete="off">
+            <div id="ac-producto" class="ac-dropdown" role="listbox"></div>
+          </div>
+          <div class="ac-field">
+            <label for="codigo">Código</label>
+            <input type="text" id="codigo" placeholder="Ej: P001" autocomplete="off">
+            <div id="ac-codigo" class="ac-dropdown" role="listbox"></div>
+          </div>
+          <div>
+            <label for="unidad">Unidad de medida</label>
+            <select id="unidad">
+              <option value="UNIDAD" selected>Unidad</option>
+              <option value="GALON">Galón</option>
+            </select>
+          </div>
+          <div>
+            <label for="cantidad">Cantidad</label>
+            <input type="number" id="cantidad" min="0" step="any" placeholder="0">
+          </div>
+          <div>
+            <label for="unitario">Valor unitario (COP)</label>
+            <input type="text" id="unitario" placeholder="0">
+          </div>
+          <div>
+            <label for="base">Valor base</label>
+            <input type="text" id="base" readonly>
+          </div>
+          <div>
+            <label for="iva">Tarifa IVA</label>
+            <select id="iva">
+              <option value="0">IVA 0%</option>
+              <option value="5">IVA 5%</option>
+              <option value="19" selected>IVA 19%</option>
+            </select>
+          </div>
+          <div>
+            <label for="valoriva">Valor impuesto (IVA)</label>
+            <input type="text" id="valoriva" readonly>
+          </div>
+          <div>
+            <label for="retencion">Retención en la fuente</label>
+            <select id="retencion">
+              <option value="0">Sin retención</option>
+              <option value="2.5">Retefuente 2.5%</option>
+              <option value="4">Retefuente 4%</option>
+              <option value="6">Retefuente 6%</option>
+              <option value="11">Retefuente 11%</option>
+            </select>
+          </div>
+          <div>
+            <label for="valorretencion">Valor retención</label>
+            <input type="text" id="valorretencion" readonly>
+          </div>
+          <div>
+            <label for="total">Total línea (neto)</label>
+            <input type="text" id="total" readonly>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button type="button" class="btn-agregar-linea" id="btn-agregar">➕ Agregar prod/serv</button>
+        </div>
+
+        <!-- Tabla de líneas con todas las columnas -->
+        <div class="lineas-table-wrap" style="margin-top:18px;">
+          <table class="lineas-table" aria-label="Líneas de la factura">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>U.M.</th>
+                <th>Cant.</th>
+                <th>V. unit.</th>
+                <th>Valor base</th>
+                <th>IVA %</th>
+                <th>Valor IVA</th>
+                <th>Rete. %</th>
+                <th>Valor rete.</th>
+                <th>Total neto</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tabla-lineas-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Totalizados -->
+      <section class="card">
+        <div class="card-header">
+          <h3>Resumen y pago</h3>
+        </div>
+
+        <div class="totals-grid">
+          <div class="t-block">
+            <label>Subtotal (base gravable)</label>
+            <div class="t-val" id="resumen-base">$ 0</div>
+          </div>
+          <div class="t-block">
+            <label>Total IVA</label>
+            <div class="t-val" id="resumen-iva">$ 0</div>
+          </div>
+          <div class="t-block rojo">
+            <label>Total retención en la fuente (–)</label>
+            <div class="t-val" id="resumen-retencion">$ 0</div>
+          </div>
+          <div class="t-block naranja">
+            <label>TOTAL A PAGAR</label>
+            <div class="t-val" id="resumen-total">$ 0</div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-bottom:10px;">
+          <div>
+            <label for="medio-pago">Medio de pago</label>
+            <select id="medio-pago">
+              <option value="EFECTIVO">Efectivo</option>
+              <option value="TRANSFERENCIA">Transferencia bancaria</option>
+              <option value="TARJETA">Tarjeta débito / crédito</option>
+            </select>
+          </div>
+          <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar todo</button>
+        </div>
+
+        <div style="margin: 10px 0 16px;">
+          <label for="observaciones">Observaciones / Datos de pago</label>
+          <textarea id="observaciones" rows="3" placeholder="Ej: Cuenta de ahorros Bancolombia N° 123-456789-01 a nombre de... / Referencia de compra N°..."></textarea>
+        </div>
+
+        <button type="button" class="btn-generar" id="btn-generar">
+          Generar factura →
+        </button>
+      </section>
+
+    </div>
+  </main>
+
+  <aside class="right-panel">
+    <div class="info-box">
+      <h3>Tarifas IVA</h3>
+      <p>IVA general: 19%</p>
+      <p>IVA reducido: 5%</p>
+      <p>Exento: 0%</p>
+    </div>
+    <div class="info-box">
+      <h3>Información POS</h3>
+      <p>Facturación electrónica</p>
+      <p>Documento soporte</p>
+      <p>POS electrónico</p>
+      <p>Integración DIAN — futura</p>
+    </div>
+  </aside>
+
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/app-footer.js"></script>
+</body>
+</html>

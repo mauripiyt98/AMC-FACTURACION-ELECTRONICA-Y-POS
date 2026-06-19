@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear tercero - AMC Facturacion</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    .wrap { max-width: 760px; margin: 0 auto; padding: 18px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 10px 0 16px; flex-wrap:wrap; }
+    .top-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn-naranja { background:#0032c8; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; }
+    .btn-naranja:hover { background:#001e82; }
+    .btn-sec { background:#001e82; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-sec:hover { background:#00155c; }
+
+    .cardx { background:#f8fcff; border-radius:10px; box-shadow: 0 10px 18px rgba(0,0,0,.06); padding:16px; margin-bottom:14px; }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    .grid .full { grid-column: 1 / -1; }
+    label { display:block; font-size:.82rem; color:#35586a; margin-bottom:6px; }
+    input { width:100%; padding:10px 12px; border:1px solid #cde7f0; border-radius:8px; }
+    .hint { font-size:.85rem; color:#527083; margin: 6px 0 0; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h2 id="page-title" style="margin:0;color:#001e82;">Crear tercero</h2>
+        <div class="hint">Este formulario guarda el cliente en la base de terceros.</div>
+      </div>
+      <div class="top-actions">
+        <a class="btn-sec" href="terceros.html">Ver base de terceros</a>
+        <button type="button" class="btn-sec" id="btn-volver">Volver a factura</button>
+      </div>
+    </div>
+
+    <div id="msg"></div>
+
+    <div class="cardx" id="form-card">
+      <h3 id="form-titulo" style="margin:0 0 12px;color:#001e82;">Crear tercero (cliente)</h3>
+      <div class="grid">
+        <div class="full">
+          <label for="t-nombre">Nombre completo</label>
+          <input id="t-nombre" type="text" placeholder="Ej: Juan Perez / Empresa XYZ S.A.S.">
+        </div>
+        <div>
+          <label for="t-doc">Numero de documento</label>
+          <input id="t-doc" type="text" placeholder="Ej: 1234567890">
+        </div>
+        <div>
+          <label for="t-email">Correo electronico</label>
+          <input id="t-email" type="email" placeholder="correo@ejemplo.com">
+        </div>
+        <div>
+          <label for="t-telefono">Numero de telefono</label>
+          <input id="t-telefono" type="text" placeholder="Ej: 3001234567">
+        </div>
+        <div class="full">
+          <label for="t-direccion">Direccion</label>
+          <input id="t-direccion" type="text" placeholder="Ciudad, direccion">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <button type="button" class="btn-naranja" id="btn-guardar">Guardar tercero</button>
+        <button type="button" class="btn-sec" id="btn-guardar-usar">Guardar y usar en factura</button>
+        <button type="button" class="btn-sec" id="btn-limpiar">Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="terceros.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - AMC Facturación Electrónica</title>
+  <!-- Redirección rápida si ya está autenticado -->
+  <script src="js/auth-check.js"></script>
+  <link rel="stylesheet" href="css/estilos.css">
+  <style>
+    .login-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8fcff 0%, #eaf9fe 100%);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    .login-sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: var(--shadow);
+    }
+
+    .login-sidebar h3 {
+      color: var(--brand-dark);
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 2px solid var(--brand-muted);
+      padding-bottom: 8px;
+      margin: 0 0 20px;
+    }
+
+    .login-sidebar a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: var(--text);
+      margin-top: 18px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+      font-weight: 600;
+    }
+
+    .login-sidebar a:hover {
+      background: var(--brand-light);
+      border-color: var(--brand-muted);
+    }
+
+    .login-sidebar .icon {
+      width: 24px;
+      margin-right: 12px;
+    }
+
+    .login-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+
+    .login-logo {
+      width: 180px;
+      height: auto;
+      margin-bottom: 16px;
+    }
+
+    .login-main h1 {
+      font-size: 1.6rem;
+      color: var(--brand-deep);
+      margin: 0 0 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 34px 30px;
+      box-shadow: var(--shadow);
+      text-align: left;
+    }
+
+    .login-card h2 {
+      margin: 0 0 24px;
+      font-size: 1.25rem;
+      color: var(--brand-dark);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .login-field {
+      margin-bottom: 20px;
+    }
+
+    .login-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .login-field input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #f4fbff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .login-field input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(11, 70, 235, 0.18);
+      background: var(--surface);
+    }
+
+    .btn-ingresar {
+      background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
+      color: #f8fcff;
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(11, 70, 235, 0.35);
+      transition: transform 0.1s, box-shadow 0.15s;
+      margin-top: 10px;
+    }
+
+    .btn-ingresar:hover {
+      box-shadow: 0 6px 20px rgba(11, 70, 235, 0.45);
+    }
+
+    .btn-ingresar:active {
+      transform: scale(0.98);
+    }
+
+    #error-msg {
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .login-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .login-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-layout">
+    <!-- Panel de contacto lateral -->
+    <aside class="login-sidebar">
+      <h3>Contacto de Soporte</h3>
+      <a href="https://wa.me/573001234567" target="_blank">
+        <img src="../assets/wpp.png" class="icon" alt="WhatsApp"> WhatsApp
+      </a>
+      <a href="tel:3001234567">
+        <img src="../assets/telefono.png" class="icon" alt="Llamada"> Llamada
+      </a>
+      <a href="https://instagram.com" target="_blank">
+        <img src="../assets/instagram.png" class="icon" alt="Instagram"> Instagram
+      </a>
+    </aside>
+
+    <!-- Panel de login principal -->
+    <main class="login-main">
+      <div class="login-container">
+        <img src="../assets/logo.png" class="login-logo" alt="AMC Logo">
+        <h1>AMC Facturación Electrónica</h1>
+
+        <div id="error-msg" class="alert alert-error"></div>
+
+        <div class="login-card">
+          <h2>Iniciar Sesión</h2>
+          <form id="login-form">
+            <div class="login-field">
+              <label for="usuario">Usuario</label>
+              <input type="text" id="usuario" placeholder="Usuario" required autocomplete="username" inputmode="numeric">
+            </div>
+            <div class="login-field">
+              <label for="clave">Contraseña</label>
+              <input type="password" id="clave" placeholder="Contraseña" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-ingresar">Ingresar</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/login.js"></script>
+  <script src="js/app-footer.js"></script>
+</body>
+</html>
