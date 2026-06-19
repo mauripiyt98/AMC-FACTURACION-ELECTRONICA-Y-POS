@@ -53,11 +53,12 @@ function leerFormulario() {
     email: $("t-email").value.trim(),
     telefono: $("t-telefono").value.trim(),
     direccion: $("t-direccion").value.trim(),
+    ciudad: $("t-ciudad").value.trim(),
   };
 }
 
 function limpiarFormulario() {
-  ["t-nombre", "t-doc", "t-email", "t-telefono", "t-direccion"].forEach((id) => {
+  ["t-nombre", "t-doc", "t-email", "t-telefono", "t-direccion", "t-ciudad"].forEach((id) => {
     const el = $(id);
     if (el) el.value = "";
   });
@@ -93,6 +94,7 @@ function cargarTerceroEnFormulario(tercero) {
   $("t-email").value = tercero.email || "";
   $("t-telefono").value = tercero.telefono || "";
   $("t-direccion").value = tercero.direccion || "";
+  $("t-ciudad").value = tercero.ciudad || "";
   actualizarModoFormulario();
 }
 
@@ -163,6 +165,7 @@ function renderLista() {
         <div><b>Email:</b> ${t.email ? escapeHtml(t.email) : "-"}</div>
         <div><b>Telefono:</b> ${t.telefono ? escapeHtml(t.telefono) : "-"}</div>
         <div><b>Direccion:</b> ${t.direccion ? escapeHtml(t.direccion) : "-"}</div>
+        <div><b>Ciudad:</b> ${t.ciudad ? escapeHtml(t.ciudad) : "-"}</div>
       </div>
       <div class="actions">
         <button type="button" class="btn-usar" data-action="usar">Usar en factura</button>

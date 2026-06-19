@@ -137,6 +137,7 @@ function aplicarTerceroAlFormulario(tercero) {
   $("cliente-email").value = tercero.email || "";
   if ($("cliente-telefono")) $("cliente-telefono").value = tercero.telefono || "";
   if ($("cliente-direccion")) $("cliente-direccion").value = tercero.direccion || "";
+  if ($("cliente-ciudad")) $("cliente-ciudad").value = tercero.ciudad || "";
 }
 
 function cerrarTodosAutocomplete() {
@@ -174,7 +175,7 @@ function initBusquedaCliente(inputId, dropdownId) {
         (t, i) => `
       <div class="ac-item" data-index="${i}" role="option">
         <strong>${escapeHtml(t.nombre)}</strong>
-        <span>Doc: ${escapeHtml(t.documento)}${t.email ? " · " + escapeHtml(t.email) : ""}${t.telefono ? " · Tel: " + escapeHtml(t.telefono) : ""}${t.direccion ? " · " + escapeHtml(t.direccion) : ""}</span>
+        <span>Doc: ${escapeHtml(t.documento)}${t.email ? " · " + escapeHtml(t.email) : ""}${t.telefono ? " · Tel: " + escapeHtml(t.telefono) : ""}${t.direccion ? " · " + escapeHtml(t.direccion) : ""}${t.ciudad ? " · " + escapeHtml(t.ciudad) : ""}</span>
       </div>`
       )
       .join("");
@@ -679,7 +680,7 @@ function limpiar() {
   state.lineas = [];
   state.clienteTercero = null;
   ["producto", "codigo", "cantidad", "unitario", "cliente-nombre", "cliente-documento",
-   "cliente-telefono", "cliente-direccion", "cliente-email"].forEach(id => { const el = $(id); if (el) el.value = ""; });
+   "cliente-telefono", "cliente-direccion", "cliente-ciudad", "cliente-email"].forEach(id => { const el = $(id); if (el) el.value = ""; });
   if ($("unidad")) $("unidad").value = "UNIDAD";
   if ($("observaciones")) $("observaciones").value = "";
   ["base", "valoriva", "valorretencion", "total"].forEach(id => { $(id).value = ""; });
@@ -711,6 +712,7 @@ function generarFactura() {
     nombre,
     documento,
     direccion: $("cliente-direccion").value.trim(),
+    ciudad:    $("cliente-ciudad") ? $("cliente-ciudad").value.trim() : "",
     telefono:  $("cliente-telefono").value.trim(),
     email:     $("cliente-email").value.trim(),
   };

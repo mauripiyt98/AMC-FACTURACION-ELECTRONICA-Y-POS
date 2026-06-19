@@ -102,6 +102,7 @@ function renderCliente(c, tercero) {
     nombre: c.nombre || tercero?.nombre || "—",
     documento: c.documento || tercero?.documento || "—",
     direccion: c.direccion || tercero?.direccion || "—",
+    ciudad: c.ciudad || tercero?.ciudad || "—",
     telefono: c.telefono || tercero?.telefono || "—",
     email: c.email || tercero?.email || "—",
   };
@@ -109,6 +110,9 @@ function renderCliente(c, tercero) {
   $("cliente-nombre").innerHTML = "<strong>" + escapeHtml(datos.nombre) + "</strong>";
   $("cliente-doc").innerHTML = "<span class=\"lbl\">Documento / NIT:</span> " + escapeHtml(datos.documento);
   $("cliente-dir").innerHTML = "<span class=\"lbl\">Dirección:</span> " + escapeHtml(datos.direccion);
+  if ($("cliente-ciudad")) {
+    $("cliente-ciudad").innerHTML = "<span class=\"lbl\">Ciudad:</span> " + escapeHtml(datos.ciudad);
+  }
   $("cliente-tel").innerHTML = "<span class=\"lbl\">Teléfono:</span> " + escapeHtml(datos.telefono);
   $("cliente-email").innerHTML = "<span class=\"lbl\">Email:</span> " + escapeHtml(datos.email);
 }
