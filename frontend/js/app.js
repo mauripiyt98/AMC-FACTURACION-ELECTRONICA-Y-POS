@@ -333,6 +333,7 @@ function aplicarProductoAlFormulario(producto) {
   if ($("codigo")) $("codigo").value = producto.codigo || "";
   if ($("unidad")) $("unidad").value = producto.unidadMedida || "UNIDAD";
   if ($("iva")) $("iva").value = String(producto.iva || "19");
+  calcularYPrevisualizarLinea();
 }
 
 function initBusquedaProducto(inputId, dropdownId) {
@@ -580,6 +581,33 @@ function leerLineaActual() {
   return { producto, codigo, unidad, cantidad, unitario, base, tarifaIva, valorIva, valorFactura, tarifaRetencion, valorRetencion, total };
 }
 
+// ── Previsualización en tiempo real ─────────────────────────────────────────
+function calcularYPrevisualizarLinea() {
+  const cantidad        = parseNumero($("cantidad").value);
+  const unitario        = parseNumero($("unitario").value);
+  const tarifaIva       = parseNumero($("iva").value);
+  const tarifaRetencion = parseNumero($("retencion").value);
+
+  if (cantidad <= 0 || unitario <= 0) {
+    $("base").value          = "";
+    $("valoriva").value      = "";
+    $("valorretencion").value = "";
+    $("total").value         = "";
+    return;
+  }
+
+  const base            = cantidad * unitario;          // cant × v.unit
+  const valorIva        = base * (tarifaIva / 100);     // IVA sobre base
+  const valorFactura    = base + valorIva;              // base + IVA
+  const valorRetencion  = base * (tarifaRetencion / 100); // rete. sobre base
+  const total           = valorFactura - valorRetencion; // neto a pagar
+
+  $("base").value          = formatoMoneda(base);
+  $("valoriva").value      = formatoMoneda(valorIva);
+  $("valorretencion").value = formatoMoneda(valorRetencion);
+  $("total").value         = formatoMoneda(total);
+}
+
 // ── Render tabla de líneas ──────────────────────────────────────────────────
 function renderTablaLineas() {
   const tbody = $("tabla-lineas-body");
@@ -805,7 +833,23 @@ document.addEventListener("DOMContentLoaded", function () {
   if (inputUnitario) {
     inputUnitario.addEventListener("input", (e) => {
       formatInputWithDots(e.target);
+      calcularYPrevisualizarLinea();
     });
+  }
+
+  const inputCantidad = $("cantidad");
+  if (inputCantidad) {
+    inputCantidad.addEventListener("input", calcularYPrevisualizarLinea);
+  }
+
+  const selectIva = $("iva");
+  if (selectIva) {
+    selectIva.addEventListener("change", calcularYPrevisualizarLinea);
+  }
+
+  const selectRetencion = $("retencion");
+  if (selectRetencion) {
+    selectRetencion.addEventListener("change", calcularYPrevisualizarLinea);
   }
 
   // Botón para cerrar sesión

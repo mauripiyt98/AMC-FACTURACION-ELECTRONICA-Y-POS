@@ -228,8 +228,9 @@ textarea:focus {
 
 input[readonly] {
   background: #eaf4f9;
-  color: var(--text);
+  color: var(--text-muted);
   font-weight: 600;
+  opacity: 0.85;
 }
 
 .totals-row {
