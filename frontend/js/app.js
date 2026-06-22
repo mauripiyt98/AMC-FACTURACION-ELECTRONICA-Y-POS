@@ -889,6 +889,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  const btnFacturaIrInicio = $("btn-factura-ir-inicio");
+  if (btnFacturaIrInicio) {
+    btnFacturaIrInicio.addEventListener("click", () => {
+      mostrarSeccion("inicio");
+    });
+  }
+
   // Tarjeta Facturación POS (En Desarrollo)
   const btnWelcomePos = $("btn-welcome-pos");
   if (btnWelcomePos) {
