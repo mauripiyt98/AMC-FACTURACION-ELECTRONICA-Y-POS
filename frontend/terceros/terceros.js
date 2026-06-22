@@ -264,7 +264,7 @@ function guardarTercero(opciones = {}) {
 
   if (opciones.usarEnFactura) {
     localStorage.setItem(CLIENTE_SELECCIONADO_KEY, JSON.stringify(guardado));
-    window.location.href = "../index.html";
+    window.location.href = "../index.html?sec=crear-factura";
   }
 
   return guardado;
@@ -272,7 +272,7 @@ function guardarTercero(opciones = {}) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnVolver = $("btn-volver");
-  if (btnVolver) btnVolver.addEventListener("click", () => (window.location.href = "../index.html"));
+  if (btnVolver) btnVolver.addEventListener("click", () => (window.location.href = "../index.html?sec=crear-factura"));
 
   const btnGuardar = $("btn-guardar");
   if (btnGuardar) btnGuardar.addEventListener("click", () => guardarTercero());

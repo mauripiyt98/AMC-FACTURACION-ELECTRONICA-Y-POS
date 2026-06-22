@@ -72,6 +72,7 @@
   <aside class="sidebar">
     <nav class="sidebar-menu" aria-label="Opciones del sistema" style="margin-top: 0; border-top: none; padding-top: 0;">
       <h3>Opciones</h3>
+      <a href="#" id="lnk-crear-factura">Crear factura</a>
       <a href="productos/productos.html">Crear productos/servicios</a>
       <a href="terceros/terceros.html">Crear cliente tercero</a>
       <a href="facturas-generadas/facturas-generadas.html">Facturas generadas</a>
@@ -94,203 +95,256 @@
   <main class="content">
     <div class="container">
 
-      <header class="header">
+      <header class="header" id="lnk-inicio" title="Ir al panel de inicio">
         <img src="../assets/logo.png" class="logo-img" alt="Logo">
         <h1>AMC Facturación Electrónica y POS</h1>
       </header>
 
       <div id="mensaje"></div>
 
-      <div style="display:flex;justify-content:flex-end;margin:8px 0 14px;gap:10px;">
-        <button type="button" id="btn-crear-productos" class="btn-agregar-linea" style="padding:10px 18px;background:#001e82;">
-          Crear productos/servicios
-        </button>
-        <button type="button" id="btn-crear-clientes" class="btn-agregar-linea" style="padding:10px 18px;">
-          Crear terceros/clientes
-        </button>
+      <!-- Panel de Bienvenida (Principal) -->
+      <section id="panel-bienvenida" class="welcome-container">
+        <div class="welcome-header-card">
+          <h2 id="welcome-user-title">¡Te damos la bienvenida!</h2>
+          <p>Sistema de Gestión Académica para Facturación y Control POS</p>
+        </div>
+
+        <div class="welcome-grid">
+          <!-- Botón Crear Factura -->
+          <div class="welcome-card-btn" id="btn-welcome-crear-factura">
+            <div class="welcome-icon-wrapper">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <h3>Crear Factura</h3>
+            <p>Generar y emitir facturas electrónicas de venta rápidamente.</p>
+          </div>
+
+          <!-- Botón Facturación POS -->
+          <div class="welcome-card-btn" id="btn-welcome-pos">
+            <div class="welcome-icon-wrapper">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </div>
+            <h3>Facturación POS</h3>
+            <p>Terminal de facturación para punto de venta.</p>
+          </div>
+
+          <!-- Botón Reportes Ventas/Productos -->
+          <div class="welcome-card-btn" id="btn-welcome-reportes">
+            <div class="welcome-icon-wrapper">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+            <h3>Reportes Ventas/Prod</h3>
+            <p>Historial de facturas generadas e indicadores de venta.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel de Crear Factura (Secundario) -->
+      <div id="panel-crear-factura" style="display: none;">
+        <div style="display:flex;justify-content:flex-end;margin:8px 0 14px;gap:10px;">
+          <button type="button" id="btn-crear-productos" class="btn-agregar-linea" style="padding:10px 18px;background:#001e82;">
+            Crear productos/servicios
+          </button>
+          <button type="button" id="btn-crear-clientes" class="btn-agregar-linea" style="padding:10px 18px;">
+            Crear terceros/clientes
+          </button>
+        </div>
+
+        <!-- Cliente -->
+        <section class="card">
+          <div class="card-header">
+            <h3>Datos del cliente</h3>
+            <span class="badge">Adquirente</span>
+          </div>
+          <p class="cliente-hint">Escriba al menos 3 letras del nombre o 3 números del documento para buscar y cargar un contacto guardado.</p>
+          <div class="form-grid">
+            <div class="full ac-field">
+              <label for="cliente-nombre">Nombre o razón social</label>
+              <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez / Empresa XYZ S.A.S." autocomplete="off">
+              <div id="ac-nombre" class="ac-dropdown" role="listbox"></div>
+            </div>
+            <div class="ac-field">
+              <label for="cliente-documento">Documento / NIT</label>
+              <input type="text" id="cliente-documento" placeholder="Ej: 1234567890" autocomplete="off">
+              <div id="ac-documento" class="ac-dropdown" role="listbox"></div>
+            </div>
+            <div>
+              <label for="cliente-telefono">Teléfono</label>
+              <input type="text" id="cliente-telefono" placeholder="Opcional">
+            </div>
+            <div class="full">
+              <label for="cliente-direccion">Dirección</label>
+              <input type="text" id="cliente-direccion" placeholder="Ej: Calle 123 # 45-67">
+            </div>
+            <div class="full">
+              <label for="cliente-ciudad">Ciudad</label>
+              <input type="text" id="cliente-ciudad" placeholder="Ej: Bogotá, Medellín">
+            </div>
+            <div class="full">
+              <label for="cliente-email">Correo electrónico</label>
+              <input type="email" id="cliente-email" placeholder="correo@ejemplo.com">
+            </div>
+          </div>
+        </section>
+
+        <!-- Producto / línea -->
+        <section class="card">
+          <div class="card-header">
+            <h3>Detalle de factura</h3>
+            <span class="badge">Productos y servicios</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="full ac-field">
+              <label for="producto">Producto o servicio</label>
+              <input type="text" id="producto" placeholder="Escriba el nombre o código para buscar..." autocomplete="off">
+              <div id="ac-producto" class="ac-dropdown" role="listbox"></div>
+            </div>
+            <div class="ac-field">
+              <label for="codigo">Código</label>
+              <input type="text" id="codigo" placeholder="Ej: P001" autocomplete="off">
+              <div id="ac-codigo" class="ac-dropdown" role="listbox"></div>
+            </div>
+            <div>
+              <label for="unidad">Unidad de medida</label>
+              <select id="unidad">
+                <option value="UNIDAD" selected>Unidad</option>
+                <option value="GALON">Galón</option>
+              </select>
+            </div>
+            <div>
+              <label for="cantidad">Cantidad</label>
+              <input type="number" id="cantidad" min="0" step="any" placeholder="0">
+            </div>
+            <div>
+              <label for="unitario">Valor unitario (COP)</label>
+              <input type="text" id="unitario" placeholder="0">
+            </div>
+            <div>
+              <label for="base">Valor base</label>
+              <input type="text" id="base" readonly>
+            </div>
+            <div>
+              <label for="iva">Tarifa IVA</label>
+              <select id="iva">
+                <option value="0">IVA 0%</option>
+                <option value="5">IVA 5%</option>
+                <option value="19" selected>IVA 19%</option>
+              </select>
+            </div>
+            <div>
+              <label for="valoriva">Valor impuesto (IVA)</label>
+              <input type="text" id="valoriva" readonly>
+            </div>
+            <div>
+              <label for="retencion">Retención en la fuente</label>
+              <select id="retencion">
+                <option value="0">Sin retención</option>
+                <option value="2.5">Retefuente 2.5%</option>
+                <option value="4">Retefuente 4%</option>
+                <option value="6">Retefuente 6%</option>
+                <option value="11">Retefuente 11%</option>
+              </select>
+            </div>
+            <div>
+              <label for="valorretencion">Valor retención</label>
+              <input type="text" id="valorretencion" readonly>
+            </div>
+            <div>
+              <label for="total">Total línea (neto)</label>
+              <input type="text" id="total" readonly>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-top: 14px;">
+            <button type="button" class="btn-agregar-linea" id="btn-agregar">➕ Agregar prod/serv</button>
+          </div>
+
+          <!-- Tabla de líneas con todas las columnas -->
+          <div class="lineas-table-wrap" style="margin-top:18px;">
+            <table class="lineas-table" aria-label="Líneas de la factura">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>U.M.</th>
+                  <th>Cant.</th>
+                  <th>V. unit.</th>
+                  <th>Valor base</th>
+                  <th>IVA %</th>
+                  <th>Valor IVA</th>
+                  <th>Rete. %</th>
+                  <th>Valor rete.</th>
+                  <th>Total neto</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tabla-lineas-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Totalizados -->
+        <section class="card">
+          <div class="card-header">
+            <h3>Resumen y pago</h3>
+          </div>
+
+          <div class="totals-grid">
+            <div class="t-block">
+              <label>Subtotal (base gravable)</label>
+              <div class="t-val" id="resumen-base">$ 0</div>
+            </div>
+            <div class="t-block">
+              <label>Total IVA</label>
+              <div class="t-val" id="resumen-iva">$ 0</div>
+            </div>
+            <div class="t-block rojo">
+              <label>Total retención en la fuente (–)</label>
+              <div class="t-val" id="resumen-retencion">$ 0</div>
+            </div>
+            <div class="t-block naranja">
+              <label>TOTAL A PAGAR</label>
+              <div class="t-val" id="resumen-total">$ 0</div>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-bottom:10px;">
+            <div>
+              <label for="medio-pago">Medio de pago</label>
+              <select id="medio-pago">
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia bancaria</option>
+                <option value="TARJETA">Tarjeta débito / crédito</option>
+              </select>
+            </div>
+            <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar todo</button>
+          </div>
+
+          <div style="margin: 10px 0 16px;">
+            <label for="observaciones">Observaciones / Datos de pago</label>
+            <textarea id="observaciones" rows="3" placeholder="Ej: Cuenta de ahorros Bancolombia N° 123-456789-01 a nombre de... / Referencia de compra N°..."></textarea>
+          </div>
+
+          <button type="button" class="btn-generar" id="btn-generar">
+            Generar factura →
+          </button>
+        </section>
       </div>
-
-      <!-- Cliente -->
-      <section class="card">
-        <div class="card-header">
-          <h3>Datos del cliente</h3>
-          <span class="badge">Adquirente</span>
-        </div>
-        <p class="cliente-hint">Escriba al menos 3 letras del nombre o 3 números del documento para buscar y cargar un contacto guardado.</p>
-        <div class="form-grid">
-          <div class="full ac-field">
-            <label for="cliente-nombre">Nombre o razón social</label>
-            <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez / Empresa XYZ S.A.S." autocomplete="off">
-            <div id="ac-nombre" class="ac-dropdown" role="listbox"></div>
-          </div>
-          <div class="ac-field">
-            <label for="cliente-documento">Documento / NIT</label>
-            <input type="text" id="cliente-documento" placeholder="Ej: 1234567890" autocomplete="off">
-            <div id="ac-documento" class="ac-dropdown" role="listbox"></div>
-          </div>
-          <div>
-            <label for="cliente-telefono">Teléfono</label>
-            <input type="text" id="cliente-telefono" placeholder="Opcional">
-          </div>
-          <div class="full">
-            <label for="cliente-direccion">Dirección</label>
-            <input type="text" id="cliente-direccion" placeholder="Ej: Calle 123 # 45-67">
-          </div>
-          <div class="full">
-            <label for="cliente-ciudad">Ciudad</label>
-            <input type="text" id="cliente-ciudad" placeholder="Ej: Bogotá, Medellín">
-          </div>
-          <div class="full">
-            <label for="cliente-email">Correo electrónico</label>
-            <input type="email" id="cliente-email" placeholder="correo@ejemplo.com">
-          </div>
-        </div>
-      </section>
-
-      <!-- Producto / línea -->
-      <section class="card">
-        <div class="card-header">
-          <h3>Detalle de factura</h3>
-          <span class="badge">Productos y servicios</span>
-        </div>
-
-        <div class="form-grid">
-          <div class="full ac-field">
-            <label for="producto">Producto o servicio</label>
-            <input type="text" id="producto" placeholder="Escriba el nombre o código para buscar..." autocomplete="off">
-            <div id="ac-producto" class="ac-dropdown" role="listbox"></div>
-          </div>
-          <div class="ac-field">
-            <label for="codigo">Código</label>
-            <input type="text" id="codigo" placeholder="Ej: P001" autocomplete="off">
-            <div id="ac-codigo" class="ac-dropdown" role="listbox"></div>
-          </div>
-          <div>
-            <label for="unidad">Unidad de medida</label>
-            <select id="unidad">
-              <option value="UNIDAD" selected>Unidad</option>
-              <option value="GALON">Galón</option>
-            </select>
-          </div>
-          <div>
-            <label for="cantidad">Cantidad</label>
-            <input type="number" id="cantidad" min="0" step="any" placeholder="0">
-          </div>
-          <div>
-            <label for="unitario">Valor unitario (COP)</label>
-            <input type="text" id="unitario" placeholder="0">
-          </div>
-          <div>
-            <label for="base">Valor base</label>
-            <input type="text" id="base" readonly>
-          </div>
-          <div>
-            <label for="iva">Tarifa IVA</label>
-            <select id="iva">
-              <option value="0">IVA 0%</option>
-              <option value="5">IVA 5%</option>
-              <option value="19" selected>IVA 19%</option>
-            </select>
-          </div>
-          <div>
-            <label for="valoriva">Valor impuesto (IVA)</label>
-            <input type="text" id="valoriva" readonly>
-          </div>
-          <div>
-            <label for="retencion">Retención en la fuente</label>
-            <select id="retencion">
-              <option value="0">Sin retención</option>
-              <option value="2.5">Retefuente 2.5%</option>
-              <option value="4">Retefuente 4%</option>
-              <option value="6">Retefuente 6%</option>
-              <option value="11">Retefuente 11%</option>
-            </select>
-          </div>
-          <div>
-            <label for="valorretencion">Valor retención</label>
-            <input type="text" id="valorretencion" readonly>
-          </div>
-          <div>
-            <label for="total">Total línea (neto)</label>
-            <input type="text" id="total" readonly>
-          </div>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <button type="button" class="btn-agregar-linea" id="btn-agregar">➕ Agregar prod/serv</button>
-        </div>
-
-        <!-- Tabla de líneas con todas las columnas -->
-        <div class="lineas-table-wrap" style="margin-top:18px;">
-          <table class="lineas-table" aria-label="Líneas de la factura">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>U.M.</th>
-                <th>Cant.</th>
-                <th>V. unit.</th>
-                <th>Valor base</th>
-                <th>IVA %</th>
-                <th>Valor IVA</th>
-                <th>Rete. %</th>
-                <th>Valor rete.</th>
-                <th>Total neto</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="tabla-lineas-body"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Totalizados -->
-      <section class="card">
-        <div class="card-header">
-          <h3>Resumen y pago</h3>
-        </div>
-
-        <div class="totals-grid">
-          <div class="t-block">
-            <label>Subtotal (base gravable)</label>
-            <div class="t-val" id="resumen-base">$ 0</div>
-          </div>
-          <div class="t-block">
-            <label>Total IVA</label>
-            <div class="t-val" id="resumen-iva">$ 0</div>
-          </div>
-          <div class="t-block rojo">
-            <label>Total retención en la fuente (–)</label>
-            <div class="t-val" id="resumen-retencion">$ 0</div>
-          </div>
-          <div class="t-block naranja">
-            <label>TOTAL A PAGAR</label>
-            <div class="t-val" id="resumen-total">$ 0</div>
-          </div>
-        </div>
-
-        <div class="btn-row" style="margin-bottom:10px;">
-          <div>
-            <label for="medio-pago">Medio de pago</label>
-            <select id="medio-pago">
-              <option value="EFECTIVO">Efectivo</option>
-              <option value="TRANSFERENCIA">Transferencia bancaria</option>
-              <option value="TARJETA">Tarjeta débito / crédito</option>
-            </select>
-          </div>
-          <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar todo</button>
-        </div>
-
-        <div style="margin: 10px 0 16px;">
-          <label for="observaciones">Observaciones / Datos de pago</label>
-          <textarea id="observaciones" rows="3" placeholder="Ej: Cuenta de ahorros Bancolombia N° 123-456789-01 a nombre de... / Referencia de compra N°..."></textarea>
-        </div>
-
-        <button type="button" class="btn-generar" id="btn-generar">
-          Generar factura →
-        </button>
-      </section>
 
     </div>
   </main>
@@ -311,6 +365,22 @@
     </div>
   </aside>
 
+</div>
+
+<!-- Modal de Notificación de Desarrollo -->
+<div id="amc-modal-desarrollo" class="amc-modal-overlay">
+  <div class="amc-modal">
+    <div class="amc-modal-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+    </div>
+    <h3 id="modal-titulo">Módulo en Desarrollo</h3>
+    <p id="modal-mensaje">Esta opción estará disponible próximamente en una futura actualización con integración directa de la DIAN.</p>
+    <button type="button" class="amc-modal-btn" id="btn-modal-cerrar">Aceptar</button>
+  </div>
 </div>
 
 <script src="js/app.js"></script>

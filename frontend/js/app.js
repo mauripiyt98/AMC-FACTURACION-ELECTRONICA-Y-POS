@@ -861,4 +861,134 @@ document.addEventListener("DOMContentLoaded", function () {
       window.location.replace("login.html");
     });
   }
+
+  // ── Navegación entre Secciones ─────────────────────────────────────────────
+  inicializarMensajeBienvenida();
+
+  // Enlaces y botones de navegación
+  const lnkCrearFactura = $("lnk-crear-factura");
+  if (lnkCrearFactura) {
+    lnkCrearFactura.addEventListener("click", (e) => {
+      e.preventDefault();
+      mostrarSeccion("crear-factura");
+    });
+  }
+
+  const btnWelcomeCrearFactura = $("btn-welcome-crear-factura");
+  if (btnWelcomeCrearFactura) {
+    btnWelcomeCrearFactura.addEventListener("click", () => {
+      mostrarSeccion("crear-factura");
+    });
+  }
+
+  const lnkInicio = $("lnk-inicio");
+  if (lnkInicio) {
+    lnkInicio.addEventListener("click", (e) => {
+      e.preventDefault();
+      mostrarSeccion("inicio");
+    });
+  }
+
+  // Tarjeta Facturación POS (En Desarrollo)
+  const btnWelcomePos = $("btn-welcome-pos");
+  if (btnWelcomePos) {
+    btnWelcomePos.addEventListener("click", () => {
+      abrirModal(
+        "Módulo POS en Desarrollo",
+        "El módulo de Facturación POS se encuentra actualmente en desarrollo. Próximamente incluirá la emisión de tirilla POS electrónica con integración directa a la DIAN."
+      );
+    });
+  }
+
+  // Tarjeta Reportes Ventas/Productos
+  const btnWelcomeReportes = $("btn-welcome-reportes");
+  if (btnWelcomeReportes) {
+    btnWelcomeReportes.addEventListener("click", () => {
+      window.location.href = "facturas-generadas/facturas-generadas.html";
+    });
+  }
+
+  // Controles del Modal de Desarrollo
+  const btnModalCerrar = $("btn-modal-cerrar");
+  if (btnModalCerrar) {
+    btnModalCerrar.addEventListener("click", cerrarModal);
+  }
+
+  const modalOverlay = $("amc-modal-desarrollo");
+  if (modalOverlay) {
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) cerrarModal();
+    });
+  }
+
+  // Ruteo Automático al Iniciar
+  const urlParams = new URLSearchParams(window.location.search);
+  const secParam = urlParams.get("sec");
+  const tieneClienteSeleccionado = localStorage.getItem("amc_cliente_seleccionado_v1") !== null;
+  const tieneProductoSeleccionado = localStorage.getItem("amc_producto_seleccionado_v1") !== null;
+
+  if (secParam === "crear-factura" || tieneClienteSeleccionado || tieneProductoSeleccionado) {
+    mostrarSeccion("crear-factura");
+  } else {
+    mostrarSeccion("inicio");
+  }
 });
+
+// ── Funciones de Control de UI ────────────────────────────────────────────────
+function mostrarSeccion(seccionId) {
+  const panelBienvenida = document.getElementById("panel-bienvenida");
+  const panelCrearFactura = document.getElementById("panel-crear-factura");
+  const lnkCrearFactura = document.getElementById("lnk-crear-factura");
+
+  if (!panelBienvenida || !panelCrearFactura) return;
+
+  // Limpiar clases active del menú
+  document.querySelectorAll(".sidebar-menu a").forEach(el => el.classList.remove("active"));
+
+  if (seccionId === "crear-factura") {
+    panelBienvenida.style.display = "none";
+    panelCrearFactura.style.display = "block";
+    if (lnkCrearFactura) lnkCrearFactura.classList.add("active");
+  } else {
+    panelBienvenida.style.display = "flex";
+    panelCrearFactura.style.display = "none";
+  }
+}
+
+function inicializarMensajeBienvenida() {
+  const welcomeTitle = document.getElementById("welcome-user-title");
+  if (!welcomeTitle) return;
+
+  let userName = "Principal Desarrollador";
+  try {
+    const rawUser = localStorage.getItem("amc_developer_user");
+    if (rawUser) {
+      const user = JSON.parse(rawUser);
+      if (user && user.nombre) {
+        userName = user.nombre;
+      }
+    }
+  } catch (err) {
+    console.error("Error al cargar nombre del usuario:", err);
+  }
+  welcomeTitle.textContent = `¡Te damos la bienvenida, ${userName}!`;
+}
+
+function abrirModal(titulo, mensaje) {
+  const overlay = document.getElementById("amc-modal-desarrollo");
+  const modalTitulo = document.getElementById("modal-titulo");
+  const modalMensaje = document.getElementById("modal-mensaje");
+
+  if (overlay && modalTitulo && modalMensaje) {
+    modalTitulo.textContent = titulo;
+    modalMensaje.textContent = mensaje;
+    overlay.classList.add("active");
+  }
+}
+
+function cerrarModal() {
+  const overlay = document.getElementById("amc-modal-desarrollo");
+  if (overlay) {
+    overlay.classList.remove("active");
+  }
+}

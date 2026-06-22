@@ -272,13 +272,13 @@ function guardarProducto(opciones = {}) {
     };
     db.push(guardado);
     guardarDB(db);
-    mostrarMsg("Producto/servicio guardado en la base de datos.");
     limpiarFormulario();
+    mostrarMsg("Item creado correctamente.");
   }
 
   if (opciones.usarEnFactura) {
     localStorage.setItem(PRODUCTO_SELECCIONADO_KEY, JSON.stringify(guardado));
-    window.location.href = "../index.html";
+    window.location.href = "../index.html?sec=crear-factura";
   }
 
   return guardado;
@@ -286,10 +286,16 @@ function guardarProducto(opciones = {}) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnVolver = $("btn-volver");
-  if (btnVolver) btnVolver.addEventListener("click", () => (window.location.href = "../index.html"));
+  if (btnVolver) {
+    btnVolver.addEventListener("click", () => {
+      window.location.href = "../index.html?sec=crear-factura";
+    });
+  }
 
   const btnGuardar = $("btn-guardar");
-  if (btnGuardar) btnGuardar.addEventListener("click", () => guardarProducto());
+  if (btnGuardar) {
+    btnGuardar.addEventListener("click", () => guardarProducto());
+  }
 
   const btnGuardarUsar = $("btn-guardar-usar");
   if (btnGuardarUsar) {
