@@ -663,3 +663,21 @@ button:active {
   opacity: 0.85;
 }
 
+/* Estilo azul sutil y destacado para botones de retorno a inicio */
+.btn-inicio-sutil {
+  background: #e1f5fe !important;
+  color: #0b46eb !important;
+  border: 1px solid #b3e5fc !important;
+  font-weight: 700 !important;
+  transition: all 0.22s ease !important;
+}
+
+.btn-inicio-sutil:hover {
+  background: #b3e5fc !important;
+  border-color: #81d4fa !important;
+  color: #002db3 !important;
+  box-shadow: 0 4px 12px rgba(11, 70, 235, 0.15) !important;
+  transform: translateY(-1px);
+}
+
+
