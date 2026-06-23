@@ -1,9 +1,13 @@
 // ── Configuración ──────────────────────────────────────────────────────────
-const STORAGE_KEY = "amc_factura_preview_v1";
-
 const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
 const isDev = activeUserCode === "1110591592";
 
+// La clave DEBE coincidir exactamente con la que usa app.js al guardar el payload
+const STORAGE_KEY = isDev
+  ? "amc_factura_preview_v1"
+  : `amc_factura_preview_v1_${activeUserCode}`;
+
+// Cargar perfil del emisor desde localStorage (guardado en «Mi Perfil»)
 let emisorData = null;
 try {
   const profileKey = `amc_perfil_emisor_v1_${activeUserCode}`;
@@ -15,14 +19,15 @@ try {
   console.error("Error al cargar perfil de emisor:", e);
 }
 
+// Fallback con datos del desarrollador únicamente para el usuario dev
 const EMISOR = emisorData || {
   tipoPersona: "NATURAL",
-  razonSocial: "ANDRES MAURICIO CAMPOS FIERRO",
-  nit: "1.110.591.592-3",
-  direccion: "Colombia",
-  ciudad: "Bogotá",
-  email: "dev@amc.com",
-  logo: "../assets/logo.png",
+  razonSocial: isDev ? "ANDRES MAURICIO CAMPOS FIERRO" : "Mi Empresa",
+  nit: isDev ? "1.110.591.592-3" : "—",
+  direccion: isDev ? "Colombia" : "",
+  ciudad: isDev ? "Bogotá" : "",
+  email: isDev ? "dev@amc.com" : "",
+  logo: "",   // sin logo por defecto para usuarios nuevos; lo establece el perfil
 };
 
 // ── Utilidades ──────────────────────────────────────────────────────────────
@@ -195,7 +200,16 @@ window.addEventListener("load", function () {
   const regimenTexto = EMISOR.regimen || 
     `${EMISOR.tipoPersona === "JURIDICA" ? "Persona Jurídica" : "Persona Natural"} — ${EMISOR.ciudad || "Colombia"}`;
   $("emisor-regimen").textContent = regimenTexto;
-  $("logo-emisor").src            = EMISOR.logo || "../assets/logo.png";
+  // Establecer logo: usa el guardado en el perfil (base64) o el asset del dev,
+  // o bien oculta el elemento si el usuario nuevo no ha configurado logo aún.
+  const logoSrc = EMISOR.logo || (isDev ? "../assets/logo.png" : "");
+  const logoEl = $("logo-emisor");
+  if (logoSrc) {
+    logoEl.src = logoSrc;
+    logoEl.style.display = "";
+  } else {
+    logoEl.style.display = "none";
+  }
 
   // Rellenar también el bloque de datos de emisor inferior
   if ($("info-emisor-nombre")) $("info-emisor-nombre").textContent = EMISOR.razonSocial;
