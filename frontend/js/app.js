@@ -942,6 +942,12 @@ document.addEventListener("DOMContentLoaded", function () {
   } else {
     mostrarSeccion("inicio");
   }
+
+  // Ocultar la sección de creación de usuario en la barra lateral para clientes
+  const lnkCrearUsuario = document.getElementById("lnk-crear-usuario");
+  if (lnkCrearUsuario) {
+    lnkCrearUsuario.style.display = isDev ? "block" : "none";
+  }
 });
 
 // ── Funciones de Control de UI ────────────────────────────────────────────────

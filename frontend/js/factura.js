@@ -1,10 +1,27 @@
 // ── Configuración ──────────────────────────────────────────────────────────
 const STORAGE_KEY = "amc_factura_preview_v1";
 
-const EMISOR = {
+const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
+const isDev = activeUserCode === "1110591592";
+
+let emisorData = null;
+try {
+  const profileKey = `amc_perfil_emisor_v1_${activeUserCode}`;
+  const rawProfile = localStorage.getItem(profileKey);
+  if (rawProfile) {
+    emisorData = JSON.parse(rawProfile);
+  }
+} catch (e) {
+  console.error("Error al cargar perfil de emisor:", e);
+}
+
+const EMISOR = emisorData || {
+  tipoPersona: "NATURAL",
   razonSocial: "ANDRES MAURICIO CAMPOS FIERRO",
   nit: "1.110.591.592-3",
-  regimen: "Persona natural — Régimen simplificado (demostración)",
+  direccion: "Colombia",
+  ciudad: "Bogotá",
+  email: "dev@amc.com",
   logo: "../assets/logo.png",
 };
 
@@ -174,8 +191,20 @@ window.addEventListener("load", function () {
 
   $("emisor-nombre").textContent  = EMISOR.razonSocial;
   $("emisor-nit").textContent     = "NIT: " + EMISOR.nit;
-  $("emisor-regimen").textContent = EMISOR.regimen;
-  $("logo-emisor").src            = EMISOR.logo;
+  
+  const regimenTexto = EMISOR.regimen || 
+    `${EMISOR.tipoPersona === "JURIDICA" ? "Persona Jurídica" : "Persona Natural"} — ${EMISOR.ciudad || "Colombia"}`;
+  $("emisor-regimen").textContent = regimenTexto;
+  $("logo-emisor").src            = EMISOR.logo || "../assets/logo.png";
+
+  // Rellenar también el bloque de datos de emisor inferior
+  if ($("info-emisor-nombre")) $("info-emisor-nombre").textContent = EMISOR.razonSocial;
+  if ($("info-emisor-nit")) $("info-emisor-nit").textContent = "NIT " + EMISOR.nit;
+  if ($("info-emisor-detalles")) {
+    const detallesTexto = EMISOR.regimen || 
+      `${EMISOR.tipoPersona === "JURIDICA" ? "Persona jurídica" : "Persona natural"} — ${EMISOR.direccion || ""} — ${EMISOR.ciudad || ""}`;
+    $("info-emisor-detalles").textContent = detallesTexto;
+  }
 
   $("factura-numero").textContent = numero;
   $("factura-fecha").textContent  = fechaGen;

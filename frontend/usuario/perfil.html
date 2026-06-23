@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Perfil de Facturación - AMC Facturación</title>
+  <!-- Redirección si no está autenticado -->
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    .wrap { max-width: 680px; margin: 0 auto; padding: 18px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 10px 0 16px; flex-wrap:wrap; }
+    .top-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn-save { background:#0032c8; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; }
+    .btn-save:hover { background:#001e82; }
+    .btn-sec { background:#001e82; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-sec:hover { background:#00155c; }
+    
+    .cardx { background:#f8fcff; border-radius:10px; box-shadow: 0 10px 18px rgba(0,0,0,.06); padding:20px; margin-bottom:14px; border: 1px solid #cde7f0; }
+    .grid { display:grid; grid-template-columns: 1fr; gap:16px; }
+    @media (min-width: 480px) {
+      .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    }
+    label { display:block; font-size:.82rem; color:#35586a; margin-bottom:6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+    input, select { width:100%; padding:11px 14px; border:1px solid #cde7f0; border-radius:8px; background: #f4fbff; font-family: inherit; font-size: 0.95rem; }
+    input:focus, select:focus { outline: none; border-color: #0b46eb; box-shadow: 0 0 0 3px rgba(11, 70, 235, 0.18); background:#f8fcff; }
+    .hint { font-size:.8rem; color:#527083; margin: 6px 0 0; line-height: 1.4; }
+    
+    /* Logo uploader */
+    .logo-uploader { display: flex; align-items: center; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+    .logo-preview-box { width: 100px; height: 100px; border: 2px dashed #cde7f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f4fbff; overflow: hidden; }
+    .logo-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .logo-file-input { display: none; }
+    .btn-upload-trigger { background: #eaf4f9; color: #0b46eb; border: 1px solid #cde7f0; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .btn-upload-trigger:hover { background: #d0ebf5; }
+    .btn-remove-logo { background: #fcecef; color: #d94d6a; border: 1px solid #f8d7da; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .btn-remove-logo:hover { background: #f8d7da; }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h2 style="margin:0;color:#001e82;">Mi Perfil de Facturación</h2>
+        <div class="hint">Define los datos del emisor que aparecerán en la representación gráfica de tus facturas.</div>
+      </div>
+      <div class="top-actions">
+        <a class="btn-sec" href="../index.html">← Volver a factura</a>
+        <a class="btn-sec" href="../index.html" style="background:#eaf9fe; color:#0b46eb; border:1px solid #cde7f0;">Ir a inicio</a>
+      </div>
+    </div>
+
+    <div id="msg"></div>
+
+    <div class="cardx">
+      <h3 style="margin:0 0 16px;color:#001e82;border-bottom:1px solid #cde7f0;padding-bottom:10px;">Información del Emisor</h3>
+      
+      <form id="perfil-form">
+        <div class="grid">
+          <div class="grid-2">
+            <div>
+              <label for="p-tipo">Tipo de Persona</label>
+              <select id="p-tipo" required>
+                <option value="NATURAL">Persona Natural</option>
+                <option value="JURIDICA">Persona Jurídica</option>
+              </select>
+              <div class="hint">Clasificación legal de tu empresa/actividad.</div>
+            </div>
+            
+            <div>
+              <label for="p-nit">Documento / NIT</label>
+              <input id="p-nit" type="text" placeholder="Ej: 1110591592-3" required>
+              <div class="hint">Número de identificación tributaria (con dígito de verificación si aplica).</div>
+            </div>
+          </div>
+
+          <div>
+            <label for="p-nombre">Nombre o Razón Social</label>
+            <input id="p-nombre" type="text" placeholder="Ej: Andres Campos SAS" required>
+            <div class="hint">Nombre completo o nombre legal de la empresa.</div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="p-direccion">Dirección de Residencia/Fiscal</label>
+              <input id="p-direccion" type="text" placeholder="Ej: Calle 10 # 5-20" required>
+              <div class="hint">Dirección de establecimiento o casa principal.</div>
+            </div>
+            
+            <div>
+              <label for="p-ciudad">Ciudad</label>
+              <input id="p-ciudad" type="text" placeholder="Ej: Bogotá" required>
+              <div class="hint">Municipio o ciudad del emisor.</div>
+            </div>
+          </div>
+
+          <div>
+            <label for="p-email">Correo Electrónico de Contacto</label>
+            <input id="p-email" type="email" placeholder="Ej: contacto@empresa.com" required>
+            <div class="hint">Correo que se listará en los datos del emisor.</div>
+          </div>
+
+          <div>
+            <label>Logo de la Empresa</label>
+            <div class="logo-uploader">
+              <div class="logo-preview-box">
+                <img id="logo-preview" src="../assets/logo.png" alt="Vista previa del logo">
+              </div>
+              <div>
+                <input type="file" id="p-logo-file" class="logo-file-input" accept="image/*">
+                <button type="button" class="btn-upload-trigger" id="btn-upload-trigger">Seleccionar imagen</button>
+                <button type="button" class="btn-remove-logo" id="btn-remove-logo" style="display: none;">Quitar logo</button>
+                <div class="hint">Formatos soportados: PNG, JPG, GIF. Tamaño sugerido cuadrado.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; border-top: 1px dashed #cde7f0; padding-top: 18px;">
+          <button type="submit" class="btn-save" id="btn-guardar">Guardar Perfil</button>
+          <a class="btn-sec" href="../index.html">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="perfil.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>
