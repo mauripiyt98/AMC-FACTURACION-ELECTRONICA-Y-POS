@@ -975,22 +975,42 @@ function inicializarMensajeBienvenida() {
   const welcomeTitle = document.getElementById("welcome-user-title");
   if (!welcomeTitle) return;
 
-  let userName = sessionStorage.getItem("amc_active_user_name") || "Principal Desarrollador";
-  if (!isDev) {
-    userName = `Usuario ${activeUserCode}`;
-  } else {
-    try {
-      const rawUser = localStorage.getItem("amc_developer_user");
-      if (rawUser) {
-        const user = JSON.parse(rawUser);
-        if (user && user.nombre) {
-          userName = user.nombre;
-        }
+  let userName = "";
+
+  // Intentar cargar la razón social / nombre desde el perfil del emisor
+  try {
+    const profileKey = `amc_perfil_emisor_v1_${activeUserCode}`;
+    const rawProfile = localStorage.getItem(profileKey);
+    if (rawProfile) {
+      const profile = JSON.parse(rawProfile);
+      if (profile && profile.razonSocial) {
+        userName = profile.razonSocial;
       }
-    } catch (err) {
-      console.error("Error al cargar nombre del usuario:", err);
+    }
+  } catch (err) {
+    console.error("Error al leer perfil para la bienvenida:", err);
+  }
+
+  // Fallbacks si no se ha configurado el perfil de emisor aún
+  if (!userName) {
+    if (isDev) {
+      try {
+        const rawUser = localStorage.getItem("amc_developer_user");
+        if (rawUser) {
+          const user = JSON.parse(rawUser);
+          if (user && user.nombre) {
+            userName = user.nombre;
+          }
+        }
+      } catch (err) {
+        console.error("Error al cargar nombre del desarrollador:", err);
+      }
+      if (!userName) userName = "Principal Desarrollador";
+    } else {
+      userName = sessionStorage.getItem("amc_active_user_name") || `Usuario ${activeUserCode}`;
     }
   }
+
   welcomeTitle.textContent = `¡Te damos la bienvenida, ${userName}!`;
 }
 
