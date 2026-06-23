@@ -1,5 +1,8 @@
-const PRODUCTOS_DB_KEY = "amc_productos_db_v1";
-const PRODUCTO_SELECCIONADO_KEY = "amc_producto_seleccionado_v1";
+const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
+const isDev = activeUserCode === "1110591592";
+
+const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
+const PRODUCTO_SELECCIONADO_KEY = isDev ? "amc_producto_seleccionado_v1" : `amc_producto_seleccionado_v1_${activeUserCode}`;
 
 const $ = (id) => document.getElementById(id);
 

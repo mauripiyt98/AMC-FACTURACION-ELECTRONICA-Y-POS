@@ -1,5 +1,8 @@
-const STORAGE_KEY = "amc_factura_preview_v1";
-const FACTURAS_GENERADAS_DB_KEY = "amc_facturas_generadas_db_v1";
+const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
+const isDev = activeUserCode === "1110591592";
+
+const STORAGE_KEY = isDev ? "amc_factura_preview_v1" : `amc_factura_preview_v1_${activeUserCode}`;
+const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
 
 const RESOLUCION_FACTURACION_DEMO = {
   prefijo: "FE",

@@ -46,14 +46,14 @@
     <div id="msg"></div>
 
     <div class="cardx">
-      <h3 style="margin:0 0 16px;color:#001e82;border-bottom:1px solid #cde7f0;padding-bottom:10px;">Configuración de Credenciales</h3>
+      <h3 id="form-card-title" style="margin:0 0 16px;color:#001e82;border-bottom:1px solid #cde7f0;padding-bottom:10px;">Configuración de Credenciales</h3>
       
       <form id="usuario-form">
         <div class="grid">
           <div>
             <label for="u-nombre">Nombre de Perfil</label>
             <input id="u-nombre" type="text" value="PRINCIPAL DESARROLLADOR" readonly>
-            <div class="hint">Nombre fijo asignado al rol del administrador general.</div>
+            <div id="u-nombre-hint" class="hint">Nombre fijo asignado al rol del administrador general.</div>
           </div>
           
           <div>
@@ -65,11 +65,17 @@
               <li>Debe tener entre 4 y 10 dígitos de longitud.</li>
             </ul>
           </div>
+
+          <div>
+            <label for="u-email">Correo Electrónico</label>
+            <input id="u-email" type="email" placeholder="Ej: desarrollador@amc.com" required>
+            <div class="hint">Correo electrónico asociado a la cuenta para recuperación.</div>
+          </div>
           
           <div>
             <label for="u-clave">Contraseña</label>
             <input id="u-clave" type="password" placeholder="Establecer nueva contraseña" required>
-            <div class="hint">Nueva clave de seguridad para el ingreso del desarrollador.</div>
+            <div id="u-clave-hint" class="hint">Nueva clave de seguridad para el ingreso del desarrollador.</div>
             <ul class="rules-list">
               <li>Longitud mínima de 5 caracteres.</li>
               <li>Debe incluir al menos un número (0-9).</li>
@@ -83,6 +89,55 @@
           <a class="btn-sec" href="../index.html">Cancelar</a>
         </div>
       </form>
+    </div>
+
+    <!-- Módulo de Creación de Usuarios Independientes (Solo visible para Desarrollador) -->
+    <div id="card-usuarios-independientes" class="cardx" style="display: none; border-color: #0b46eb;">
+      <h3 style="margin:0 0 16px;color:#0b46eb;border-bottom:1px solid #cde7f0;padding-bottom:10px;">Creación de Usuarios Independientes</h3>
+      
+      <form id="crear-usuario-form">
+        <div class="grid">
+          <div>
+            <label for="new-u-codigo">Código de Usuario (ID / Cédula)</label>
+            <input id="new-u-codigo" type="text" placeholder="Ej: 80123456" required inputmode="numeric">
+            <div class="hint">Debe ser numérico y servirá para iniciar su sesión independiente.</div>
+          </div>
+
+          <div>
+            <label for="new-u-email">Correo Electrónico</label>
+            <input id="new-u-email" type="email" placeholder="Ej: cliente@correo.com" required>
+            <div class="hint">Correo obligatorio para la futura recuperación de contraseña.</div>
+          </div>
+          
+          <div>
+            <label for="new-u-clave">Contraseña</label>
+            <input id="new-u-clave" type="password" placeholder="Establecer contraseña" required>
+            <div class="hint">Debe cumplir con los parámetros mínimos establecidos.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:24px; border-top: 1px dashed #cde7f0; padding-top: 18px;">
+          <button type="submit" class="btn-save" style="background:#0b46eb;">Crear Usuario</button>
+        </div>
+      </form>
+
+      <div style="margin-top:28px; border-top: 1px solid #cde7f0; padding-top: 18px;">
+        <h4 style="margin:0 0 14px;color:#001e82;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.04em;">Usuarios Independientes Registrados</h4>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.85rem;">
+            <thead>
+              <tr style="background:#eaf4f9; border-bottom:1px solid #cde7f0;">
+                <th style="padding:10px; color:#35586a; font-weight:700;">Usuario (Código)</th>
+                <th style="padding:10px; color:#35586a; font-weight:700;">Correo Electrónico</th>
+                <th style="padding:10px; color:#35586a; font-weight:700; text-align:center;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="lista-usuarios-independientes">
+              <!-- Cargados dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 

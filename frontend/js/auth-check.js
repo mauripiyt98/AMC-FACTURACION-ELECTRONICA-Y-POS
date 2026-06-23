@@ -7,8 +7,15 @@
     localStorage.setItem(DEV_USER_KEY, JSON.stringify({
       nombre: "PRINCIPAL DESARROLLADOR",
       codigo: "1110591592",
-      clave: "Desa*2026"
+      clave: "Desa*2026",
+      email: "dev@amc.com"
     }));
+  }
+
+  // Compatibilidad de sesión activa sin código seteado
+  if (sessionStorage.getItem(SESSION_KEY) === "true" && !sessionStorage.getItem("amc_active_user_code")) {
+    sessionStorage.setItem("amc_active_user_code", "1110591592");
+    sessionStorage.setItem("amc_active_user_name", "PRINCIPAL DESARROLLADOR");
   }
 
   const isLoggedIn = sessionStorage.getItem(SESSION_KEY) === "true";

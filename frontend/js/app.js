@@ -1,5 +1,8 @@
-// ── Configuración ──────────────────────────────────────────────────────────
-const STORAGE_KEY = "amc_factura_preview_v1";
+// ── Configuración y Contexto ────────────────────────────────────────────────
+const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
+const isDev = activeUserCode === "1110591592";
+
+const STORAGE_KEY = isDev ? "amc_factura_preview_v1" : `amc_factura_preview_v1_${activeUserCode}`;
 
 const MEDIOS_PAGO = [
   { value: "EFECTIVO",       label: "Efectivo" },
@@ -83,11 +86,11 @@ const state = { lineas: [], clienteTercero: null };
 const $ = (id) => document.getElementById(id);
 
 // ── Terceros (base de datos local) ──────────────────────────────────────────
-const TERCEROS_DB_KEY = "amc_terceros_db_v1";
-const CLIENTE_SELECCIONADO_KEY = "amc_cliente_seleccionado_v1";
-const PRODUCTOS_DB_KEY = "amc_productos_db_v1";
-const PRODUCTO_SELECCIONADO_KEY = "amc_producto_seleccionado_v1";
-const FACTURAS_GENERADAS_DB_KEY = "amc_facturas_generadas_db_v1";
+const TERCEROS_DB_KEY = isDev ? "amc_terceros_db_v1" : `amc_terceros_db_v1_${activeUserCode}`;
+const CLIENTE_SELECCIONADO_KEY = isDev ? "amc_cliente_seleccionado_v1" : `amc_cliente_seleccionado_v1_${activeUserCode}`;
+const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
+const PRODUCTO_SELECCIONADO_KEY = isDev ? "amc_producto_seleccionado_v1" : `amc_producto_seleccionado_v1_${activeUserCode}`;
+const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
 const RESOLUCION_FACTURACION_DEMO = {
   prefijo: "FE",
   desde: 1,
@@ -931,8 +934,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ruteo Automático al Iniciar
   const urlParams = new URLSearchParams(window.location.search);
   const secParam = urlParams.get("sec");
-  const tieneClienteSeleccionado = localStorage.getItem("amc_cliente_seleccionado_v1") !== null;
-  const tieneProductoSeleccionado = localStorage.getItem("amc_producto_seleccionado_v1") !== null;
+  const tieneClienteSeleccionado = localStorage.getItem(CLIENTE_SELECCIONADO_KEY) !== null;
+  const tieneProductoSeleccionado = localStorage.getItem(PRODUCTO_SELECCIONADO_KEY) !== null;
 
   if (secParam === "crear-factura" || tieneClienteSeleccionado || tieneProductoSeleccionado) {
     mostrarSeccion("crear-factura");
@@ -966,17 +969,21 @@ function inicializarMensajeBienvenida() {
   const welcomeTitle = document.getElementById("welcome-user-title");
   if (!welcomeTitle) return;
 
-  let userName = "Principal Desarrollador";
-  try {
-    const rawUser = localStorage.getItem("amc_developer_user");
-    if (rawUser) {
-      const user = JSON.parse(rawUser);
-      if (user && user.nombre) {
-        userName = user.nombre;
+  let userName = sessionStorage.getItem("amc_active_user_name") || "Principal Desarrollador";
+  if (!isDev) {
+    userName = `Usuario ${activeUserCode}`;
+  } else {
+    try {
+      const rawUser = localStorage.getItem("amc_developer_user");
+      if (rawUser) {
+        const user = JSON.parse(rawUser);
+        if (user && user.nombre) {
+          userName = user.nombre;
+        }
       }
+    } catch (err) {
+      console.error("Error al cargar nombre del usuario:", err);
     }
-  } catch (err) {
-    console.error("Error al cargar nombre del usuario:", err);
   }
   welcomeTitle.textContent = `¡Te damos la bienvenida, ${userName}!`;
 }
