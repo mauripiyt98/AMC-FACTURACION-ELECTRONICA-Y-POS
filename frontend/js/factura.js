@@ -211,13 +211,40 @@ window.addEventListener("load", function () {
     logoEl.style.display = "none";
   }
 
-  // Rellenar también el bloque de datos de emisor inferior
+  // Rellenar bloque de datos de emisor inferior (sección info-grid)
   if ($("info-emisor-nombre")) $("info-emisor-nombre").textContent = EMISOR.razonSocial;
-  if ($("info-emisor-nit")) $("info-emisor-nit").textContent = "NIT " + EMISOR.nit;
+  if ($("info-emisor-nit"))    $("info-emisor-nit").textContent    = "NIT " + EMISOR.nit;
+
   if ($("info-emisor-detalles")) {
-    const detallesTexto = EMISOR.regimen || 
-      `${EMISOR.tipoPersona === "JURIDICA" ? "Persona jurídica" : "Persona natural"} — ${EMISOR.direccion || ""} — ${EMISOR.ciudad || ""}`;
+    const detallesTexto = EMISOR.regimen ||
+      `${EMISOR.tipoPersona === "JURIDICA" ? "Persona jurídica" : "Persona natural"} — ${EMISOR.ciudad || "Colombia"}`;
     $("info-emisor-detalles").textContent = detallesTexto;
+  }
+
+  // Email del emisor — fuente 1: perfil de Mi Perfil (EMISOR object)
+  //                   fuente 2: payload guardado en el data del sessionStorage
+  //                   fuente 3: fallback vacío si no hay dato
+  const emisorEmail = EMISOR.email || data.emisor?.email || "";
+  if ($("info-emisor-email")) {
+    if (emisorEmail) {
+      $("info-emisor-email").innerHTML =
+        `<span class="lbl">Email:</span> <a href="mailto:${escapeHtml(emisorEmail)}" style="color:inherit;text-decoration:none;">${escapeHtml(emisorEmail)}</a>`;
+      $("info-emisor-email").style.display = "";
+    } else {
+      $("info-emisor-email").style.display = "none";
+    }
+  }
+
+  // Dirección del emisor
+  const emisorDireccion = EMISOR.direccion || data.emisor?.direccion || "";
+  if ($("info-emisor-direccion")) {
+    if (emisorDireccion) {
+      $("info-emisor-direccion").innerHTML =
+        `<span class="lbl">Dirección:</span> ${escapeHtml(emisorDireccion)}`;
+      $("info-emisor-direccion").style.display = "";
+    } else {
+      $("info-emisor-direccion").style.display = "none";
+    }
   }
 
   $("factura-numero").textContent = numero;
