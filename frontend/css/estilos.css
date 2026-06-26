@@ -444,25 +444,72 @@ button:active {
   background: linear-gradient(135deg, var(--surface) 0%, var(--brand-light) 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 36px 28px;
-  text-align: center;
+  padding: 22px 24px;
   box-shadow: var(--shadow);
   border-left: 6px solid var(--brand);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Zona del logo de perfil */
+.welcome-logo-box {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(11,70,235,0.10);
+  transition: box-shadow 0.2s;
+}
+
+.welcome-logo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+/* Zona de texto compacta */
+.welcome-header-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .welcome-header-card h2 {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   color: var(--brand-deep);
-  font-size: 1.75rem;
+  font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .welcome-header-card p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .welcome-header-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px 16px;
+  }
+  .welcome-header-card h2 {
+    white-space: normal;
+    font-size: 1.15rem;
+  }
 }
 
 .welcome-grid {
