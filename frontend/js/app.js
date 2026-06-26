@@ -910,10 +910,21 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Tarjeta Reportes Ventas/Productos
+  // Tarjeta Reportes Ventas/Productos (En Desarrollo)
   const btnWelcomeReportes = $("btn-welcome-reportes");
   if (btnWelcomeReportes) {
     btnWelcomeReportes.addEventListener("click", () => {
+      abrirModal(
+        "Módulo Reportes en Desarrollo",
+        "El módulo de Reportes de Ventas/Productos se encuentra actualmente en desarrollo. Próximamente incluirá indicadores de venta, análisis por período y más."
+      );
+    });
+  }
+
+  // Tarjeta Facturas Generadas → navega al historial
+  const btnWelcomeFacturasGeneradas = $("btn-welcome-facturas-generadas");
+  if (btnWelcomeFacturasGeneradas) {
+    btnWelcomeFacturasGeneradas.addEventListener("click", () => {
       window.location.href = "facturas-generadas/facturas-generadas.html";
     });
   }
