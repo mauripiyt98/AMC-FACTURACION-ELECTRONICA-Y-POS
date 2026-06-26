@@ -984,9 +984,12 @@ function mostrarSeccion(seccionId) {
 
 function inicializarMensajeBienvenida() {
   const welcomeTitle = document.getElementById("welcome-user-title");
+  const welcomeLogo = document.getElementById("welcome-logo");
+  const welcomeLogoBox = welcomeLogo ? welcomeLogo.closest(".welcome-logo-box") : null;
   if (!welcomeTitle) return;
 
   let userName = "";
+  let userLogo = "";
 
   // Intentar cargar la razón social / nombre desde el perfil del emisor
   try {
@@ -996,6 +999,9 @@ function inicializarMensajeBienvenida() {
       const profile = JSON.parse(rawProfile);
       if (profile && profile.razonSocial) {
         userName = profile.razonSocial;
+      }
+      if (profile && profile.logo) {
+        userLogo = profile.logo;
       }
     }
   } catch (err) {
@@ -1019,6 +1025,16 @@ function inicializarMensajeBienvenida() {
       if (!userName) userName = "Principal Desarrollador";
     } else {
       userName = sessionStorage.getItem("amc_active_user_name") || `Usuario ${activeUserCode}`;
+    }
+  }
+
+  if (welcomeLogo && welcomeLogoBox) {
+    if (userLogo) {
+      welcomeLogo.src = userLogo;
+      welcomeLogoBox.style.display = "";
+    } else {
+      welcomeLogo.removeAttribute("src");
+      welcomeLogoBox.style.display = "none";
     }
   }
 
