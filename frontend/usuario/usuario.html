@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Administrar Usuario - AMC Facturacion</title>
+  <title>Acceso Seguro - AMC Facturacion</title>
   <!-- Redirección si no está autenticado -->
   <script src="../js/auth-check.js"></script>
   <link rel="stylesheet" href="../css/estilos.css">
@@ -26,10 +26,292 @@
     input[readonly] { background:#eaf4f9; color:#527083; font-weight:700; cursor:not-allowed; }
     .hint { font-size:.8rem; color:#527083; margin: 6px 0 0; line-height: 1.4; }
     .rules-list { margin: 6px 0 0; padding-left: 18px; font-size: 0.78rem; color: #527083; line-height: 1.45; }
+
+    /* ── Modal de Seguridad ──────────────────────────────── */
+    #sec-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, #00091a 0%, #001060 50%, #0032c8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: opacity 0.4s ease;
+    }
+    #sec-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #sec-box {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 20px;
+      padding: 40px 36px 36px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(11,70,235,0.3);
+      animation: secSlideIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes secSlideIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    }
+    }
+    #sec-box .sec-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    #sec-box .sec-logo .shield-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #0b46eb, #001e82);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(11,70,235,0.45);
+    }
+    #sec-box h2.sec-title {
+      color: #ffffff;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin: 18px 0 4px;
+      text-align: center;
+      letter-spacing: -0.01em;
+    }
+    #sec-box p.sec-sub {
+      color: rgba(255,255,255,0.55);
+      font-size: 0.82rem;
+      text-align: center;
+      margin: 0 0 28px;
+      line-height: 1.5;
+    }
+    .sec-field {
+      margin-bottom: 16px;
+    }
+    .sec-field label {
+      display: block;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+    }
+    .sec-field .input-wrap {
+      position: relative;
+    }
+    .sec-field .input-wrap svg.field-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+    }
+    .sec-field input {
+      width: 100%;
+      padding: 13px 14px 13px 42px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
+    }
+    .sec-field input::placeholder { color: rgba(255,255,255,0.28); }
+    .sec-field input:focus {
+      outline: none;
+      border-color: rgba(11,70,235,0.8);
+      background: rgba(255,255,255,0.11);
+      box-shadow: 0 0 0 3px rgba(11,70,235,0.25);
+    }
+    .sec-field input.input-error {
+      border-color: #ff4d6d !important;
+      box-shadow: 0 0 0 3px rgba(255,77,109,0.22) !important;
+      animation: secShake 0.38s ease;
+    }
+    @keyframes secShake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-7px); }
+      40%      { transform: translateX(7px); }
+      60%      { transform: translateX(-5px); }
+      80%      { transform: translateX(4px); }
+    }
+    /* toggle contraseña */
+    .sec-field .btn-toggle-pass {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: rgba(255,255,255,0.45);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.18s;
+    }
+    .sec-field .btn-toggle-pass:hover { color: rgba(255,255,255,0.85); }
+    #sec-error {
+      background: rgba(255,77,109,0.15);
+      border: 1px solid rgba(255,77,109,0.4);
+      border-radius: 8px;
+      color: #ff8fa3;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: none;
+      text-align: center;
+      animation: secSlideIn 0.2s ease;
+    }
+    #sec-intentos {
+      text-align: center;
+      color: rgba(255,200,0,0.8);
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: none;
+      letter-spacing: 0.04em;
+    }
+    #btn-sec-acceder {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0b46eb, #0032c8);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+      box-shadow: 0 6px 20px rgba(11,70,235,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    #btn-sec-acceder:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(11,70,235,0.55);
+    }
+    #btn-sec-acceder:active { transform: translateY(0); }
+    #btn-sec-acceder:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #btn-sec-acceder .btn-spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sec-footer {
+      margin-top: 20px;
+      text-align: center;
+      color: rgba(255,255,255,0.3);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+    }
+    .sec-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.68rem;
+      color: rgba(255,255,255,0.45);
+      margin-top: 6px;
+    }
+    /* Contenido principal oculto hasta autenticación */
+    #main-content { display: none; }
   </style>
 </head>
 <body>
 
+  <!-- ── Modal de Seguridad del Desarrollador ───────────────────────── -->
+  <div id="sec-overlay" role="dialog" aria-modal="true" aria-labelledby="sec-dialog-title">
+    <div id="sec-box">
+      <div class="sec-logo">
+        <div class="shield-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+        </div>
+      </div>
+      <h2 class="sec-title" id="sec-dialog-title">Acceso Restringido</h2>
+      <p class="sec-sub">Este módulo requiere verificación de identidad.<br>Ingrese sus credenciales de <strong style="color:rgba(255,255,255,0.75)">Desarrollador</strong> para continuar.</p>
+
+      <div id="sec-error" role="alert"></div>
+      <div id="sec-intentos"></div>
+
+      <form id="sec-form" autocomplete="off" novalidate>
+        <div class="sec-field">
+          <label for="sec-id">ID de Usuario</label>
+          <div class="input-wrap">
+            <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input type="text" id="sec-id" placeholder="Ej: 1110591592" inputmode="numeric" autocomplete="off" required>
+          </div>
+        </div>
+        <div class="sec-field">
+          <label for="sec-pass">Contraseña</label>
+          <div class="input-wrap">
+            <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="sec-pass" placeholder="Contraseña" autocomplete="off" required>
+            <button type="button" class="btn-toggle-pass" id="btn-toggle-pass" aria-label="Mostrar/ocultar contraseña" tabindex="-1">
+              <svg id="icon-eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="icon-eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" id="btn-sec-acceder">
+          <span id="btn-sec-text">Verificar Identidad</span>
+          <div class="btn-spinner" id="btn-sec-spinner"></div>
+        </button>
+      </form>
+
+      <div class="sec-footer">
+        <div class="sec-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          AMC Facturación · Acceso Seguro
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Contenido Principal (bloqueado hasta autenticación) ─────────── -->
+  <div id="main-content">
   <div class="wrap">
     <div class="topbar">
       <div>
@@ -140,8 +422,137 @@
       </div>
     </div>
   </div>
+  </div><!-- /#main-content -->
 
   <script src="usuario.js"></script>
   <script src="../js/app-footer.js"></script>
+  <script>
+  /* ── Sistema de Seguridad: Verificación de Identidad del Desarrollador ── */
+  (function () {
+    const DEV_USER_KEY = "amc_developer_user";
+    const MAX_INTENTOS = 3;
+    let intentosFallidos = 0;
+
+    // Leer credenciales del desarrollador (con fallback a las por defecto)
+    function getDevCredentials() {
+      try {
+        const raw = localStorage.getItem(DEV_USER_KEY);
+        if (raw) {
+          const dev = JSON.parse(raw);
+          return { codigo: dev.codigo || "1110591592", clave: dev.clave || "Amc2026*" };
+        }
+      } catch (e) { /* ignorar */ }
+      return { codigo: "1110591592", clave: "Amc2026*" };
+    }
+
+    const overlay   = document.getElementById("sec-overlay");
+    const mainContent = document.getElementById("main-content");
+    const secForm   = document.getElementById("sec-form");
+    const secId     = document.getElementById("sec-id");
+    const secPass   = document.getElementById("sec-pass");
+    const secError  = document.getElementById("sec-error");
+    const secIntentos = document.getElementById("sec-intentos");
+    const btnAcceder  = document.getElementById("btn-sec-acceder");
+    const btnText     = document.getElementById("btn-sec-text");
+    const btnSpinner  = document.getElementById("btn-sec-spinner");
+    const btnToggle   = document.getElementById("btn-toggle-pass");
+    const iconOpen    = document.getElementById("icon-eye-open");
+    const iconClosed  = document.getElementById("icon-eye-closed");
+
+    // Toggle mostrar/ocultar contraseña
+    btnToggle.addEventListener("click", () => {
+      const esPassword = secPass.type === "password";
+      secPass.type = esPassword ? "text" : "password";
+      iconOpen.style.display   = esPassword ? "none"  : "block";
+      iconClosed.style.display = esPassword ? "block" : "none";
+    });
+
+    function mostrarError(msg) {
+      secError.textContent = msg;
+      secError.style.display = "block";
+      [secId, secPass].forEach(el => {
+        el.classList.add("input-error");
+        el.addEventListener("input", () => el.classList.remove("input-error"), { once: true });
+      });
+    }
+
+    function ocultarError() {
+      secError.style.display = "none";
+      secError.textContent = "";
+    }
+
+    function mostrarIntentos() {
+      const restantes = MAX_INTENTOS - intentosFallidos;
+      if (restantes > 0) {
+        secIntentos.style.display = "block";
+        secIntentos.textContent = `⚠️ Intento ${intentosFallidos} de ${MAX_INTENTOS} — Restan ${restantes} intento${restantes !== 1 ? "s" : ""}`;
+      }
+    }
+
+    function simularCarga(callback) {
+      btnAcceder.disabled = true;
+      btnText.style.display = "none";
+      btnSpinner.style.display = "block";
+      setTimeout(() => {
+        btnAcceder.disabled = false;
+        btnText.style.display = "block";
+        btnSpinner.style.display = "none";
+        callback();
+      }, 700);
+    }
+
+    function revelarContenido() {
+      overlay.classList.add("fade-out");
+      setTimeout(() => {
+        overlay.style.display = "none";
+        mainContent.style.display = "block";
+        document.title = "Administrar Usuario - AMC Facturacion";
+      }, 420);
+    }
+
+    secForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      ocultarError();
+
+      const idIngresado   = secId.value.trim();
+      const claveIngresada = secPass.value;
+
+      if (!idIngresado || !claveIngresada) {
+        mostrarError("Complete ambos campos para continuar.");
+        return;
+      }
+
+      simularCarga(() => {
+        const creds = getDevCredentials();
+
+        if (idIngresado === creds.codigo && claveIngresada === creds.clave) {
+          // ✅ Credenciales correctas
+          revelarContenido();
+        } else {
+          // ❌ Credenciales incorrectas
+          intentosFallidos++;
+          mostrarIntentos();
+
+          if (intentosFallidos >= MAX_INTENTOS) {
+            mostrarError("Demasiados intentos fallidos. Redirigiendo al inicio de sesión...");
+            btnAcceder.disabled = true;
+            setTimeout(() => {
+              sessionStorage.removeItem("amc_session_active");
+              window.location.replace("../login.html");
+            }, 2200);
+            return;
+          }
+
+          mostrarError("ID o contraseña incorrectos. Verifique sus credenciales.");
+          secPass.value = "";
+          secId.focus();
+        }
+      });
+    });
+
+    // Auto-foco al cargar
+    secId.focus();
+  })();
+  </script>
 </body>
 </html>
