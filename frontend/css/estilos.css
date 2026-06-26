@@ -455,8 +455,8 @@ button:active {
 /* Zona del logo de perfil */
 .welcome-logo-box {
   flex-shrink: 0;
-  width: 104px;
-  height: 104px;
+  width: 112px;
+  height: 112px;
   border-radius: 12px;
   border: 2px solid var(--border);
   background: #fff;
@@ -726,4 +726,3 @@ button:active {
   box-shadow: 0 4px 12px rgba(11, 70, 235, 0.15) !important;
   transform: translateY(-1px);
 }
-
