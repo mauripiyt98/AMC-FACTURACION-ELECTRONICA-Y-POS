@@ -929,6 +929,17 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Tarjeta Antony (En Desarrollo)
+  const btnWelcomeAntony = $("btn-welcome-antony");
+  if (btnWelcomeAntony) {
+    btnWelcomeAntony.addEventListener("click", () => {
+      abrirModal(
+        "Modulo Antony en Desarrollo",
+        "El modulo Antony se encuentra actualmente en proceso de desarrollo. Estara disponible proximamente en una futura actualizacion."
+      );
+    });
+  }
+
   // Controles del Modal de Desarrollo
   const btnModalCerrar = $("btn-modal-cerrar");
   if (btnModalCerrar) {
