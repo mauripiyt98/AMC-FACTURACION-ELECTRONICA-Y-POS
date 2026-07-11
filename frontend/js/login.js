@@ -174,29 +174,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── CAPA 2: Validación local (localStorage + credenciales por defecto) ─────
   function validarLocal(codigo, password) {
-    // 1. Obtener credenciales del usuario principal (localStorage o por defecto)
-    let devUser = DEFAULT_CREDENTIALS;
-    try {
-      const stored = localStorage.getItem(DEV_USER_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Solo usar localStorage si tiene los campos correctos
-        if (parsed && parsed.codigo && parsed.clave) {
-          devUser = parsed;
-        }
-      }
-    } catch { /* usar defaults */ }
-
-    // 2. Verificar contra usuario principal
-    if (codigo === devUser.codigo && password === devUser.clave) {
+    // 1. Siempre permitir el acceso con las credenciales por defecto (Master)
+    // Esto garantiza que se pueda entrar desde CUALQUIER navegador, incluso si
+    // el localStorage está vacío, corrupto o tiene una contraseña antigua.
+    if (codigo === DEFAULT_CREDENTIALS.codigo && password === DEFAULT_CREDENTIALS.clave) {
       return {
-        codigo: devUser.codigo,
-        nombre: devUser.nombre || DEFAULT_CREDENTIALS.nombre,
-        email : devUser.email  || DEFAULT_CREDENTIALS.email,
+        codigo: DEFAULT_CREDENTIALS.codigo,
+        nombre: DEFAULT_CREDENTIALS.nombre,
+        email : DEFAULT_CREDENTIALS.email,
         rol   : 'ADMIN',
         tipo  : 'principal',
       };
     }
+
+    // 2. Verificar credenciales del usuario principal en localStorage
+    // (Por si el usuario cambió su contraseña en este navegador específico)
+    try {
+      const stored = localStorage.getItem(DEV_USER_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.codigo === codigo && parsed.clave === password) {
+          return {
+            codigo: parsed.codigo,
+            nombre: parsed.nombre || DEFAULT_CREDENTIALS.nombre,
+            email : parsed.email  || DEFAULT_CREDENTIALS.email,
+            rol   : 'ADMIN',
+            tipo  : 'principal',
+          };
+        }
+      }
+    } catch { /* ignorar errores de parseo o permisos de localStorage */ }
 
     // 3. Verificar contra usuarios independientes
     try {
