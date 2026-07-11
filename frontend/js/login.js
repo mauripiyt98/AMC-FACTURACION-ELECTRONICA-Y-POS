@@ -1,46 +1,57 @@
 /**
- * login.js — Sistema de autenticación universal multi-navegador
+ * login.js — Autenticación universal AMC (compatible con cualquier navegador)
  *
- * Llama al backend REST (POST /api/auth/login) en lugar de comparar
- * credenciales en localStorage. El resultado es un JWT guardado en
- * sessionStorage, que funciona igual en cualquier navegador web.
+ * Sistema HÍBRIDO de autenticación en dos capas:
  *
- * Flujo:
- *  1. El usuario ingresa NIT, código y contraseña
- *  2. Se envía POST a /api/auth/login
- *  3. El backend valida contra PostgreSQL y devuelve un JWT
- *  4. El JWT se guarda en sessionStorage (amc_session_v2)
- *  5. Se sincroniza la sesión legada para retrocompatibilidad
- *  6. Se redirige a index.html
+ *  CAPA 1 — Backend JWT (si el servidor está corriendo):
+ *    • Hace POST /api/auth/login con { nit, codigo, password }
+ *    • El NIT se obtiene del campo usuario (son iguales para el usuario principal)
+ *      o del localStorage si fue guardado antes.
+ *    • Si tiene éxito, guarda el JWT en sessionStorage.
+ *
+ *  CAPA 2 — Local (siempre disponible, funciona sin backend):
+ *    • Si el backend no está disponible, valida contra credenciales locales.
+ *    • Las credenciales por defecto están HARDCODEADAS en el código → funcionan
+ *      en CUALQUIER navegador sin importar el localStorage.
+ *    • Las credenciales personalizadas (si el usuario las cambió) se leen
+ *      de localStorage de ese navegador.
+ *
+ * Resultado: El usuario PRINCIPAL siempre puede iniciar sesión desde
+ * CUALQUIER navegador con sus credenciales (las por defecto o las guardadas
+ * en ese navegador). Los usuarios independientes también funcionan.
  */
 
 'use strict';
 
-// ── Configuración ─────────────────────────────────────────────────────────────
-const API_BASE_URL   = 'http://localhost:3000/api';
-const SESSION_KEY    = 'amc_session_v2';
-const USER_KEY       = 'amc_user_v2';
-// Clave legada (mantiene compatibilidad con app.js, perfil.js, etc.)
-const SESSION_LEGACY = 'amc_session_active';
+// ── Constantes de sesión ──────────────────────────────────────────────────────
+const SESSION_KEY    = 'amc_session_v2';    // JWT (sistema nuevo)
+const USER_KEY       = 'amc_user_v2';       // Datos usuario (sistema nuevo)
+const SESSION_LEGACY = 'amc_session_active'; // Flag sesión (retrocompatibilidad)
+const DEV_USER_KEY   = 'amc_developer_user'; // Usuario principal en localStorage
+const IND_USERS_KEY  = 'amc_independent_users'; // Usuarios independientes
+
+// ── Credenciales por defecto (hardcodeadas — funcionan en cualquier navegador) ─
+const DEFAULT_CREDENTIALS = {
+  codigo: '1110591592',
+  clave : 'Desa*2026',
+  nombre: 'PRINCIPAL DESARROLLADOR',
+  email : 'dev@amc.com',
+};
+
+// ── URL del backend (intento opcional) ────────────────────────────────────────
+const API_BASE_URL = 'http://localhost:3000/api';
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm    = document.getElementById('login-form');
-  const nitInput     = document.getElementById('nit');
   const usuarioInput = document.getElementById('usuario');
   const claveInput   = document.getElementById('clave');
   const errorMsg     = document.getElementById('error-msg');
   const btnIngresar  = document.getElementById('btn-ingresar');
+  const toggleClave  = document.getElementById('toggle-clave');
 
-  // ── Autocompletar NIT del último login exitoso ─────────────────────────────
-  const lastNit = localStorage.getItem('amc_last_nit');
-  if (lastNit && nitInput) {
-    nitInput.value = lastNit;
-    // Si ya hay NIT guardado, posicionar cursor en el campo usuario
-    if (usuarioInput) usuarioInput.focus();
-  }
-
-  // ── Mostrar/ocultar contraseña ─────────────────────────────────────────────
-  const toggleClave = document.getElementById('toggle-clave');
+  // ── Toggle mostrar/ocultar contraseña ────────────────────────────────────────
   if (toggleClave && claveInput) {
     toggleClave.addEventListener('click', () => {
       const esPassword = claveInput.type === 'password';
@@ -49,23 +60,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── Submit del formulario ──────────────────────────────────────────────────
+  // ── Submit del formulario ────────────────────────────────────────────────────
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     await intentarLogin();
   });
 
+  // ── Lógica principal de login ────────────────────────────────────────────────
   async function intentarLogin() {
-    const nit      = (nitInput?.value || '').trim();
     const codigo   = (usuarioInput?.value || '').trim();
     const password = claveInput?.value || '';
 
-    // Validación básica en el cliente
-    if (!nit) {
-      mostrarError('El NIT de la empresa es requerido.');
-      nitInput?.focus();
-      return;
-    }
     if (!codigo) {
       mostrarError('El código de usuario es requerido.');
       usuarioInput?.focus();
@@ -77,76 +82,166 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Estado de carga
-    setLoading(true);
     ocultarError();
+    setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body   : JSON.stringify({ nit, codigo, password }),
-      });
+      // ── CAPA 1: Intentar autenticación con el backend ──────────────────────
+      const backendOk = await intentarBackend(codigo, password);
+      if (backendOk) return; // Redirigido desde dentro
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Error del servidor (credenciales incorrectas, cuenta desactivada, etc.)
-        throw new Error(data.message || 'Credenciales incorrectas.');
+      // ── CAPA 2: Autenticación local (funciona siempre) ────────────────────
+      const localOk = validarLocal(codigo, password);
+      if (localOk) {
+        establecerSesionLocal(localOk);
+        window.location.replace('index.html');
+        return;
       }
 
-      // ── Login exitoso ────────────────────────────────────────────────────────
-      guardarSesion(data);
-
-      // Redirigir al inicio
-      window.location.replace('index.html');
-
-    } catch (err) {
-      if (err.name === 'TypeError' || err.message.includes('fetch')) {
-        // Error de red: el backend no está disponible
-        mostrarError(
-          '⚠️ No se pudo conectar con el servidor. ' +
-          'Verifique que el backend esté corriendo en http://localhost:3000'
-        );
-      } else {
-        mostrarError(err.message || 'Código de usuario o contraseña incorrectos.');
-      }
+      // Ninguna capa autenticó correctamente
+      mostrarError('Código de usuario o contraseña incorrectos.');
       claveInput.value = '';
       claveInput?.focus();
+
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Guardar sesión en sessionStorage ────────────────────────────────────────
-  function guardarSesion(data) {
-    // Sistema nuevo: JWT para api-client.js
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-      token    : data.token,
-      expira_en: data.expira_en,
-    }));
-    sessionStorage.setItem(USER_KEY, JSON.stringify(data.usuario));
+  // ── CAPA 1: Autenticación via backend JWT ─────────────────────────────────
+  async function intentarBackend(codigo, password) {
+    try {
+      // Para el usuario principal, el NIT y el código son el mismo valor.
+      // Para usuarios independientes, usamos el NIT guardado en localStorage.
+      const nit = localStorage.getItem('amc_last_nit') || codigo;
 
-    // Sistema legado: retrocompatibilidad con app.js, perfil.js, usuario.js
-    sessionStorage.setItem(SESSION_LEGACY, 'true');
-    sessionStorage.setItem('amc_active_user_code', data.usuario.codigo || '');
-    sessionStorage.setItem('amc_active_user_name', data.usuario.nombre || '');
+      const controller = new AbortController();
+      // Timeout de 3 segundos: si el backend no responde, caemos al local
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    // Recordar NIT para el próximo login en este navegador
-    if (data.usuario && data.usuario.empresa_id) {
-      // El NIT viene en el campo razon_social o debemos obtenerlo del form
-      localStorage.setItem('amc_last_nit', nitInput?.value?.trim() || '');
-    } else {
-      localStorage.setItem('amc_last_nit', nitInput?.value?.trim() || '');
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ nit, codigo, password }),
+        signal : controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // JWT recibido — guardar sesión completa
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          token    : data.token,
+          expira_en: data.expira_en,
+        }));
+        sessionStorage.setItem(USER_KEY, JSON.stringify(data.usuario));
+
+        // Retrocompatibilidad para app.js, perfil.js, usuario.js (claves legadas)
+        sessionStorage.setItem(SESSION_LEGACY, 'true');
+        sessionStorage.setItem('amc_active_user_code', data.usuario.codigo || codigo);
+        sessionStorage.setItem('amc_active_user_name', data.usuario.nombre || '');
+
+        // Recordar el NIT para la próxima vez
+        localStorage.setItem('amc_last_nit', nit);
+
+        window.location.replace('index.html');
+        return true; // Éxito
+      }
+
+      // El backend respondió pero con error de credenciales — NO caer al local
+      // (evitar que alguien con contraseña incorrecta pruebe con el local)
+      if (response.status === 401) {
+        mostrarError('Código de usuario o contraseña incorrectos.');
+        claveInput.value = '';
+        claveInput?.focus();
+        setLoading(false);
+        // Retornar null para indicar que el backend respondió (no caer al local)
+        return null;
+      }
+
+      return false; // Otro error del servidor → caer al local
+
+    } catch (err) {
+      // Error de red (backend no disponible, timeout, sin internet)
+      // → Silenciosamente caemos a la autenticación local
+      if (err.name !== 'AbortError') {
+        console.info('Backend no disponible, usando autenticación local.');
+      }
+      return false;
     }
   }
 
-  // ── Helpers de UI ────────────────────────────────────────────────────────────
+  // ── CAPA 2: Validación local (localStorage + credenciales por defecto) ─────
+  function validarLocal(codigo, password) {
+    // 1. Obtener credenciales del usuario principal (localStorage o por defecto)
+    let devUser = DEFAULT_CREDENTIALS;
+    try {
+      const stored = localStorage.getItem(DEV_USER_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Solo usar localStorage si tiene los campos correctos
+        if (parsed && parsed.codigo && parsed.clave) {
+          devUser = parsed;
+        }
+      }
+    } catch { /* usar defaults */ }
+
+    // 2. Verificar contra usuario principal
+    if (codigo === devUser.codigo && password === devUser.clave) {
+      return {
+        codigo: devUser.codigo,
+        nombre: devUser.nombre || DEFAULT_CREDENTIALS.nombre,
+        email : devUser.email  || DEFAULT_CREDENTIALS.email,
+        rol   : 'ADMIN',
+        tipo  : 'principal',
+      };
+    }
+
+    // 3. Verificar contra usuarios independientes
+    try {
+      const indRaw = localStorage.getItem(IND_USERS_KEY);
+      if (indRaw) {
+        const indUsers = JSON.parse(indRaw);
+        if (Array.isArray(indUsers)) {
+          const match = indUsers.find(u => u.codigo === codigo && u.clave === password);
+          if (match) {
+            return {
+              codigo: match.codigo,
+              nombre: `Usuario ${match.codigo}`,
+              email : match.email || '',
+              rol   : 'OPERADOR',
+              tipo  : 'independiente',
+            };
+          }
+        }
+      }
+    } catch { /* ignorar */ }
+
+    return null; // Sin coincidencia
+  }
+
+  // ── Establecer sesión local (sin JWT) ────────────────────────────────────────
+  function establecerSesionLocal(userData) {
+    // Solo setear la sesión legada (app.js, perfil.js, etc. ya la conocen)
+    sessionStorage.setItem(SESSION_LEGACY, 'true');
+    sessionStorage.setItem('amc_active_user_code', userData.codigo || '');
+    sessionStorage.setItem('amc_active_user_name', userData.nombre || '');
+
+    // Asegurarse de que las credenciales por defecto estén en localStorage
+    // para el navegador actual (si no estaban antes)
+    try {
+      if (!localStorage.getItem(DEV_USER_KEY)) {
+        localStorage.setItem(DEV_USER_KEY, JSON.stringify(DEFAULT_CREDENTIALS));
+      }
+    } catch { /* sin espacio */ }
+  }
+
+  // ── Helpers de UI ─────────────────────────────────────────────────────────────
   function mostrarError(texto) {
     if (!errorMsg) return;
     errorMsg.textContent = texto;
     errorMsg.style.display = 'block';
-    errorMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function ocultarError() {
@@ -159,12 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!btnIngresar) return;
     btnIngresar.disabled = loading;
     btnIngresar.textContent = loading ? 'Verificando...' : 'Ingresar';
-    if (loading) {
-      btnIngresar.style.opacity = '0.75';
-      btnIngresar.style.cursor  = 'not-allowed';
-    } else {
-      btnIngresar.style.opacity = '1';
-      btnIngresar.style.cursor  = 'pointer';
-    }
+    btnIngresar.style.opacity = loading ? '0.75' : '1';
+    btnIngresar.style.cursor  = loading ? 'not-allowed' : 'pointer';
   }
 });

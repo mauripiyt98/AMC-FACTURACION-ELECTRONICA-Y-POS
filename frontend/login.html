@@ -205,25 +205,20 @@
           <h2>Iniciar Sesión</h2>
           <form id="login-form" autocomplete="on">
             <div class="login-field">
-              <label for="nit">NIT de la Empresa</label>
-              <input type="text" id="nit" name="nit" placeholder="Ej: 1110591592" required
-                autocomplete="organization" inputmode="numeric">
+              <label for="usuario">Usuario</label>
+              <input type="text" id="usuario" name="usuario" placeholder="Código de usuario"
+                required autocomplete="username" inputmode="numeric">
             </div>
             <div class="login-field">
-              <label for="usuario">Código de Usuario</label>
-              <input type="text" id="usuario" name="usuario" placeholder="Tu código numérico" required
-                autocomplete="username" inputmode="numeric">
-            </div>
-            <div class="login-field" style="position:relative;">
               <label for="clave">Contraseña</label>
               <div style="position:relative;">
-                <input type="password" id="clave" name="clave" placeholder="Contraseña" required
-                  autocomplete="current-password" style="padding-right:46px;">
+                <input type="password" id="clave" name="clave" placeholder="Contraseña"
+                  required autocomplete="current-password" style="padding-right:46px;">
                 <button type="button" id="toggle-clave" tabindex="-1"
                   title="Mostrar/ocultar contraseña"
                   style="position:absolute; right:10px; top:50%; transform:translateY(-50%);
                          background:none; border:none; cursor:pointer; font-size:1.1rem;
-                         color:#527083; padding:4px; line-height:1;"></button>
+                         color:#527083; padding:4px; line-height:1;">👁️</button>
               </div>
             </div>
             <button type="submit" id="btn-ingresar" class="btn-ingresar">Ingresar</button>
