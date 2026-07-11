@@ -1,4 +1,35 @@
 // ── Configuración y Contexto ────────────────────────────────────────────────
+const SESSION_KEY = 'amc_session_v2';
+function getToken() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+    return s.token || null;
+  } catch { return null; }
+}
+const token = getToken();
+const useApi = !!token;
+const API_BASE = 'http://localhost:3000/api';
+const apiData = { terceros: [], productos: [], loaded: false };
+
+async function apiFetch(endpoint, options = {}) {
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  if (res.status === 401) {
+    sessionStorage.clear();
+    window.location.replace('login.html');
+    throw new Error('Sesión expirada');
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
+  return data;
+}
+
 const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
 const isDev = activeUserCode === "1110591592";
 
@@ -108,6 +139,7 @@ function normalizarTexto(s) {
 }
 
 function cargarTercerosDB() {
+  if (useApi && apiData.loaded) return apiData.terceros;
   const raw = localStorage.getItem(TERCEROS_DB_KEY);
   if (!raw) return [];
   try {
@@ -258,6 +290,7 @@ function cargarClienteSeleccionado() {
 }
 
 function cargarProductosDB() {
+  if (useApi && apiData.loaded) return apiData.productos;
   const raw = localStorage.getItem(PRODUCTOS_DB_KEY);
   if (!raw) return [];
   try {
@@ -724,7 +757,7 @@ function limpiar() {
 }
 
 // ── Generar factura → prefactura ────────────────────────────────────────────
-function generarFactura() {
+async function generarFactura() {
   limpiarMensaje();
 
   if (!state.lineas.length) {
@@ -739,59 +772,132 @@ function generarFactura() {
     return;
   }
 
-  const cliente = {
-    nombre,
-    documento,
-    direccion: $("cliente-direccion").value.trim(),
-    ciudad:    $("cliente-ciudad") ? $("cliente-ciudad").value.trim() : "",
-    telefono:  $("cliente-telefono").value.trim(),
-    email:     $("cliente-email").value.trim(),
-  };
+  const btn = $("btn-generar");
+  const oldText = btn.textContent;
+  btn.textContent = "Procesando...";
+  btn.disabled = true;
 
-  let terceroRef = state.clienteTercero;
-  if (!terceroRef) {
-    const docNorm = normalizarTexto(documento);
-    terceroRef = cargarTercerosDB().find((t) => normalizarTexto(t.documento) === docNorm) || null;
+  try {
+    let payload;
+
+    if (useApi) {
+      // ── MODO API ──
+      const reqBody = {
+        cliente: {
+          nombre,
+          documento,
+          direccion: $("cliente-direccion").value.trim(),
+          ciudad:    $("cliente-ciudad") ? $("cliente-ciudad").value.trim() : "",
+          telefono:  $("cliente-telefono").value.trim(),
+          email:     $("cliente-email").value.trim(),
+        },
+        lineas: state.lineas.map(l => ({
+          producto_id: l.producto_id || null,
+          codigo: l.codigo,
+          nombre: l.producto,
+          unidad_medida: l.unidad,
+          cantidad: l.cantidad,
+          valor_unitario: l.unitario,
+          tarifa_iva: l.tarifaIva,
+          tarifa_retencion: l.tarifaRetencion
+        })),
+        medio_pago: $("medio-pago").value,
+        observaciones: $("observaciones") ? $("observaciones").value.trim() : ""
+      };
+
+      const res = await apiFetch('/facturas', {
+        method: 'POST',
+        body: JSON.stringify(reqBody)
+      });
+
+      const f = res.factura;
+      // Compatibilidad con el visor de prefactura local
+      payload = {
+        id: f.id,
+        consecutivo: f.numero_factura ? parseInt(f.numero_factura.split('-')[1]) : f.consecutivo,
+        numeroFactura: f.numero_factura,
+        cufe: f.cufe,
+        resolucion: RESOLUCION_FACTURACION_DEMO,
+        cliente: reqBody.cliente,
+        lineas: state.lineas,
+        totales: totalesGlobales(),
+        medioPagoLabel: (MEDIOS_PAGO.find(m => m.value === reqBody.medio_pago) || {}).label || reqBody.medio_pago,
+        observaciones: reqBody.observaciones,
+        generadoEn: f.creado_en
+      };
+    } else {
+      // ── MODO LOCAL (Fallback) ──
+      const cliente = {
+        nombre, documento,
+        direccion: $("cliente-direccion").value.trim(),
+        ciudad:    $("cliente-ciudad") ? $("cliente-ciudad").value.trim() : "",
+        telefono:  $("cliente-telefono").value.trim(),
+        email:     $("cliente-email").value.trim(),
+      };
+
+      let terceroRef = state.clienteTercero;
+      if (!terceroRef) {
+        const docNorm = normalizarTexto(documento);
+        terceroRef = cargarTercerosDB().find((t) => normalizarTexto(t.documento) === docNorm) || null;
+      }
+
+      const totales = totalesGlobales();
+      const medioPagoVal = $("medio-pago").value;
+      const consecutivo = obtenerSiguienteConsecutivo();
+
+      if (!consecutivo) {
+        throw new Error("El rango demo de facturación 1 a 1000 ya fue consumido. Configure una nueva resolución/rango.");
+      }
+
+      const numeroFactura = construirNumeroFactura(consecutivo);
+      const cufeDemo = generarCufeDemoFactura(consecutivo, totales.total);
+
+      payload = {
+        id: "FAC-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+        consecutivo,
+        numeroFactura,
+        cufe: cufeDemo,
+        resolucion: RESOLUCION_FACTURACION_DEMO,
+        cliente,
+        tercero: terceroRef,
+        lineas: state.lineas,
+        totales,
+        medioPago: medioPagoVal,
+        medioPagoLabel: (MEDIOS_PAGO.find(m => m.value === medioPagoVal) || {}).label || medioPagoVal,
+        observaciones: $("observaciones") ? $("observaciones").value.trim() : "",
+        generadoEn: new Date().toISOString(),
+      };
+
+      const facturas = cargarFacturasGeneradasDB();
+      facturas.push(payload);
+      guardarFacturasGeneradasDB(facturas);
+    }
+
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    window.location.href = "prefactura.html" + (useApi ? `?id=${payload.id}` : "");
+
+  } catch (err) {
+    mostrarMensaje(err.message || "Ocurrió un error al generar la factura", "error");
+  } finally {
+    btn.textContent = oldText;
+    btn.disabled = false;
   }
-
-  const totales = totalesGlobales();
-  const medioPagoVal = $("medio-pago").value;
-  const consecutivo = obtenerSiguienteConsecutivo();
-
-  if (!consecutivo) {
-    mostrarMensaje("El rango demo de facturacion 1 a 1000 ya fue consumido. Configure una nueva resolucion/rango.", "error");
-    return;
-  }
-
-  const numeroFactura = construirNumeroFactura(consecutivo);
-  const cufeDemo = generarCufeDemoFactura(consecutivo, totales.total);
-
-  const payload = {
-    id: "FAC-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
-    consecutivo,
-    numeroFactura,
-    cufe: cufeDemo,
-    resolucion: RESOLUCION_FACTURACION_DEMO,
-    cliente,
-    tercero: terceroRef,
-    lineas: state.lineas,
-    totales,
-    medioPago: medioPagoVal,
-    medioPagoLabel: (MEDIOS_PAGO.find(m => m.value === medioPagoVal) || {}).label || medioPagoVal,
-    observaciones: $("observaciones") ? $("observaciones").value.trim() : "",
-    generadoEn: new Date().toISOString(),
-  };
-
-  const facturas = cargarFacturasGeneradasDB();
-  facturas.push(payload);
-  guardarFacturasGeneradasDB(facturas);
-
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  window.location.href = "prefactura.html";
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+  if (useApi) {
+    try {
+      const [tRes, pRes] = await Promise.all([
+        apiFetch('/terceros'),
+        apiFetch('/productos?limit=1000')
+      ]);
+      apiData.terceros = tRes.terceros || [];
+      apiData.productos = pRes.productos || [];
+      apiData.loaded = true;
+    } catch(e) { console.warn("API load error", e); }
+  }
+
   renderTablaLineas();
   actualizarResumen();
 

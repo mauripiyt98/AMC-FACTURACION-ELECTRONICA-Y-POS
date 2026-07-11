@@ -1,150 +1,229 @@
-const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-const isDev = activeUserCode === "1110591592";
-
-const STORAGE_KEY = isDev ? "amc_factura_preview_v1" : `amc_factura_preview_v1_${activeUserCode}`;
-const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
-
-const RESOLUCION_FACTURACION_DEMO = {
-  prefijo: "FE",
-  desde: 1,
-  hasta: 1000,
-  numeroResolucion: "18760000001",
-  vigencia: "Demo academico",
-};
-
-const $ = (id) => document.getElementById(id);
-
-function cargarFacturas() {
-  const raw = localStorage.getItem(FACTURAS_GENERADAS_DB_KEY);
-  if (!raw) return [];
-  try {
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-function normalizar(s) {
-  return String(s || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function escapeHtml(text) {
-  const d = document.createElement("div");
-  d.textContent = String(text || "");
-  return d.innerHTML;
-}
-
-function formatoMoneda(valor) {
-  const n = Number(valor) || 0;
-  return "$ " + Math.round(n).toLocaleString("es-CO", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-}
-
-function fechaHoraColombia(value) {
-  const date = value ? new Date(value) : new Date();
-  return date.toLocaleString("es-CO", {
-    timeZone: "America/Bogota",
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-function construirNumeroFactura(consecutivo) {
-  return RESOLUCION_FACTURACION_DEMO.prefijo + "-" + String(consecutivo).padStart(4, "0");
-}
-
-function obtenerSiguienteConsecutivo(facturas) {
-  const usados = facturas
-    .map((f) => Number(f.consecutivo))
-    .filter((n) => Number.isInteger(n) && n >= RESOLUCION_FACTURACION_DEMO.desde);
-  const ultimo = usados.length ? Math.max(...usados) : RESOLUCION_FACTURACION_DEMO.desde - 1;
-  const siguiente = ultimo + 1;
-  return siguiente <= RESOLUCION_FACTURACION_DEMO.hasta ? siguiente : null;
-}
-
-function actualizarResumen(facturas) {
-  $("stat-resolucion").textContent = RESOLUCION_FACTURACION_DEMO.numeroResolucion;
-  $("stat-rango").textContent = RESOLUCION_FACTURACION_DEMO.desde + " - " + RESOLUCION_FACTURACION_DEMO.hasta;
-  $("stat-generadas").textContent = String(facturas.length);
-
-  const siguiente = obtenerSiguienteConsecutivo(facturas);
-  $("stat-siguiente").textContent = siguiente ? construirNumeroFactura(siguiente) : "Rango agotado";
-}
-
-function coincideBusqueda(factura, q) {
-  if (!q) return true;
-  const cliente = factura.cliente || {};
-  const texto = [
-    factura.numeroFactura,
-    factura.consecutivo,
-    factura.generadoEn,
-    cliente.nombre,
-    cliente.documento,
-    cliente.email,
-    factura.medioPagoLabel,
-  ].join(" ");
-  return normalizar(texto).includes(q);
-}
-
-function renderFacturas() {
-  const facturas = cargarFacturas().slice().sort((a, b) => Number(b.consecutivo || 0) - Number(a.consecutivo || 0));
-  const q = normalizar($("buscar").value);
-  const filtradas = facturas.filter((f) => coincideBusqueda(f, q));
-  const body = $("facturas-body");
-  const empty = $("empty");
-
-  actualizarResumen(facturas);
-
-  if (!facturas.length) {
-    body.innerHTML = "";
-    empty.style.display = "block";
-    return;
-  }
-
-  empty.style.display = "none";
-
-  if (!filtradas.length) {
-    body.innerHTML = '<tr><td colspan="8" class="empty">No hay facturas que coincidan con la busqueda.</td></tr>';
-    return;
-  }
-
-  body.innerHTML = filtradas.map((factura) => {
-    const cliente = factura.cliente || {};
-    const numero = factura.numeroFactura || construirNumeroFactura(factura.consecutivo || 0);
-    const total = factura.totales?.total || 0;
-    const lineas = Array.isArray(factura.lineas) ? factura.lineas.length : 0;
-
-    return `
-      <tr>
-        <td><strong>${escapeHtml(numero)}</strong><br><span class="badge">Cons. ${escapeHtml(factura.consecutivo)}</span></td>
-        <td>${escapeHtml(fechaHoraColombia(factura.generadoEn))}</td>
-        <td>${escapeHtml(cliente.nombre || "-")}</td>
-        <td>${escapeHtml(cliente.documento || "-")}</td>
-        <td>${lineas}</td>
-        <td class="num">${formatoMoneda(total)}</td>
-        <td>Guardada</td>
-        <td><button type="button" class="btn-sec" data-id="${escapeHtml(factura.id)}">Ver factura</button></td>
-      </tr>`;
-  }).join("");
-
-  body.querySelectorAll("button[data-id]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const factura = facturas.find((f) => f.id === btn.dataset.id);
-      if (!factura) return;
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(factura));
-      window.location.href = "../prefactura.html";
-    });
-  });
-}
+/**
+ * facturas-generadas.js — Listado de facturas emitidas
+ *
+ * MIGRACIÓN A BASE DE DATOS:
+ * - Si hay sesión JWT activa: usa API REST (/api/facturas y /api/facturas/stats)
+ * - Si no hay backend: usa localStorage (fallback modo offline)
+ */
+'use strict';
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  // ── Sesión y Configuración ──────────────────────────────────────────────────
+  const SESSION_KEY = 'amc_session_v2';
+  const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
+  const isDev = activeUserCode === "1110591592";
+
+  const STORAGE_KEY = isDev ? "amc_factura_preview_v1" : `amc_factura_preview_v1_${activeUserCode}`;
+  const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
+
+  const RESOLUCION_FACTURACION_DEMO = {
+    prefijo: "FE",
+    desde: 1,
+    hasta: 1000,
+    numeroResolucion: "18760000001",
+    vigencia: "Demo académico",
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function getToken() {
+    try {
+      const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+      return s.token || null;
+    } catch { return null; }
+  }
+
+  const token = getToken();
+  const useApi = !!token;
+  const API_BASE = 'http://localhost:3000/api';
+
+  // ── API Helper ──────────────────────────────────────────────────────────────
+  async function apiFetch(endpoint, options = {}) {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+    if (res.status === 401) {
+      sessionStorage.clear();
+      window.location.replace('../login.html');
+      throw new Error('Sesión expirada');
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
+    return data;
+  }
+
+  // ── Funciones Base ─────────────────────────────────────────────────────────
+  function normalizar(s) {
+    return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function escapeHtml(text) {
+    const d = document.createElement("div");
+    d.textContent = String(text || "");
+    return d.innerHTML;
+  }
+
+  function formatoMoneda(valor) {
+    const n = Number(valor) || 0;
+    return "$ " + Math.round(n).toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function fechaHoraColombia(value) {
+    const date = value ? new Date(value) : new Date();
+    return date.toLocaleString("es-CO", { timeZone: "America/Bogota", dateStyle: "medium", timeStyle: "short" });
+  }
+
+  function construirNumeroFactura(consecutivo) {
+    return RESOLUCION_FACTURACION_DEMO.prefijo + "-" + String(consecutivo).padStart(4, "0");
+  }
+
+  function obtenerSiguienteConsecutivo(facturas) {
+    const usados = facturas
+      .map((f) => Number(f.consecutivo))
+      .filter((n) => Number.isInteger(n) && n >= RESOLUCION_FACTURACION_DEMO.desde);
+    const ultimo = usados.length ? Math.max(...usados) : RESOLUCION_FACTURACION_DEMO.desde - 1;
+    const siguiente = ultimo + 1;
+    return siguiente <= RESOLUCION_FACTURACION_DEMO.hasta ? siguiente : null;
+  }
+
+  // ── Carga de Datos ─────────────────────────────────────────────────────────
+  async function cargarFacturas() {
+    if (useApi) {
+      try {
+        const data = await apiFetch('/facturas?limit=100');
+        // Mapear al formato esperado por el frontend
+        return (data.facturas || []).map(f => ({
+          id: f.id,
+          consecutivo: f.numero_factura ? parseInt(f.numero_factura.split('-')[1] || 0) : f.consecutivo,
+          numeroFactura: f.numero_factura,
+          generadoEn: f.creado_en,
+          cliente: {
+            nombre: f.cliente_nombre,
+            documento: f.cliente_documento,
+            email: f.cliente_email
+          },
+          totales: { total: f.total },
+          lineas: Array.from({ length: f.total_lineas || 0 }),
+          estado: f.estado
+        }));
+      } catch (err) {
+        console.warn("Error cargando facturas del API, usando caché local", err);
+      }
+    }
+    // Fallback Local
+    const raw = localStorage.getItem(FACTURAS_GENERADAS_DB_KEY);
+    if (!raw) return [];
+    try {
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function cargarEstadisticas(facturasLocales) {
+    if (useApi) {
+      try {
+        const data = await apiFetch('/facturas/stats');
+        const stats = data.stats || {};
+        $("stat-resolucion").textContent = stats.resolucion || RESOLUCION_FACTURACION_DEMO.numeroResolucion;
+        $("stat-rango").textContent = `${stats.resolucion_desde || RESOLUCION_FACTURACION_DEMO.desde} - ${stats.resolucion_hasta || RESOLUCION_FACTURACION_DEMO.hasta}`;
+        $("stat-generadas").textContent = String(stats.total_facturas || 0);
+        $("stat-siguiente").textContent = stats.consecutivo_siguiente ? construirNumeroFactura(stats.consecutivo_siguiente) : "Rango agotado";
+        return;
+      } catch (err) {
+        console.warn("Error cargando estadísticas del API", err);
+      }
+    }
+    // Fallback Local
+    $("stat-resolucion").textContent = RESOLUCION_FACTURACION_DEMO.numeroResolucion;
+    $("stat-rango").textContent = RESOLUCION_FACTURACION_DEMO.desde + " - " + RESOLUCION_FACTURACION_DEMO.hasta;
+    $("stat-generadas").textContent = String(facturasLocales.length);
+
+    const siguiente = obtenerSiguienteConsecutivo(facturasLocales);
+    $("stat-siguiente").textContent = siguiente ? construirNumeroFactura(siguiente) : "Rango agotado";
+  }
+
+  function coincideBusqueda(factura, q) {
+    if (!q) return true;
+    const cliente = factura.cliente || {};
+    const texto = [
+      factura.numeroFactura,
+      factura.consecutivo,
+      factura.generadoEn,
+      cliente.nombre,
+      cliente.documento,
+      cliente.email,
+      factura.medioPagoLabel,
+    ].join(" ");
+    return normalizar(texto).includes(q);
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  async function renderFacturas() {
+    const dbFacturas = await cargarFacturas();
+    const facturas = dbFacturas.slice().sort((a, b) => Number(b.consecutivo || 0) - Number(a.consecutivo || 0));
+
+    const q = normalizar($("buscar").value);
+    const filtradas = facturas.filter((f) => coincideBusqueda(f, q));
+
+    const body = $("facturas-body");
+    const empty = $("empty");
+
+    await cargarEstadisticas(facturas);
+
+    if (!facturas.length) {
+      body.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+
+    empty.style.display = "none";
+
+    if (!filtradas.length) {
+      body.innerHTML = '<tr><td colspan="8" class="empty">No hay facturas que coincidan con la búsqueda.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = filtradas.map((factura) => {
+      const cliente = factura.cliente || {};
+      const numero = factura.numeroFactura || construirNumeroFactura(factura.consecutivo || 0);
+      const total = factura.totales?.total || 0;
+      const lineas = Array.isArray(factura.lineas) ? factura.lineas.length : 0;
+      const estado = factura.estado || 'EMITIDA';
+
+      return `
+        <tr>
+          <td><strong>${escapeHtml(numero)}</strong><br><span class="badge">Cons. ${escapeHtml(factura.consecutivo)}</span></td>
+          <td>${escapeHtml(fechaHoraColombia(factura.generadoEn))}</td>
+          <td>${escapeHtml(cliente.nombre || "-")}</td>
+          <td>${escapeHtml(cliente.documento || "-")}</td>
+          <td>${lineas}</td>
+          <td class="num">${formatoMoneda(total)}</td>
+          <td>${estado}</td>
+          <td><button type="button" class="btn-sec" data-id="${escapeHtml(factura.id)}">Ver factura</button></td>
+        </tr>`;
+    }).join("");
+
+    body.querySelectorAll("button[data-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const factura = facturas.find((f) => String(f.id) === String(btn.dataset.id));
+        if (!factura) return;
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(factura));
+        // Si usamos API, deberíamos pasar el ID por URL en vez de sessionStorage a futuro
+        window.location.href = "../prefactura.html" + (useApi ? `?id=${factura.id}` : '');
+      });
+    });
+  }
+
+  // ── Eventos Iniciales ──────────────────────────────────────────────────────
   $("buscar").addEventListener("input", renderFacturas);
   renderFacturas();
+
 });

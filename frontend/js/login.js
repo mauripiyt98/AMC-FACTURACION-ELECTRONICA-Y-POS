@@ -149,15 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return true; // Éxito
       }
 
-      // El backend respondió pero con error de credenciales — NO caer al local
-      // (evitar que alguien con contraseña incorrecta pruebe con el local)
+      // El backend respondió con 401 (Credenciales incorrectas)
+      // En lugar de bloquear, caemos a la validación local (Capa 2) para
+      // permitir que la contraseña maestra funcione incluso si la DB está desactualizada.
       if (response.status === 401) {
-        mostrarError('Código de usuario o contraseña incorrectos.');
-        claveInput.value = '';
-        claveInput?.focus();
-        setLoading(false);
-        // Retornar null para indicar que el backend respondió (no caer al local)
-        return null;
+        return false; // Retornar false para que caiga al local
       }
 
       return false; // Otro error del servidor → caer al local

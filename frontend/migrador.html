@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migrar Datos a la Nube (Base de Datos) | AMC</title>
+  <style>
+    :root {
+      --primary: #0033a0;
+      --primary-dark: #002277;
+      --bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --border: #e0e4e8;
+      --success: #28a745;
+      --error: #dc3545;
+      --warning: #ffc107;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .migrador-card {
+      background-color: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+    }
+    h1 {
+      color: var(--primary);
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.8rem;
+    }
+    p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .stats-box {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      background-color: var(--bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-migrar {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      width: 100%;
+    }
+    .btn-migrar:hover { background-color: var(--primary-dark); }
+    .btn-migrar:active { transform: scale(0.98); }
+    .btn-migrar:disabled { background-color: #a0aec0; cursor: not-allowed; transform: none; }
+    
+    .log-container {
+      margin-top: 2rem;
+      text-align: left;
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 6px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .log-container.active { display: block; }
+    .log-line { margin-bottom: 4px; }
+    .log-success { color: #4CAF50; }
+    .log-error { color: #f44336; }
+    .log-warn { color: #ffeb3b; }
+    
+    .success-panel {
+      display: none;
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background-color: rgba(40, 167, 69, 0.1);
+      border: 1px solid var(--success);
+      border-radius: 8px;
+    }
+    .success-panel.active { display: block; }
+    .success-title { color: var(--success); font-weight: bold; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .btn-volver {
+      margin-top: 1rem;
+      background-color: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-volver:hover { background-color: rgba(0, 51, 160, 0.05); }
+  </style>
+</head>
+<body>
+
+  <div class="migrador-card">
+    <h1>Sincronización en la Nube</h1>
+    <p>Hemos detectado que tienes información guardada localmente en este navegador. Para que esta información esté disponible en todos los navegadores (Edge, Chrome, etc.), necesitas sincronizarla con la base de datos.</p>
+    
+    <div class="stats-box">
+      <div class="stat-item">
+        <span class="stat-value" id="count-terceros">0</span>
+        <span class="stat-label">Clientes</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="count-productos">0</span>
+        <span class="stat-label">Productos</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="count-facturas">0</span>
+        <span class="stat-label">Facturas</span>
+      </div>
+    </div>
+
+    <button type="button" id="btn-iniciar" class="btn-migrar">Migrar datos a la Nube</button>
+    
+    <div id="logs" class="log-container"></div>
+    
+    <div id="success-panel" class="success-panel">
+      <div class="success-title">¡Sincronización Completa! 🎉</div>
+      <p style="margin-bottom: 0; color: #333;">Toda tu información ya está en la base de datos compartida.</p>
+      <a href="index.html" class="btn-volver">Volver al sistema</a>
+    </div>
+  </div>
+
+  <script src="js/migrador.js"></script>
+</body>
+</html>
