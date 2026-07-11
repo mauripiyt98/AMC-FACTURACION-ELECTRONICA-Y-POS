@@ -14,6 +14,7 @@ const empresasRoutes = require('./routes/empresas.routes');
 const tercerosRoutes = require('./routes/terceros.routes');
 const productosRoutes = require('./routes/productos.routes');
 const facturasRoutes  = require('./routes/facturas.routes');
+const usuariosRoutes  = require('./routes/usuarios.routes');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -22,11 +23,31 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 
 // ── CORS ─────────────────────────────────────────────────
-const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+// Orígenes configurados en .env, más orígenes localhost comunes en desarrollo
+const allowedOrigins = [
+  ...(process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean),
+  // Orígenes localhost frecuentes en desarrollo (file://, Live Server, etc.)
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'http://localhost:3000',
+  'http://localhost:8080',
+  'http://127.0.0.1:3000',
+];
+
 app.use(cors({
   origin(origin, callback) {
-    // Permitir requests sin origin (Postman, curl, etc.) en desarrollo
-    if (!origin || process.env.NODE_ENV === 'development') return callback(null, true);
+    // Sin origin: Postman, curl, extensiones de navegador, file://
+    if (!origin) return callback(null, true);
+    // Modo desarrollo: permitir cualquier origen localhost/127.0.0.1
+    if (process.env.NODE_ENV !== 'production') {
+      if (
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.startsWith('null') // file:// en algunos navegadores
+      ) {
+        return callback(null, true);
+      }
+    }
     if (allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error(`CORS: origen no permitido — ${origin}`));
   },
@@ -68,6 +89,7 @@ app.use('/api/empresas',  empresasRoutes);
 app.use('/api/terceros',  tercerosRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/facturas',  facturasRoutes);
+app.use('/api/usuarios',  usuariosRoutes);
 
 // ── Manejo de rutas no encontradas y errores ─────────────
 app.use(notFound);
