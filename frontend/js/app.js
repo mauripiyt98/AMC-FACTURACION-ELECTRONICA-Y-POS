@@ -1005,14 +1005,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  // Tarjeta Facturación POS (En Desarrollo)
+  // Tarjeta Facturación POS → navega al módulo POS
   const btnWelcomePos = $("btn-welcome-pos");
   if (btnWelcomePos) {
     btnWelcomePos.addEventListener("click", () => {
-      abrirModal(
-        "Módulo POS en Desarrollo",
-        "El módulo de Facturación POS se encuentra actualmente en desarrollo. Próximamente incluirá la emisión de tirilla POS electrónica con integración directa a la DIAN."
-      );
+      window.location.href = "pos/pos.html";
     });
   }
 

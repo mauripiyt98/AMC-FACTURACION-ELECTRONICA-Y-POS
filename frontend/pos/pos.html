@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facturación POS — AMC</title>
+  <meta name="description" content="Terminal de Facturación POS para punto de venta — AMC Facturación Electrónica">
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="pos.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="pos-header">
+    <a href="../index.html" class="pos-header-logo" title="Volver al inicio">
+      <img src="../../assets/logo.png" alt="AMC Logo">
+      <span>AMC · POS</span>
+    </a>
+
+    <div class="pos-caja-info">
+      <div class="caja-title">Caja abierta: <span id="pos-caja-nombre">Caja 1</span></div>
+      <div class="caja-sub">
+        Sucursal: <span id="pos-sucursal">POS</span> &nbsp;|&nbsp;
+        Bodega: <span id="pos-bodega">Principal</span>
+      </div>
+    </div>
+
+    <div class="pos-header-spacer"></div>
+
+    <div class="pos-header-actions">
+      <button class="btn-pos btn-pos-danger" id="btn-cerrar-caja" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        Cerrar caja
+      </button>
+      <button class="btn-pos btn-pos-blue" id="btn-apartar-venta" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Apartar venta
+      </button>
+      <button class="btn-pos btn-pos-ghost" id="btn-traer-venta" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+        Traer venta
+      </button>
+      <button class="btn-pos-menu" id="btn-pos-menu" type="button" title="Más opciones">⋮</button>
+    </div>
+  </header>
+
+  <!-- ── Main layout ── -->
+  <div class="pos-main">
+
+    <!-- ── Panel izquierdo ── -->
+    <div class="pos-left">
+
+      <!-- 3. Busca productos -->
+      <div class="pos-search-card">
+        <div class="pos-search-label">
+          <span>3</span>
+          Busca productos y servicios
+        </div>
+        <div class="pos-search-row">
+          <input
+            type="text"
+            id="pos-search-input"
+            class="pos-search-input"
+            placeholder="Buscar por nombre o código SKU..."
+            autocomplete="off"
+          >
+          <button class="btn-search-add" id="btn-search-add" type="button" title="Agregar manual">+</button>
+          <div id="pos-search-dropdown" class="pos-search-dropdown" role="listbox"></div>
+        </div>
+      </div>
+
+      <!-- 4. Grid de productos más vendidos -->
+      <div class="pos-products-card">
+        <div class="pos-products-label">
+          <span>4</span>
+          Productos y servicios — más vendidos
+        </div>
+        <div class="pos-products-grid" id="pos-products-grid">
+          <div class="pos-products-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span>Cree productos/servicios primero<br>para verlos aquí</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /pos-left -->
+
+    <!-- ── Panel derecho ── -->
+    <div class="pos-right">
+
+      <!-- 1. Tercero (cliente) -->
+      <div class="pos-right-section" id="pos-tercero-section">
+        <div class="pos-right-section-header">
+          <div class="pos-right-section-icon">👤</div>
+          <div class="pos-right-section-title">
+            <span>1. Seleccionar cliente (tercero)</span>
+            <strong id="pos-tercero-display">— Consumidor final —</strong>
+          </div>
+          <button class="btn-cambiar" id="btn-cambiar-tercero" type="button">Cambiar</button>
+        </div>
+        <div class="pos-tercero-input-wrap" id="pos-tercero-input-wrap" style="display:none;">
+          <input
+            type="text"
+            id="pos-tercero-input"
+            class="pos-tercero-input"
+            placeholder="Escriba nombre o documento (mín. 4 caracteres)..."
+            autocomplete="off"
+          >
+          <div id="pos-tercero-dropdown" class="pos-ac-dropdown" role="listbox"></div>
+        </div>
+      </div>
+
+      <!-- 2. Medio de pago -->
+      <div class="pos-right-section">
+        <div class="pos-right-section-header">
+          <div class="pos-right-section-icon" style="background:#059669;">$</div>
+          <div class="pos-right-section-title">
+            <span>2. Medio de pago</span>
+          </div>
+        </div>
+        <select id="pos-medio-pago" class="pos-pago-select">
+          <option value="EFECTIVO">Efectivo</option>
+          <option value="TRANSFERENCIA">Transferencia bancaria</option>
+          <option value="TARJETA">Tarjeta débito / crédito</option>
+        </select>
+      </div>
+
+      <!-- Carrito de venta -->
+      <div class="pos-cart" id="pos-cart">
+        <div class="pos-cart-empty" id="pos-cart-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span>El carrito está vacío.<br>Selecciona un producto.</span>
+        </div>
+      </div>
+
+      <!-- Totales -->
+      <div class="pos-totals">
+        <div class="pos-totals-row">
+          <span>Subtotal</span>
+          <span id="pos-subtotal">$ 0</span>
+        </div>
+        <div class="pos-totals-row">
+          <span>Impuestos (IVA)</span>
+          <span id="pos-iva">$ 0</span>
+        </div>
+        <div class="pos-totals-row">
+          <span>Retenciones (–)</span>
+          <span id="pos-retenciones">$ 0</span>
+        </div>
+        <div class="pos-totals-row total-main">
+          <span>TOTAL</span>
+          <span id="pos-total">$ 0</span>
+        </div>
+        <button class="btn-pagar" id="btn-pagar" type="button" disabled>
+          <span class="pagar-label" id="pagar-label">Pagar 0 Artículos</span>
+          <span class="pagar-total" id="pagar-total">$ 0,00</span>
+        </button>
+      </div>
+
+    </div><!-- /pos-right -->
+  </div><!-- /pos-main -->
+
+  <!-- ── Modal de venta exitosa ── -->
+  <div class="pos-modal-overlay" id="pos-modal-exito">
+    <div class="pos-modal">
+      <div class="pos-modal-icon">✅</div>
+      <h3>¡Venta Registrada!</h3>
+      <p id="pos-modal-msg">La venta fue procesada correctamente.</p>
+      <div class="pos-modal-btns">
+        <button class="btn-modal-ok" id="btn-modal-nueva-venta" type="button">Nueva venta</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="pos.js"></script>
+</body>
+</html>
