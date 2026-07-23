@@ -81,10 +81,16 @@ async function tenantMiddleware(req, res, next) {
     };
 
     res.on('finish', () => {
-      if (res.statusCode >= 500) rollback();
+      // También se revierte en errores de validación (4xx), de modo que nunca
+      // queden escrituras parciales de una operación rechazada.
+      if (res.statusCode >= 400) rollback();
       else release();
     });
-    res.on('close', rollback);
+    // "close" también ocurre tras una respuesta normal. Solo revertimos si el
+    // cliente interrumpió la conexión antes de terminar de escribirla.
+    res.on('close', () => {
+      if (!res.writableEnded) rollback();
+    });
 
     next();
   } catch (err) {

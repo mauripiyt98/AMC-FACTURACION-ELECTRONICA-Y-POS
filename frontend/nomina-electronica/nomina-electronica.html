@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nómina electrónica - AMC</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="nomina-electronica.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <nav class="sidebar-menu" aria-label="Opciones de nómina" style="margin-top:0;border-top:none;padding-top:0;">
+        <h3>Opciones</h3>
+        <a href="../index.html">Inicio</a>
+        <a href="../index.html?sec=crear-factura">Crear factura</a>
+        <a href="../terceros/terceros.html">Crear cliente tercero</a>
+        <a href="nomina-electronica.html" class="nomina-nav-active">Nómina electrónica</a>
+      </nav>
+      <div class="sidebar-support" style="margin-top:auto;padding-top:18px;border-top:1px solid var(--border);">
+        <h3>Soporte</h3>
+        <a href="#"><img src="../../assets/wpp.png" class="icon" alt=""> WhatsApp</a>
+        <a href="#"><img src="../../assets/telefono.png" class="icon" alt=""> Llamada</a>
+        <a href="#"><img src="../../assets/instagram.png" class="icon" alt=""> Instagram</a>
+      </div>
+      <div class="logo-bottom" style="margin-top:20px;padding-top:0;"><img src="../../assets/logo.png" alt="AMC Logo"></div>
+    </aside>
+
+    <main class="content nomina-content">
+      <div class="container nomina-container">
+        <header class="header nomina-header">
+          <img src="../../assets/logo.png" class="logo-img" alt="AMC">
+          <div><h1>Nómina electrónica</h1><p>Liquidación básica de nómina para Colombia</p></div>
+        </header>
+        <div id="mensaje" role="status" aria-live="polite"></div>
+        <section class="nomina-intro">
+          <div><h2>Liquidar nómina</h2><p>Ingrese la información del empleado y los valores del período para calcular los devengados, deducciones y neto a pagar.</p></div>
+          <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar formulario</button>
+        </section>
+
+        <form id="form-nomina" novalidate>
+          <div class="nomina-grid">
+            <section class="card nomina-card">
+              <div class="card-header"><h3>Datos del empleado</h3></div>
+              <div class="form-grid">
+                <div class="full"><label for="nombre">Nombre completo</label><input id="nombre" type="text" placeholder="Ej: Juan Pérez"></div>
+                <div><label for="doc">Documento</label><input id="doc" type="text" placeholder="Ej: 1234567890"></div>
+                <div><label for="cargo">Cargo</label><input id="cargo" type="text" placeholder="Ej: Auxiliar administrativo"></div>
+                <div class="full"><label for="cuenta">Cuenta bancaria</label><input id="cuenta" type="text" placeholder="Banco y número de cuenta"></div>
+              </div>
+            </section>
+            <section class="card nomina-card">
+              <div class="card-header"><h3>Devengados</h3></div>
+              <div class="form-grid">
+                <div><label for="salario">Salario base</label><input id="salario" inputmode="numeric" autocomplete="off" placeholder="$ 0"></div>
+                <div><label for="bonificaciones">Bonificaciones</label><input id="bonificaciones" inputmode="numeric" autocomplete="off" placeholder="$ 0"></div>
+                <div class="full"><label for="auxilio">Auxilio de transporte</label><input id="auxilio" readonly value="$ 0"></div>
+              </div>
+            </section>
+            <section class="card nomina-card">
+              <div class="card-header"><h3>Deducciones del empleado</h3></div>
+              <div class="form-grid">
+                <div><label for="salud">Salud (4%)</label><input id="salud" readonly value="$ 0"></div>
+                <div><label for="pension">Pensión (4%)</label><input id="pension" readonly value="$ 0"></div>
+                <div class="full"><label for="fsp">Fondo de Solidaridad Pensional</label><input id="fsp" readonly value="$ 0"></div>
+              </div>
+            </section>
+            <section class="card nomina-total-card">
+              <span>Neto a pagar</span><strong id="neto">$ 0</strong><small>Salario + auxilio + bonificaciones − deducciones</small>
+              <button type="submit" class="btn-generar">Calcular nómina</button>
+            </section>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <aside class="right-panel nomina-right-panel">
+      <div class="info-box"><h3>Valores 2026</h3><p><span>Salario mínimo</span><strong>$ 1.750.905</strong></p><p><span>Auxilio de transporte</span><strong>$ 249.095</strong></p><p><span>Tope para auxilio</span><strong>$ 3.501.810</strong></p><p><span>UVT</span><strong>$ 52.374</strong></p></div>
+      <div class="info-box"><h3>Reglas aplicadas</h3><p>Salud: 4% de la base.</p><p>Pensión: 4% de la base.</p><p>FSP: aplica desde 4 SMMLV según el rango salarial.</p><p class="nomina-note">Valores y reglas trasladados del proyecto AMC Nómina Electrónica compartido.</p></div>
+    </aside>
+  </div>
+  <script src="nomina-electronica.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

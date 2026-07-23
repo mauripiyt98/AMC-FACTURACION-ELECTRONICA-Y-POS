@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const isDev = activeUserCode === "1110591592";
 
   const TERCEROS_DB_KEY = isDev ? "amc_terceros_db_v1" : `amc_terceros_db_v1_${activeUserCode}`;
+  const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
   const CLIENTE_SELECCIONADO_KEY = isDev ? "amc_cliente_seleccionado_v1" : `amc_cliente_seleccionado_v1_${activeUserCode}`;
 
   function getToken() {
@@ -75,13 +76,69 @@ document.addEventListener("DOMContentLoaded", () => {
     return d.innerHTML;
   }
 
+  // Extrae un tercero por documento desde los snapshots que conserva cada FE.
+  function extraerTercerosDeFacturas() {
+    let facturas;
+    try {
+      facturas = JSON.parse(localStorage.getItem(FACTURAS_GENERADAS_DB_KEY) || '[]');
+    } catch { return []; }
+    if (!Array.isArray(facturas)) return [];
+
+    const limpiar = value => String(value == null ? '' : value).trim();
+    const claveDocumento = documento => limpiar(documento).replace(/[.\s-]/g, '').toLowerCase();
+    const grupos = new Map();
+
+    facturas.forEach(factura => {
+      const cliente = factura && factura.cliente ? factura.cliente : factura || {};
+      const registro = {
+        nombre: limpiar(cliente.nombre || cliente.cliente_nombre),
+        documento: limpiar(cliente.documento || cliente.cliente_documento),
+        email: limpiar(cliente.email || cliente.cliente_email),
+        telefono: limpiar(cliente.telefono || cliente.cliente_telefono),
+        direccion: limpiar(cliente.direccion || cliente.cliente_direccion),
+        ciudad: limpiar(cliente.ciudad || cliente.cliente_ciudad),
+        fecha: factura && (factura.generadoEn || factura.generado_en || factura.actualizado_en) || ''
+      };
+      if (!registro.nombre || !registro.documento) return;
+      const clave = claveDocumento(registro.documento);
+      if (!clave) return;
+      const versiones = grupos.get(clave) || [];
+      versiones.push(registro);
+      grupos.set(clave, versiones);
+    });
+
+    return [...grupos.values()].map(versiones => {
+      versiones.sort((a, b) => new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime());
+      const masReciente = versiones[0];
+      const dato = campo => versiones.map(version => version[campo]).find(Boolean) || '';
+      return {
+        id: `TER-REC-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+        nombre: dato('nombre'),
+        documento: masReciente.documento,
+        email: dato('email'),
+        telefono: dato('telefono'),
+        direccion: dato('direccion'),
+        ciudad: dato('ciudad')
+      };
+    }).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  }
+
   // ── Carga de Datos ─────────────────────────────────────────────────────────
   async function cargarDB() {
     if (useApi) {
       try {
-        const data = await apiFetch('/terceros');
+        const pageSize = 500;
+        const terceros = [];
+        let offset = 0;
+        while (true) {
+          const data = await apiFetch(`/terceros?limit=${pageSize}&offset=${offset}`);
+          const pagina = Array.isArray(data.terceros) ? data.terceros : [];
+          terceros.push(...pagina);
+          if (!data.pagination?.hasMore || pagina.length === 0) break;
+          offset += pagina.length;
+        }
         // Normalizar estructura API -> Frontend
-        state.list = (data.terceros || []).map(t => ({
+        state.list = terceros.map(t => ({
           id: t.id,
           nombre: t.nombre,
           documento: t.documento,
@@ -160,9 +217,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function cargarTerceroDesdeUrl() {
+    // Esta pantalla también se usa para crear. Cargar siempre el catálogo antes
+    // de guardar evita sobrescribir los clientes existentes con una lista vacía.
+    await cargarDB();
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
-    await cargarDB();
     const tercero = state.list.find((x) => String(x.id) === String(id));
     if (!tercero) {
       mostrarMsg("No se encontró el tercero solicitado para editar.", "error");
@@ -273,6 +332,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ── Guardar ────────────────────────────────────────────────────────────────
   async function guardarTercero(opciones = {}) {
     limpiarMsg();
+    // Defensa adicional ante una carga incompleta o una pestaña recién abierta.
+    // Nunca se escribe localStorage usando un arreglo que no provenga de la BD.
+    if (!useApi) await cargarDB();
     const datos = leerFormulario();
     const err = validarTercero(datos);
     if (err) { mostrarMsg(err, "error"); return null; }
@@ -342,6 +404,75 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function crearTercerosDesdeFacturas() {
+    limpiarMsg();
+    const candidatos = extraerTercerosDeFacturas();
+    if (!candidatos.length) {
+      mostrarMsg('No se encontraron facturas con nombre y documento de cliente para recuperar.', 'error');
+      return;
+    }
+
+    await cargarDB();
+    const boton = $('btn-recuperar-facturas');
+    const textoOriginal = boton ? boton.textContent : '';
+    if (boton) boton.disabled = true;
+
+    let creados = 0;
+    let omitidos = 0;
+    let errores = 0;
+    let usarAlmacenamientoLocal = !useApi;
+
+    for (let i = 0; i < candidatos.length; i++) {
+      const tercero = candidatos[i];
+      if (documentoDuplicado(tercero.documento)) {
+        omitidos++;
+        continue;
+      }
+
+      if (boton) boton.textContent = `Creando ${i + 1} de ${candidatos.length}...`;
+      try {
+        if (!usarAlmacenamientoLocal) {
+          const response = await apiFetch('/terceros', {
+            method: 'POST',
+            body: JSON.stringify({ ...tercero, tipo_documento: 'NIT' })
+          });
+          state.list.push(response.tercero);
+        } else {
+          const guardado = {
+            id: `local_${Date.now().toString(36)}_${i}`,
+            ...tercero,
+            creadoEn: new Date().toISOString()
+          };
+          state.list.push(guardado);
+          // Persistir después de cada cliente para no perder el avance.
+          localStorage.setItem(TERCEROS_DB_KEY, JSON.stringify(state.list));
+        }
+        creados++;
+      } catch (error) {
+        // Una sesión antigua puede conservar token aunque el servidor no esté
+        // activo. En ese caso se continúa en el almacenamiento local.
+        if (!usarAlmacenamientoLocal) {
+          usarAlmacenamientoLocal = true;
+          i--;
+          continue;
+        }
+        console.error('No fue posible crear tercero:', tercero.documento, error);
+        errores++;
+      }
+    }
+
+    if (usarAlmacenamientoLocal) {
+      localStorage.setItem(TERCEROS_DB_KEY, JSON.stringify(state.list));
+    }
+    if (boton) {
+      boton.textContent = textoOriginal;
+      boton.disabled = false;
+    }
+    const detalleErrores = errores ? ` No se pudieron crear ${errores}.` : '';
+    mostrarMsg(`Proceso terminado: ${creados} terceros creados individualmente desde las facturas y ${omitidos} ya existentes omitidos.${detalleErrores}`, errores ? 'error' : 'success');
+    await renderLista();
+  }
+
   // ── Eventos Iniciales ──────────────────────────────────────────────────────
   const btnVolver = $("btn-volver");
   if (btnVolver) btnVolver.addEventListener("click", () => (window.location.href = "../index.html?sec=crear-factura"));
@@ -357,6 +488,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnLimpiar = $("btn-limpiar");
   if (btnLimpiar) {
     btnLimpiar.addEventListener("click", () => { limpiarFormulario(); limpiarMsg(); });
+  }
+
+  const btnRecuperarFacturas = $('btn-recuperar-facturas');
+  if (btnRecuperarFacturas) {
+    btnRecuperarFacturas.addEventListener('click', crearTercerosDesdeFacturas);
   }
 
   const buscar = $("buscar");

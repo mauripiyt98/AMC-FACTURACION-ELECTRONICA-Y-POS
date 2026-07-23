@@ -30,6 +30,24 @@ async function apiFetch(endpoint, options = {}) {
   return data;
 }
 
+// El catálogo de terceros no tiene un límite funcional. Se consulta por
+// páginas para que los primeros 50 registros no oculten el resto.
+async function cargarTodosLosTercerosApi() {
+  const pageSize = 500;
+  const terceros = [];
+  let offset = 0;
+
+  while (true) {
+    const data = await apiFetch(`/terceros?limit=${pageSize}&offset=${offset}`);
+    const pagina = Array.isArray(data.terceros) ? data.terceros : [];
+    terceros.push(...pagina);
+    if (!data.pagination?.hasMore || pagina.length === 0) break;
+    offset += pagina.length;
+  }
+
+  return terceros;
+}
+
 const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
 const isDev = activeUserCode === "1110591592";
 
@@ -148,6 +166,31 @@ function cargarTercerosDB() {
   } catch {
     return [];
   }
+}
+
+function sincronizarTerceroLocalDesdeFactura(cliente) {
+  const documento = normalizarTexto(cliente?.documento);
+  if (!documento) return null;
+
+  const terceros = cargarTercerosDB();
+  const indice = terceros.findIndex((tercero) => normalizarTexto(tercero.documento) === documento);
+  const fecha = new Date().toISOString();
+  const camposConValor = Object.fromEntries(
+    Object.entries(cliente).filter(([, valor]) => String(valor == null ? '' : valor).trim() !== '')
+  );
+  let tercero;
+
+  if (indice >= 0) {
+    tercero = { ...terceros[indice], ...camposConValor, actualizadoEn: fecha };
+    terceros[indice] = tercero;
+  } else {
+    const id = window.crypto?.randomUUID?.() || `local_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    tercero = { id, ...camposConValor, creadoEn: fecha, actualizadoEn: fecha };
+    terceros.push(tercero);
+  }
+
+  localStorage.setItem(TERCEROS_DB_KEY, JSON.stringify(terceros));
+  return tercero;
 }
 
 function buscarTerceros(query) {
@@ -825,6 +868,11 @@ async function generarFactura() {
         observaciones: reqBody.observaciones,
         generadoEn: f.creado_en
       };
+      // Mantiene el autocompletado vigente sin tener que recargar la página.
+      const terceroSincronizado = { id: f.tercero_id, ...reqBody.cliente };
+      const indice = apiData.terceros.findIndex((t) => String(t.id) === String(f.tercero_id));
+      if (indice >= 0) apiData.terceros[indice] = { ...apiData.terceros[indice], ...terceroSincronizado };
+      else apiData.terceros.push(terceroSincronizado);
     } else {
       // ── MODO LOCAL (Fallback) ──
       const cliente = {
@@ -835,11 +883,9 @@ async function generarFactura() {
         email:     $("cliente-email").value.trim(),
       };
 
-      let terceroRef = state.clienteTercero;
-      if (!terceroRef) {
-        const docNorm = normalizarTexto(documento);
-        terceroRef = cargarTercerosDB().find((t) => normalizarTexto(t.documento) === docNorm) || null;
-      }
+      // Toda factura actualiza el maestro local por documento. Así un cliente
+      // nuevo se conserva y uno existente recibe los datos facturados.
+      const terceroRef = sincronizarTerceroLocalDesdeFactura(cliente);
 
       const totales = totalesGlobales();
       const medioPagoVal = $("medio-pago").value;
@@ -889,10 +935,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (useApi) {
     try {
       const [tRes, pRes] = await Promise.all([
-        apiFetch('/terceros'),
+        cargarTodosLosTercerosApi(),
         apiFetch('/productos?limit=1000')
       ]);
-      apiData.terceros = tRes.terceros || [];
+      apiData.terceros = tRes || [];
       apiData.productos = pRes.productos || [];
       apiData.loaded = true;
     } catch(e) { console.warn("API load error", e); }
@@ -1036,10 +1082,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const btnWelcomeAntony = $("btn-welcome-antony");
   if (btnWelcomeAntony) {
     btnWelcomeAntony.addEventListener("click", () => {
-      abrirModal(
-        "Modulo Nomina Electronica en Desarrollo",
-        "El modulo Nomina Electronica se encuentra actualmente en proceso de desarrollo. Estara disponible proximamente en una futura actualizacion."
-      );
+      window.location.href = "nomina-electronica/nomina-electronica.html";
     });
   }
 

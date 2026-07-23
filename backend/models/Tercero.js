@@ -85,6 +85,46 @@ class Tercero {
   }
 
   /**
+   * Crea o actualiza el tercero identificado por su documento.
+   *
+   * La factura conserva su propio snapshot, pero el tercero es el registro vivo
+   * que se utilizará en las siguientes facturas. Los campos vacíos de una
+   * factura nunca borran datos de contacto que ya estuvieran guardados.
+   */
+  static async upsertFromInvoice(client, empresaId, data) {
+    const limpiar = (value) => {
+      const texto = String(value == null ? '' : value).trim();
+      return texto || null;
+    };
+    const nombre = limpiar(data.nombre);
+    const documento = limpiar(data.documento);
+    const tipoDocumento = limpiar(data.tipo_documento) || 'CC';
+
+    const { rows } = await client.query(
+      `INSERT INTO terceros
+         (empresa_id, nombre, documento, tipo_documento, email, telefono, direccion, ciudad, departamento, activo)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,TRUE)
+       ON CONFLICT (empresa_id, documento) DO UPDATE SET
+         nombre = EXCLUDED.nombre,
+         tipo_documento = COALESCE(NULLIF(EXCLUDED.tipo_documento, ''), terceros.tipo_documento),
+         email = COALESCE(NULLIF(EXCLUDED.email, ''), terceros.email),
+         telefono = COALESCE(NULLIF(EXCLUDED.telefono, ''), terceros.telefono),
+         direccion = COALESCE(NULLIF(EXCLUDED.direccion, ''), terceros.direccion),
+         ciudad = COALESCE(NULLIF(EXCLUDED.ciudad, ''), terceros.ciudad),
+         departamento = COALESCE(NULLIF(EXCLUDED.departamento, ''), terceros.departamento),
+         activo = TRUE,
+         actualizado_en = NOW()
+       RETURNING *`,
+      [
+        empresaId, nombre, documento, tipoDocumento,
+        limpiar(data.email), limpiar(data.telefono), limpiar(data.direccion),
+        limpiar(data.ciudad), limpiar(data.departamento),
+      ]
+    );
+    return rows[0];
+  }
+
+  /**
    * Actualizar tercero — valida empresa_id para evitar cross-tenant.
    */
   static async update(client, empresaId, id, data) {

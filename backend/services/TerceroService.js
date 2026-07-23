@@ -24,6 +24,10 @@ class TerceroService {
     return Tercero.create(client, empresaId, data);
   }
 
+  static async sincronizarDesdeFactura(client, empresaId, data) {
+    return Tercero.upsertFromInvoice(client, empresaId, data);
+  }
+
   static async actualizar(client, empresaId, id, data) {
     // Verificar existencia primero
     const existing = await Tercero.findById(client, empresaId, id);

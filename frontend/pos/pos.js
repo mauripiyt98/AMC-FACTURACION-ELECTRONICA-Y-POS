@@ -83,6 +83,22 @@ async function apiFetch(endpoint) {
   return data;
 }
 
+async function cargarTodosLosTercerosApi() {
+  const pageSize = 500;
+  const terceros = [];
+  let offset = 0;
+
+  while (true) {
+    const data = await apiFetch(`/terceros?limit=${pageSize}&offset=${offset}`);
+    const pagina = Array.isArray(data.terceros) ? data.terceros : [];
+    terceros.push(...pagina);
+    if (!data.pagination?.hasMore || pagina.length === 0) break;
+    offset += pagina.length;
+  }
+
+  return terceros;
+}
+
 function cargarTerceros() {
   if (useApi && apiData.loaded) return apiData.terceros;
   try {
@@ -686,10 +702,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (useApi) {
     try {
       const [tRes, pRes] = await Promise.all([
-        apiFetch('/terceros'),
+        cargarTodosLosTercerosApi(),
         apiFetch('/productos?limit=1000'),
       ]);
-      apiData.terceros  = tRes.terceros  || [];
+      apiData.terceros  = tRes || [];
       apiData.productos = pRes.productos || [];
       apiData.loaded = true;
     } catch (e) { console.warn('API load error:', e); }

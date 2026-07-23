@@ -16,13 +16,21 @@ router.use(authMiddleware, tenantMiddleware);
 router.get('/', async (req, res, next) => {
   try {
     const { search = '', limit = 50, offset = 0, soloActivos = 'true' } = req.query;
+    // La lista es paginada para que el catálogo pueda crecer sin omitir ni
+    // cargar de golpe todos los clientes. El frontend recorre las páginas.
+    const pageSize = Math.min(Math.max(Number(limit) || 50, 1), 500);
+    const pageOffset = Math.max(Number(offset) || 0, 0);
     const terceros = await TerceroService.listar(req.dbClient, req.empresaId, {
       search,
-      limit  : Number(limit),
-      offset : Number(offset),
+      limit  : pageSize,
+      offset : pageOffset,
       soloActivos: soloActivos !== 'false',
     });
-    res.json({ success: true, terceros });
+    res.json({
+      success: true,
+      terceros,
+      pagination: { limit: pageSize, offset: pageOffset, hasMore: terceros.length === pageSize },
+    });
   } catch (err) {
     next(err);
   }

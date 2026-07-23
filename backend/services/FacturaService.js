@@ -2,6 +2,7 @@
 
 const Factura  = require('../models/Factura');
 const Empresa  = require('../models/Empresa');
+const TerceroService = require('./TerceroService');
 const { NotFoundError, TenantIsolationError, ValidationError } = require('../utils/errors');
 
 /**
@@ -95,7 +96,11 @@ class FacturaService {
 
     const total_factura = Math.round((total_base + total_iva - total_retencion) * 100) / 100;
 
-    // 5. Persistir
+    // 5. Sincronizar el maestro una vez que la factura ya pasó validaciones.
+    // La transacción revierte ambos cambios si la persistencia posterior falla.
+    const tercero = await TerceroService.sincronizarDesdeFactura(client, empresaId, cliente);
+
+    // 6. Persistir snapshot de la factura vinculado al tercero sincronizado.
     const facturaData = {
       consecutivo,
       numero_factura,
@@ -106,7 +111,7 @@ class FacturaService {
       cliente_telefono : cliente.telefono || null,
       cliente_direccion: cliente.direccion || null,
       cliente_ciudad   : cliente.ciudad   || null,
-      tercero_id       : cliente.tercero_id || null,
+      tercero_id       : tercero.id,
       resolucion_numero,
       resolucion_prefijo,
       total_base     : Math.round(total_base * 100) / 100,
