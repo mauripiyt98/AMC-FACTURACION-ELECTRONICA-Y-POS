@@ -197,9 +197,9 @@ function agregarAlCarrito(prod) {
     posState.carrito.push({
       nombre: prod.nombre || prod.producto || '',
       codigo: prod.codigo || '',
-      precio: Number(prod.precio || prod.unitario || prod.precio_venta || 0),
+      precio: Number(prod.precio || prod.valorUnitario || prod.precio_venta || 0),
       cantidad: 1,
-      iva: Number(prod.iva || 0),
+      iva: Number(prod.iva !== undefined ? prod.iva : 19),
       retencion: Number(prod.retencion || 0),
     });
   }
@@ -227,7 +227,7 @@ function renderCarrito() {
   const empty = $('pos-cart-empty');
 
   // Limpiar ítems previos (conservar empty)
-  cart.querySelectorAll('.pos-cart-item').forEach((el) => el.remove());
+  cart.querySelectorAll('.pos-cart-item-v2').forEach((el) => el.remove());
 
   if (!posState.carrito.length) {
     if (empty) empty.style.display = 'flex';
@@ -242,29 +242,92 @@ function renderCarrito() {
     const total  = base + iva - rete;
 
     const div = document.createElement('div');
-    div.className = 'pos-cart-item';
+    div.className = 'pos-cart-item-v2';
     div.innerHTML = `
-      <div class="pos-cart-item-info">
-        <div class="ci-name">${escapeHtml(item.nombre)}</div>
-        <div class="ci-detail">${formatoMoneda(item.precio)} u. · IVA ${item.iva}%</div>
+      <div class="ci-header">
+        <div class="ci-title" title="${escapeHtml(item.nombre)}">${escapeHtml(item.nombre)}</div>
+        <button class="btn-rm-item" data-i="${i}" type="button" title="Eliminar">✕</button>
       </div>
-      <div class="pos-cart-item-qty">
-        <button class="btn-qty btn-qty-minus" data-i="${i}" type="button">−</button>
-        <span class="ci-qty-val">${item.cantidad}</span>
-        <button class="btn-qty btn-qty-plus" data-i="${i}" type="button">+</button>
+      <div class="ci-grid">
+        <div class="ci-col">
+          <label>Cant.</label>
+          <div class="ci-qty-row">
+            <button class="btn-qty btn-qty-minus" data-i="${i}" type="button">−</button>
+            <input type="number" class="ci-qty-input" data-i="${i}" value="${item.cantidad}" min="1">
+            <button class="btn-qty btn-qty-plus" data-i="${i}" type="button">+</button>
+          </div>
+        </div>
+        <div class="ci-col">
+          <label>Val. Unit. ($)</label>
+          <input type="number" class="ci-price-input" data-i="${i}" value="${item.precio}" min="0" step="any">
+        </div>
+        <div class="ci-col">
+          <label>IVA (%)</label>
+          <select class="ci-iva-select" data-i="${i}">
+            <option value="0" ${Number(item.iva) === 0 ? 'selected' : ''}>0%</option>
+            <option value="5" ${Number(item.iva) === 5 ? 'selected' : ''}>5%</option>
+            <option value="19" ${Number(item.iva) === 19 ? 'selected' : ''}>19%</option>
+          </select>
+        </div>
+        <div class="ci-col">
+          <label>Rete (%)</label>
+          <select class="ci-rete-select" data-i="${i}">
+            <option value="0" ${Number(item.retencion) === 0 ? 'selected' : ''}>0%</option>
+            <option value="2.5" ${Number(item.retencion) === 2.5 ? 'selected' : ''}>2.5%</option>
+            <option value="4" ${Number(item.retencion) === 4 ? 'selected' : ''}>4%</option>
+            <option value="6" ${Number(item.retencion) === 6 ? 'selected' : ''}>6%</option>
+            <option value="11" ${Number(item.retencion) === 11 ? 'selected' : ''}>11%</option>
+          </select>
+        </div>
       </div>
-      <span class="ci-total">${formatoMoneda(total)}</span>
-      <button class="btn-rm-item" data-i="${i}" type="button" title="Eliminar">✕</button>
+      <div class="ci-footer">
+        <span>Sub: ${formatoMoneda(base)} | IVA: ${formatoMoneda(iva)} | Rete: ${formatoMoneda(rete)}</span>
+        <span class="ci-total-label">Total: ${formatoMoneda(total)}</span>
+      </div>
     `;
     cart.appendChild(div);
   });
 
-  // Eventos de cantidad y eliminar
+  // Eventos de inputs y botones
   cart.querySelectorAll('.btn-qty-minus').forEach((btn) => {
     btn.addEventListener('click', () => cambiarCantidad(Number(btn.dataset.i), -1));
   });
   cart.querySelectorAll('.btn-qty-plus').forEach((btn) => {
     btn.addEventListener('click', () => cambiarCantidad(Number(btn.dataset.i), +1));
+  });
+  cart.querySelectorAll('.ci-qty-input').forEach((input) => {
+    input.addEventListener('change', (e) => {
+      const idx = Number(input.dataset.i);
+      const val = Math.max(1, parseInt(e.target.value) || 1);
+      posState.carrito[idx].cantidad = val;
+      renderCarrito();
+      actualizarTotales();
+    });
+  });
+  cart.querySelectorAll('.ci-price-input').forEach((input) => {
+    input.addEventListener('change', (e) => {
+      const idx = Number(input.dataset.i);
+      const val = Math.max(0, parseFloat(e.target.value) || 0);
+      posState.carrito[idx].precio = val;
+      renderCarrito();
+      actualizarTotales();
+    });
+  });
+  cart.querySelectorAll('.ci-iva-select').forEach((sel) => {
+    sel.addEventListener('change', (e) => {
+      const idx = Number(sel.dataset.i);
+      posState.carrito[idx].iva = Number(e.target.value) || 0;
+      renderCarrito();
+      actualizarTotales();
+    });
+  });
+  cart.querySelectorAll('.ci-rete-select').forEach((sel) => {
+    sel.addEventListener('change', (e) => {
+      const idx = Number(sel.dataset.i);
+      posState.carrito[idx].retencion = Number(e.target.value) || 0;
+      renderCarrito();
+      actualizarTotales();
+    });
   });
   cart.querySelectorAll('.btn-rm-item').forEach((btn) => {
     btn.addEventListener('click', () => eliminarDeCarrito(Number(btn.dataset.i)));
@@ -359,7 +422,6 @@ function initTerceroAutocomplete() {
   function seleccionarTercero(tercero) {
     posState.tercero = tercero;
     $('pos-tercero-display').textContent = `${tercero.nombre} — ${tercero.documento}`;
-    $('pos-tercero-input-wrap').style.display = 'none';
     dropdown.classList.remove('visible');
     dropdown.innerHTML = '';
     input.value = '';
@@ -428,9 +490,9 @@ function initBusquedaProductosPOS() {
         agregarAlCarrito({
           nombre: prod.nombre,
           codigo: prod.codigo || '',
-          precio: Number(prod.precio || prod.precio_venta || 0),
-          iva: Number(prod.iva || 0),
-          retencion: Number(prod.retencion || 0),
+          precio: Number(prod.precio || prod.valorUnitario || prod.precio_venta || 0),
+          iva: Number(prod.iva !== undefined ? prod.iva : 19),
+          retencion: Number(prod.retencion !== undefined ? prod.retencion : 0),
         });
         input.value = '';
         dropdown.classList.remove('visible');
@@ -456,7 +518,13 @@ function initBusquedaProductosPOS() {
       e.preventDefault();
       const prod = buscarProductosPOS(input.value)[activeIndex];
       if (prod) {
-        agregarAlCarrito({ nombre: prod.nombre, codigo: prod.codigo || '', precio: Number(prod.precio || prod.precio_venta || 0), iva: Number(prod.iva || 0), retencion: Number(prod.retencion || 0) });
+        agregarAlCarrito({
+          nombre: prod.nombre,
+          codigo: prod.codigo || '',
+          precio: Number(prod.precio || prod.valorUnitario || prod.precio_venta || 0),
+          iva: Number(prod.iva !== undefined ? prod.iva : 19),
+          retencion: Number(prod.retencion !== undefined ? prod.retencion : 0)
+        });
         input.value = '';
         dropdown.classList.remove('visible');
       }
@@ -543,7 +611,6 @@ function nuevaVenta() {
   posState.tercero = null;
   $('pos-modal-exito').classList.remove('active');
   $('pos-tercero-display').textContent = '— Seleccione cliente —';
-  $('pos-tercero-input-wrap').style.display = 'none';
   $('pos-medio-pago').value = 'EFECTIVO';
   renderCarrito();
   actualizarTotales();
@@ -575,13 +642,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTerceroAutocomplete();
   initBusquedaProductosPOS();
 
-  // Botón "Cambiar" tercero
-  $('btn-cambiar-tercero').addEventListener('click', () => {
-    const wrap = $('pos-tercero-input-wrap');
-    const visible = wrap.style.display !== 'none';
-    wrap.style.display = visible ? 'none' : 'block';
-    if (!visible) setTimeout(() => $('pos-tercero-input').focus(), 80);
-  });
+
 
   // Cerrar dropdowns al hacer click fuera
   document.addEventListener('click', (e) => {
