@@ -156,6 +156,106 @@
     </div>
   </article>
 
+  <!-- Nueva Tirilla POS -->
+  <article class="tirilla-doc" id="tirilla-documento" style="display: none;">
+    <div class="tirilla-inner">
+      <div class="tirilla-header">
+        <h3>FACTURA ELECTRÓNICA DE VENTA</h3>
+        <h2 id="tirilla-numero">#POS001</h2>
+      </div>
+
+      <div class="tirilla-section emisor-info">
+        <div id="t-emisor-nombre" style="font-weight: bold; text-transform: uppercase;">ANDRES MAURICIO CAMPOS FIERRO</div>
+        <div id="t-emisor-nit">NIT: 1.110.591.592-3</div>
+        <div id="t-emisor-dir">Dir: Colombia</div>
+        <div id="t-emisor-tel">Tel: —</div>
+        <div id="t-emisor-fecha-emision">Fecha de emisión: —</div>
+        <div id="t-emisor-fecha-validacion">Fecha de validación: —</div>
+      </div>
+
+      <div class="tirilla-divider"></div>
+
+      <!-- Ítems -->
+      <div class="tirilla-items" id="tirilla-lineas">
+        <!-- Generado dinámicamente -->
+      </div>
+
+      <div class="tirilla-divider"></div>
+
+      <!-- Totales -->
+      <div class="tirilla-section tirilla-totales">
+        <div class="t-row">
+          <span>Subtotal</span>
+          <span id="t-subtotal">$ 0</span>
+        </div>
+        <div class="t-row">
+          <span>Impuestos</span>
+          <span id="t-iva">$ 0</span>
+        </div>
+        <div class="t-row">
+          <span>Retenciones</span>
+          <span id="t-retencion">$ 0</span>
+        </div>
+        <div class="t-row total-main">
+          <strong id="t-articulos-count">Total 0 Unidad</strong>
+          <strong id="t-total-pagar">$ 0</strong>
+        </div>
+      </div>
+
+      <div class="tirilla-divider"></div>
+
+      <!-- Desglose Impuestos -->
+      <div class="tirilla-section">
+        <div class="t-section-title">Impuestos y retenciones</div>
+        <div id="tirilla-desglose-impuestos">
+          <!-- IVA 19.00% Base: ... Valor: ... -->
+        </div>
+      </div>
+
+      <div class="tirilla-divider"></div>
+
+      <!-- Medios de Pago -->
+      <div class="tirilla-section">
+        <div>Forma de Pago: Contado</div>
+        <div>Medios de pago:</div>
+        <div class="t-row" style="margin-top: 4px;">
+          <span id="t-medio-pago-label">Efectivo</span>
+          <span id="t-medio-pago-valor">$ 0</span>
+        </div>
+      </div>
+
+      <div class="tirilla-divider"></div>
+
+      <!-- QR y CUFE -->
+      <div class="tirilla-qr-section">
+        <canvas id="tirilla-qr-canvas" style="margin: 0 auto 10px; display: block;"></canvas>
+        <div class="t-cufe">
+          <span>CUFE:</span>
+          <p id="t-cufe-texto">—</p>
+        </div>
+      </div>
+
+      <div class="tirilla-divider"></div>
+
+      <!-- Cliente -->
+      <div class="tirilla-section cliente-info" style="font-size: 10px;">
+        <div>Cliente: <span id="t-cliente-nombre">—</span></div>
+        <div>CC/NIT: <span id="t-cliente-doc">—</span></div>
+      </div>
+
+      <div class="tirilla-divider"></div>
+
+      <!-- Resoluciones y Legal -->
+      <div class="tirilla-legal">
+        <p>Autorización de facturación electrónica</p>
+        <p>18764111157293 del 12 de junio de 2026, válida desde 12 de junio de 2026 hasta 12 de junio de 2028. Prefijo POS, numeración desde 1 hasta 1000</p>
+        <br>
+        <p class="t-thanks">Gracias por su compra, vuelva pronto</p>
+        <p>Software: AMC Facturación Electrónica · www.amc.com</p>
+      </div>
+    </div>
+  </article>
+
 </div>
 
 <script src="js/factura.js"></script>

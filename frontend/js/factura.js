@@ -142,7 +142,8 @@ function renderCliente(c, tercero) {
 
 
 function descargarPdf() {
-  const elemento = document.getElementById("factura-documento");
+  const isPos = $("factura-numero").textContent.startsWith('POS');
+  const elemento = document.getElementById(isPos ? "tirilla-documento" : "factura-documento");
   const numero = $("factura-numero").textContent.replace(/\s/g, "-");
   const docCliente = ($("cliente-doc").textContent || "").replace(/[^\dA-Za-z-]/g, "").slice(0, 20);
 
@@ -151,7 +152,13 @@ function descargarPdf() {
     return;
   }
 
-  const opt = {
+  const opt = isPos ? {
+    margin: [4, 4, 4, 4],
+    filename: "Ticket-" + numero + ".pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "mm", format: [80, 220], orientation: "portrait" }, // Formato tirilla 80mm ancho
+  } : {
     margin: [8, 8, 8, 8],
     filename: "Factura-" + numero + (docCliente ? "-" + docCliente : "") + ".pdf",
     image: { type: "jpeg", quality: 0.98 },
@@ -159,17 +166,18 @@ function descargarPdf() {
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
   };
 
-  $("btn-pdf").disabled = true;
-  $("btn-pdf").textContent = "Generando PDF…";
+  const btnPdf = $("btn-pdf");
+  btnPdf.disabled = true;
+  btnPdf.textContent = "Generando PDF…";
 
   html2pdf().set(opt).from(elemento).save()
     .then(() => {
-      $("btn-pdf").disabled = false;
-      $("btn-pdf").textContent = "Descargar PDF";
+      btnPdf.disabled = false;
+      btnPdf.textContent = "Descargar PDF";
     })
     .catch(() => {
-      $("btn-pdf").disabled = false;
-      $("btn-pdf").textContent = "Descargar PDF";
+      btnPdf.disabled = false;
+      btnPdf.textContent = "Descargar PDF";
       window.print();
     });
 }
@@ -193,90 +201,187 @@ window.addEventListener("load", function () {
   const numero   = data.numeroFactura || generarNumeroFactura();
   const cufe     = data.cufe || generarCufeDemo();
   const fechaGen = fechaHoraColombia(new Date(data.generadoEn));
+  const isPos    = numero.startsWith('POS');
 
-  $("emisor-nombre").textContent  = EMISOR.razonSocial;
-  $("emisor-nit").textContent     = "NIT: " + EMISOR.nit;
-  
-  const regimenTexto = EMISOR.regimen || 
-    `${EMISOR.tipoPersona === "JURIDICA" ? "Persona Jurídica" : "Persona Natural"} — ${EMISOR.ciudad || "Colombia"}`;
-  $("emisor-regimen").textContent = regimenTexto;
-  // Establecer logo: usa el guardado en el perfil (base64) o el asset del dev,
-  // o bien oculta el elemento si el usuario nuevo no ha configurado logo aún.
-  const logoSrc = EMISOR.logo || (isDev ? "../assets/logo.png" : "");
-  const logoEl = $("logo-emisor");
-  if (logoSrc) {
-    logoEl.src = logoSrc;
-    logoEl.style.display = "";
+  if (isPos) {
+    document.body.classList.add('print-pos');
+    if ($("factura-documento")) $("factura-documento").style.display = "none";
+    if ($("tirilla-documento")) $("tirilla-documento").style.display = "block";
+
+    if ($("tirilla-numero")) $("tirilla-numero").textContent = "#" + numero;
+
+    if ($("t-emisor-nombre")) $("t-emisor-nombre").textContent = EMISOR.razonSocial;
+    if ($("t-emisor-nit"))    $("t-emisor-nit").textContent    = "NIT: " + EMISOR.nit;
+    if ($("t-emisor-dir"))    $("t-emisor-dir").textContent    = "Dir: " + (EMISOR.direccion || "—");
+    if ($("t-emisor-tel"))    $("t-emisor-tel").textContent    = "Tel: " + (EMISOR.telefono || "—");
+    if ($("t-emisor-fecha-emision")) $("t-emisor-fecha-emision").textContent = "Fecha de emisión: " + fechaGen;
+    if ($("t-emisor-fecha-validacion")) $("t-emisor-fecha-validacion").textContent = "Fecha de validación: " + fechaGen;
+
+    const lineasCont = $("tirilla-lineas");
+    if (lineasCont) {
+      lineasCont.innerHTML = (data.lineas || []).map(l => `
+        <div class="t-item-row">
+          <div class="t-item-name">${l.cantidad} - ${escapeHtml(l.producto)}</div>
+          <div class="t-item-details">
+            <span>Impuestos: IVA</span>
+          </div>
+          <div class="t-item-details">
+            <span>Precio unit.</span>
+            <span>${formatoMoneda(l.unitario || l.precio || 0)}</span>
+          </div>
+          <div class="t-item-details">
+            <span><strong>${l.cantidad} ${escapeHtml(l.unidad || 'Unidad')}</strong></span>
+            <span><strong>${formatoMoneda(l.total)}</strong></span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    if ($("t-subtotal"))   $("t-subtotal").textContent = formatoMoneda(data.totales.base);
+    if ($("t-iva"))        $("t-iva").textContent      = formatoMoneda(data.totales.iva);
+    if ($("t-retencion"))  $("t-retencion").textContent = formatoMoneda(data.totales.retencion || 0);
+
+    const articulosCount = (data.lineas || []).reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
+    if ($("t-articulos-count")) $("t-articulos-count").textContent = `Total ${articulosCount} Unidad${articulosCount !== 1 ? 'es' : ''}`;
+    if ($("t-total-pagar")) $("t-total-pagar").textContent = formatoMoneda(data.totales.total);
+
+    const desgloseDiv = $("tirilla-desglose-impuestos");
+    if (desgloseDiv) {
+      const entries = Object.entries(data.totales.ivaPorTarifa || {}).sort((a, b) => Number(b[0]) - Number(a[0]));
+      if (entries.length > 0) {
+        desgloseDiv.innerHTML = entries.map(([tarifa, valor]) => {
+          const baseTarifa = (data.lineas || [])
+            .filter(l => Number(l.tarifaIva) === Number(tarifa))
+            .reduce((acc, l) => acc + (l.base || (l.unitario * l.cantidad) || 0), 0);
+          return `
+            <div style="font-weight: bold; margin-top: 4px;">IVA ${Number(tarifa).toFixed(2)}%</div>
+            <div class="t-row" style="padding-left: 10px;">
+              <span>Base:</span>
+              <span>${formatoMoneda(baseTarifa)}</span>
+            </div>
+            <div class="t-row" style="padding-left: 10px;">
+              <span>Valor:</span>
+              <span>${formatoMoneda(valor)}</span>
+            </div>
+          `;
+        }).join("");
+      } else {
+        desgloseDiv.innerHTML = `
+          <div style="font-weight: bold;">IVA ${Number(data.lineas?.[0]?.tarifaIva || 19).toFixed(2)}%</div>
+          <div class="t-row" style="padding-left: 10px;">
+            <span>Base:</span>
+            <span>${formatoMoneda(data.totales.base)}</span>
+          </div>
+          <div class="t-row" style="padding-left: 10px;">
+            <span>Valor:</span>
+            <span>${formatoMoneda(data.totales.iva)}</span>
+          </div>
+        `;
+      }
+    }
+
+    if ($("t-medio-pago-label")) $("t-medio-pago-label").textContent = data.medioPagoLabel || data.medioPago || "Efectivo";
+    if ($("t-medio-pago-valor")) $("t-medio-pago-valor").textContent = formatoMoneda(data.totales.total);
+
+    const qrCanvas = $("tirilla-qr-canvas");
+    if (qrCanvas && typeof QRCode !== "undefined") {
+      QRCode.toCanvas(qrCanvas, `https://amc.com/factura/${data.id}`, { width: 120, margin: 1 }, (err) => {
+        if (err) console.error(err);
+      });
+    }
+
+    if ($("t-cufe-texto")) $("t-cufe-texto").textContent = cufe;
+
+    const c = data.cliente || {};
+    const nombreCli = c.nombre || data.tercero?.nombre || "Consumidor Final";
+    const docCli = c.documento || data.tercero?.documento || "222222222";
+    if ($("t-cliente-nombre")) $("t-cliente-nombre").textContent = nombreCli;
+    if ($("t-cliente-doc"))    $("t-cliente-doc").textContent    = docCli;
+
+    const linkBack = document.querySelector(".toolbar-back");
+    if (linkBack) {
+      linkBack.href = "pos/pos.html";
+      linkBack.textContent = "← Volver al POS";
+    }
   } else {
-    logoEl.style.display = "none";
-  }
+    document.body.classList.remove('print-pos');
+    if ($("factura-documento")) $("factura-documento").style.display = "block";
+    if ($("tirilla-documento")) $("tirilla-documento").style.display = "none";
 
-  // Rellenar bloque de datos de emisor inferior (sección info-grid)
-  if ($("info-emisor-nombre")) $("info-emisor-nombre").textContent = EMISOR.razonSocial;
-  if ($("info-emisor-nit"))    $("info-emisor-nit").textContent    = "NIT " + EMISOR.nit;
-
-  if ($("info-emisor-detalles")) {
-    const detallesTexto = EMISOR.regimen ||
-      `${EMISOR.tipoPersona === "JURIDICA" ? "Persona jurídica" : "Persona natural"} — ${EMISOR.ciudad || "Colombia"}`;
-    $("info-emisor-detalles").textContent = detallesTexto;
-  }
-
-  // Email del emisor — fuente 1: perfil de Mi Perfil (EMISOR object)
-  //                   fuente 2: payload guardado en el data del sessionStorage
-  //                   fuente 3: fallback vacío si no hay dato
-  const emisorEmail = EMISOR.email || data.emisor?.email || "";
-  if ($("info-emisor-email")) {
-    if (emisorEmail) {
-      $("info-emisor-email").innerHTML =
-        `<span class="lbl">Email:</span> <a href="mailto:${escapeHtml(emisorEmail)}" style="color:inherit;text-decoration:none;">${escapeHtml(emisorEmail)}</a>`;
-      $("info-emisor-email").style.display = "";
+    $("emisor-nombre").textContent  = EMISOR.razonSocial;
+    $("emisor-nit").textContent     = "NIT: " + EMISOR.nit;
+    
+    const regimenTexto = EMISOR.regimen || 
+      `${EMISOR.tipoPersona === "JURIDICA" ? "Persona Jurídica" : "Persona Natural"} — ${EMISOR.ciudad || "Colombia"}`;
+    $("emisor-regimen").textContent = regimenTexto;
+    const logoSrc = EMISOR.logo || (isDev ? "../assets/logo.png" : "");
+    const logoEl = $("logo-emisor");
+    if (logoSrc) {
+      logoEl.src = logoSrc;
+      logoEl.style.display = "";
     } else {
-      $("info-emisor-email").style.display = "none";
+      logoEl.style.display = "none";
+    }
+
+    if ($("info-emisor-nombre")) $("info-emisor-nombre").textContent = EMISOR.razonSocial;
+    if ($("info-emisor-nit"))    $("info-emisor-nit").textContent    = "NIT " + EMISOR.nit;
+
+    if ($("info-emisor-detalles")) {
+      const detallesTexto = EMISOR.regimen ||
+        `${EMISOR.tipoPersona === "JURIDICA" ? "Persona jurídica" : "Persona natural"} — ${EMISOR.ciudad || "Colombia"}`;
+      $("info-emisor-detalles").textContent = detallesTexto;
+    }
+
+    const emisorEmail = EMISOR.email || data.emisor?.email || "";
+    if ($("info-emisor-email")) {
+      if (emisorEmail) {
+        $("info-emisor-email").innerHTML =
+          `<span class="lbl">Email:</span> <a href="mailto:${escapeHtml(emisorEmail)}" style="color:inherit;text-decoration:none;">${escapeHtml(emisorEmail)}</a>`;
+        $("info-emisor-email").style.display = "";
+      } else {
+        $("info-emisor-email").style.display = "none";
+      }
+    }
+
+    const emisorDireccion = EMISOR.direccion || data.emisor?.direccion || "";
+    if ($("info-emisor-direccion")) {
+      if (emisorDireccion) {
+        $("info-emisor-direccion").innerHTML =
+          `<span class="lbl">Dirección:</span> ${escapeHtml(emisorDireccion)}`;
+        $("info-emisor-direccion").style.display = "";
+      } else {
+        $("info-emisor-direccion").style.display = "none";
+      }
+    }
+
+    $("factura-numero").textContent = numero;
+    $("factura-fecha").textContent  = fechaGen;
+    $("cufe-texto").textContent     = "CUFE (demostración): " + cufe;
+
+    const c = data.cliente || {};
+    renderCliente(c, data.tercero);
+
+    renderLineas(data.lineas);
+    renderDesgloseIva(data.totales.ivaPorTarifa);
+    renderDesgloseRetencion(data.totales.retencionPorTarifa);
+
+    $("subtotal").textContent         = formatoMoneda(data.totales.base);
+    $("total-iva").textContent        = formatoMoneda(data.totales.iva);
+    $("total-retencion").textContent  = formatoMoneda(data.totales.retencion || 0);
+    $("total-pagar").textContent      = formatoMoneda(data.totales.total);
+    $("medio-pago-texto").textContent = data.medioPagoLabel || data.medioPago;
+
+    const obsContenedor = $("observaciones-contenedor");
+    const obsTexto = $("observaciones-texto");
+    if (obsContenedor && obsTexto) {
+      if (data.observaciones && data.observaciones.trim() !== "") {
+        obsTexto.textContent = data.observaciones;
+        obsContenedor.style.display = "block";
+      } else {
+        obsContenedor.style.display = "none";
+      }
     }
   }
-
-  // Dirección del emisor
-  const emisorDireccion = EMISOR.direccion || data.emisor?.direccion || "";
-  if ($("info-emisor-direccion")) {
-    if (emisorDireccion) {
-      $("info-emisor-direccion").innerHTML =
-        `<span class="lbl">Dirección:</span> ${escapeHtml(emisorDireccion)}`;
-      $("info-emisor-direccion").style.display = "";
-    } else {
-      $("info-emisor-direccion").style.display = "none";
-    }
-  }
-
-  $("factura-numero").textContent = numero;
-  $("factura-fecha").textContent  = fechaGen;
-  $("cufe-texto").textContent     = "CUFE (demostración): " + cufe;
-
-  const c = data.cliente || {};
-  renderCliente(c, data.tercero);
-
-  renderLineas(data.lineas);
-  renderDesgloseIva(data.totales.ivaPorTarifa);
-  renderDesgloseRetencion(data.totales.retencionPorTarifa);
-
-  $("subtotal").textContent         = formatoMoneda(data.totales.base);
-  $("total-iva").textContent        = formatoMoneda(data.totales.iva);
-  $("total-retencion").textContent  = formatoMoneda(data.totales.retencion || 0);
-  $("total-pagar").textContent      = formatoMoneda(data.totales.total);
-  $("medio-pago-texto").textContent = data.medioPagoLabel || data.medioPago;
-
-  // Cargar observaciones si existen
-  const obsContenedor = $("observaciones-contenedor");
-  const obsTexto = $("observaciones-texto");
-  if (obsContenedor && obsTexto) {
-    if (data.observaciones && data.observaciones.trim() !== "") {
-      obsTexto.textContent = data.observaciones;
-      obsContenedor.style.display = "block";
-    } else {
-      obsContenedor.style.display = "none";
-    }
-  }
-
-
 
   $("btn-pdf").addEventListener("click", descargarPdf);
 });

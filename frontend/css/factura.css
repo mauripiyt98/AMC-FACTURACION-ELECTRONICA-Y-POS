@@ -288,4 +288,135 @@
   }
 }
 
+/* ─── POS Ticket (Tirilla) Styles ─── */
+.tirilla-doc {
+  max-width: 80mm;
+  width: 80mm;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  color: #000;
+  line-height: 1.35;
+}
 
+.tirilla-doc .tirilla-inner {
+  padding: 18px 14px;
+}
+
+.tirilla-header {
+  text-align: center;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 8px;
+}
+.tirilla-header h3 {
+  font-size: 11px;
+  font-weight: bold;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+.tirilla-header h2 {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.tirilla-section {
+  margin-bottom: 10px;
+}
+.tirilla-section.emisor-info {
+  font-size: 10px;
+  line-height: 1.3;
+}
+.tirilla-section.emisor-info div {
+  margin-bottom: 2px;
+}
+
+.tirilla-divider {
+  border-top: 1px dashed #000;
+  margin: 10px 0;
+}
+
+.tirilla-items {
+  margin-bottom: 10px;
+}
+.t-item-row {
+  margin-bottom: 8px;
+  font-size: 10px;
+}
+.t-item-name {
+  font-weight: bold;
+}
+.t-item-details {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 10px;
+}
+
+.tirilla-totales {
+  font-size: 11px;
+}
+.t-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.t-row.total-main {
+  font-size: 12px;
+  border-top: 1px dashed #000;
+  padding-top: 5px;
+  margin-top: 5px;
+}
+
+.t-section-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.tirilla-qr-section {
+  text-align: center;
+  margin: 12px 0;
+}
+.tirilla-qr-section canvas {
+  width: 120px !important;
+  height: 120px !important;
+  margin: 0 auto 8px;
+}
+.t-cufe {
+  font-size: 8px;
+  word-break: break-all;
+  line-height: 1.25;
+  text-align: left;
+  padding: 0 5px;
+}
+.t-cufe span {
+  font-weight: bold;
+  display: block;
+}
+
+.tirilla-legal {
+  font-size: 9px;
+  text-align: center;
+  line-height: 1.3;
+}
+.t-thanks {
+  font-weight: bold;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+@media print {
+  body.print-pos .factura-doc {
+    display: none !important;
+  }
+  body.print-pos .tirilla-doc {
+    box-shadow: none;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+  }
+}
