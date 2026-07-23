@@ -478,6 +478,10 @@ function obtenerSiguienteConsecutivoPOS() {
 
 function procesarVenta() {
   if (!posState.carrito.length) return;
+  if (!posState.tercero) {
+    alert('Por favor seleccione un cliente (tercero) antes de pagar.');
+    return;
+  }
 
   const totales    = calcularTotalesCarrito();
   const consecutivo = obtenerSiguienteConsecutivoPOS();
@@ -492,14 +496,14 @@ function procesarVenta() {
     numeroFactura: numero,
     cufe: '',
     generadoEn: new Date().toISOString(),
-    cliente: tercero ? {
+    cliente: {
       nombre: tercero.nombre,
       documento: tercero.documento,
       email: tercero.email || '',
       telefono: tercero.telefono || '',
       direccion: tercero.direccion || '',
       ciudad: tercero.ciudad || '',
-    } : { nombre: 'Consumidor Final', documento: '222222222', email: '', telefono: '', direccion: '', ciudad: '' },
+    },
     lineas: posState.carrito.map((item) => ({
       producto: item.nombre,
       codigo:   item.codigo,
@@ -538,7 +542,7 @@ function nuevaVenta() {
   posState.carrito = [];
   posState.tercero = null;
   $('pos-modal-exito').classList.remove('active');
-  $('pos-tercero-display').textContent = '— Consumidor final —';
+  $('pos-tercero-display').textContent = '— Seleccione cliente —';
   $('pos-tercero-input-wrap').style.display = 'none';
   $('pos-medio-pago').value = 'EFECTIVO';
   renderCarrito();
@@ -603,41 +607,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '../index.html';
   });
 
-  // Apartar venta (guardar en sessionStorage y limpiar)
-  $('btn-apartar-venta').addEventListener('click', () => {
-    if (!posState.carrito.length) { alert('El carrito está vacío.'); return; }
-    const apartada = {
-      carrito: [...posState.carrito],
-      tercero: posState.tercero,
-      apartadoEn: new Date().toISOString(),
-    };
-    sessionStorage.setItem('amc_pos_venta_apartada', JSON.stringify(apartada));
-    alert(`Venta apartada con ${calcularTotalesCarrito().articulos} artículo(s). Usa "Traer venta" para recuperarla.`);
-    posState.carrito = [];
-    posState.tercero = null;
-    $('pos-tercero-display').textContent = '— Consumidor final —';
-    $('pos-tercero-input-wrap').style.display = 'none';
-    renderCarrito();
-    actualizarTotales();
-  });
 
-  // Traer venta apartada
-  $('btn-traer-venta').addEventListener('click', () => {
-    const raw = sessionStorage.getItem('amc_pos_venta_apartada');
-    if (!raw) { alert('No hay ninguna venta apartada.'); return; }
-    try {
-      const apartada = JSON.parse(raw);
-      posState.carrito = apartada.carrito || [];
-      posState.tercero = apartada.tercero || null;
-      if (posState.tercero) {
-        $('pos-tercero-display').textContent = `${posState.tercero.nombre} — ${posState.tercero.documento}`;
-      }
-      sessionStorage.removeItem('amc_pos_venta_apartada');
-      renderCarrito();
-      actualizarTotales();
-      alert('Venta recuperada correctamente.');
-    } catch { alert('Error al recuperar la venta apartada.'); }
-  });
 
   // Botón añadir manual (+) - sólo abre focus en búsqueda
   $('btn-search-add').addEventListener('click', () => {
