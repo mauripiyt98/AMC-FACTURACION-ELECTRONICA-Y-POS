@@ -142,10 +142,19 @@ function renderCliente(c, tercero) {
 
 
 function descargarPdf() {
-  const isPos = $("factura-numero").textContent.startsWith('POS');
+  // En POS la factura estándar permanece oculta y su número no se actualiza.
+  // Identificar el tipo por la vista activa evita intentar convertir ese nodo
+  // oculto, que producía un PDF en blanco.
+  const isPos = document.body.classList.contains('print-pos');
   const elemento = document.getElementById(isPos ? "tirilla-documento" : "factura-documento");
-  const numero = $("factura-numero").textContent.replace(/\s/g, "-");
+  const numero = (isPos ? $("tirilla-numero") : $("factura-numero"))
+    .textContent.replace(/^#/, "").replace(/\s/g, "-");
   const docCliente = ($("cliente-doc").textContent || "").replace(/[^\dA-Za-z-]/g, "").slice(0, 20);
+
+  if (!elemento) {
+    console.error("No se encontró el documento que se debe exportar a PDF.");
+    return;
+  }
 
   if (typeof html2pdf === "undefined") {
     window.print();
@@ -157,7 +166,7 @@ function descargarPdf() {
     filename: "Ticket-" + numero + ".pdf",
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: "mm", format: [80, 220], orientation: "portrait" }, // Formato tirilla 80mm ancho
+    jsPDF: { unit: "mm", format: [80, 297], orientation: "portrait" }, // Formato tirilla 80 mm de ancho
   } : {
     margin: [8, 8, 8, 8],
     filename: "Factura-" + numero + (docCliente ? "-" + docCliente : "") + ".pdf",
