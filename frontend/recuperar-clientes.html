@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recuperar clientes desde facturas | AMC</title>
+  <style>
+    :root { --azul:#0033a0; --fondo:#f4f6f9; --borde:#dbe2ea; --verde:#147a3f; --rojo:#b42318; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:32px 16px; background:var(--fondo); color:#17202a; font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:760px; margin:auto; background:#fff; border-radius:14px; padding:28px; box-shadow:0 10px 30px #1b2b4a18; }
+    h1 { margin:0 0 8px; color:var(--azul); font-size:1.7rem; }
+    p { margin:8px 0 18px; }
+    .notice { padding:13px 15px; border:1px solid var(--borde); border-radius:9px; background:#f8fafc; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:22px 0; }
+    .stat { padding:15px; border:1px solid var(--borde); border-radius:9px; text-align:center; }
+    .stat strong { display:block; color:var(--azul); font-size:1.7rem; }
+    .stat span { font-size:.85rem; color:#52606d; }
+    button, a { display:inline-block; border:0; border-radius:8px; padding:11px 16px; font:inherit; font-weight:700; cursor:pointer; text-decoration:none; }
+    button { background:var(--azul); color:#fff; }
+    button:disabled { background:#94a3b8; cursor:not-allowed; }
+    a { margin-left:8px; background:#eef2ff; color:#183b8c; }
+    #resultado { margin-top:20px; padding:13px 15px; border-radius:9px; display:none; }
+    #resultado.ok { display:block; color:#075d2a; background:#eaf8ef; border:1px solid #93d5a8; }
+    #resultado.error { display:block; color:#8c1814; background:#fff0ef; border:1px solid #f3b3ae; }
+    .small { color:#52606d; font-size:.9rem; }
+    @media (max-width:560px) { .stats { grid-template-columns:1fr; } main { padding:22px; } a { margin:10px 0 0; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Recuperar clientes desde las facturas</h1>
+    <p>Esta herramienta reconstruye la base de clientes del usuario actual usando únicamente la información almacenada en sus facturas. No modifica las facturas.</p>
+    <div class="notice">Antes de restaurar se guardará una copia de seguridad de la base de clientes actual en este mismo navegador.</div>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><strong id="facturas">—</strong><span>Facturas encontradas</span></div>
+      <div class="stat"><strong id="clientes">—</strong><span>Clientes recuperables</span></div>
+      <div class="stat"><strong id="incompletas">—</strong><span>Facturas sin datos mínimos</span></div>
+    </div>
+    <button id="restaurar" type="button">Restaurar clientes</button>
+    <a href="terceros/terceros.html">Ver base de clientes</a>
+    <div id="resultado" role="status"></div>
+    <p class="small">Para un mismo documento se conserva la información más reciente y se completa con datos existentes de facturas anteriores cuando haga falta.</p>
+  </main>
+  <script src="js/recuperar-clientes.js"></script>
+</body>
+</html>
