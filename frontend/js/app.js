@@ -1046,6 +1046,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
+  // Tarjeta Inventarios / Bodegas (En Desarrollo)
+  const btnWelcomeInventarios = $("btn-welcome-inventarios");
+  if (btnWelcomeInventarios) {
+    btnWelcomeInventarios.addEventListener("click", () => {
+      abrirModal(
+        "Modulo Inventarios / Bodegas en Desarrollo",
+        "El modulo Inventarios / Bodegas se encuentra actualmente en proceso de desarrollo. Estara disponible proximamente en una futura actualizacion."
+      );
+    });
+  }
+
   // Controles del Modal de Desarrollo
   const btnModalCerrar = $("btn-modal-cerrar");
   if (btnModalCerrar) {
