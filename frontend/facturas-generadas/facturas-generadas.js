@@ -25,6 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
     vigencia: "Demo académico",
   };
 
+  const RESOLUCION_POS_DEMO = {
+    prefijo: "POS",
+    desde: 1,
+    hasta: 1000,
+    numeroResolucion: "18764111157293",
+  };
+
   const $ = (id) => document.getElementById(id);
 
   function getToken() {
@@ -83,6 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return RESOLUCION_FACTURACION_DEMO.prefijo + "-" + String(consecutivo).padStart(4, "0");
   }
 
+  function construirNumeroPos(consecutivo) {
+    return RESOLUCION_POS_DEMO.prefijo + "-" + String(consecutivo).padStart(3, "0");
+  }
+
   function obtenerSiguienteConsecutivo(facturas) {
     const usados = facturas
       .map((f) => Number(f.consecutivo))
@@ -92,14 +103,15 @@ document.addEventListener("DOMContentLoaded", () => {
     return siguiente <= RESOLUCION_FACTURACION_DEMO.hasta ? siguiente : null;
   }
 
-  // ── Carga de Datos ─────────────────────────────────────────────────────────
+  // ── Carga de Datos ───────────────────────────────────────────────────
   async function cargarFacturas() {
     if (useApi) {
       try {
-        const data = await apiFetch('/facturas?limit=100');
+        const data = await apiFetch('/facturas?limit=500');
         // Mapear al formato esperado por el frontend
         return (data.facturas || []).map(f => ({
           id: f.id,
+          tipo: f.tipo || 'FE',
           consecutivo: f.numero_factura ? parseInt(f.numero_factura.split('-')[1] || 0) : f.consecutivo,
           numeroFactura: f.numero_factura,
           generadoEn: f.creado_en,
@@ -141,13 +153,27 @@ document.addEventListener("DOMContentLoaded", () => {
         console.warn("Error cargando estadísticas del API", err);
       }
     }
-    // Fallback Local
+    // Fallback Local — separar FE y POS
+    const feFacturas  = facturasLocales.filter(f => (f.tipo || 'FE') === 'FE');
+    const posFacturas = facturasLocales.filter(f => f.tipo === 'POS');
+
     $("stat-resolucion").textContent = RESOLUCION_FACTURACION_DEMO.numeroResolucion;
     $("stat-rango").textContent = RESOLUCION_FACTURACION_DEMO.desde + " - " + RESOLUCION_FACTURACION_DEMO.hasta;
-    $("stat-generadas").textContent = String(facturasLocales.length);
+    $("stat-generadas").textContent = String(feFacturas.length);
 
-    const siguiente = obtenerSiguienteConsecutivo(facturasLocales);
-    $("stat-siguiente").textContent = siguiente ? construirNumeroFactura(siguiente) : "Rango agotado";
+    const siguienteFE = obtenerSiguienteConsecutivo(feFacturas);
+    $("stat-siguiente").textContent = siguienteFE ? construirNumeroFactura(siguienteFE) : "Rango agotado";
+
+    // Stats POS
+    if ($("stat-pos-generadas")) $("stat-pos-generadas").textContent = String(posFacturas.length);
+    if ($("stat-pos-siguiente")) {
+      const usadosPOS = posFacturas.map(f => Number(f.consecutivo)).filter(n => Number.isInteger(n) && n >= 1);
+      const ultimoPOS = usadosPOS.length ? Math.max(...usadosPOS) : 0;
+      const siguientePOS = ultimoPOS + 1;
+      $("stat-pos-siguiente").textContent = siguientePOS <= RESOLUCION_POS_DEMO.hasta
+        ? construirNumeroPos(siguientePOS)
+        : "Rango agotado";
+    }
   }
 
   function coincideBusqueda(factura, q) {
@@ -165,10 +191,15 @@ document.addEventListener("DOMContentLoaded", () => {
     return normalizar(texto).includes(q);
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────────
   async function renderFacturas() {
     const dbFacturas = await cargarFacturas();
-    const facturas = dbFacturas.slice().sort((a, b) => Number(b.consecutivo || 0) - Number(a.consecutivo || 0));
+    // Ordenar por fecha de generación (más reciente primero)
+    const facturas = dbFacturas.slice().sort((a, b) => {
+      const da = a.generadoEn ? new Date(a.generadoEn).getTime() : 0;
+      const db2 = b.generadoEn ? new Date(b.generadoEn).getTime() : 0;
+      return db2 - da;
+    });
 
     const q = normalizar($("buscar").value);
     const filtradas = facturas.filter((f) => coincideBusqueda(f, q));
@@ -193,14 +224,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     body.innerHTML = filtradas.map((factura) => {
       const cliente = factura.cliente || {};
-      const numero = factura.numeroFactura || construirNumeroFactura(factura.consecutivo || 0);
-      const total = factura.totales?.total || 0;
-      const lineas = Array.isArray(factura.lineas) ? factura.lineas.length : 0;
-      const estado = factura.estado || 'EMITIDA';
+      const tipo    = factura.tipo || 'FE';
+      const numero  = factura.numeroFactura ||
+        (tipo === 'POS' ? construirNumeroPos(factura.consecutivo || 0) : construirNumeroFactura(factura.consecutivo || 0));
+      const total   = factura.totales?.total || 0;
+      const lineas  = Array.isArray(factura.lineas) ? factura.lineas.length : 0;
+      const estado  = factura.estado || 'EMITIDA';
+      const tipoBadge = tipo === 'POS'
+        ? '<span class="badge-pos">POS</span>'
+        : '<span class="badge-fe">FE</span>';
 
       return `
         <tr>
-          <td><strong>${escapeHtml(numero)}</strong><br><span class="badge">Cons. ${escapeHtml(factura.consecutivo)}</span></td>
+          <td><strong>${escapeHtml(numero)}</strong><br><span class="badge">Cons. ${escapeHtml(String(factura.consecutivo || ''))}</span></td>
+          <td>${tipoBadge}</td>
           <td>${escapeHtml(fechaHoraColombia(factura.generadoEn))}</td>
           <td>${escapeHtml(cliente.nombre || "-")}</td>
           <td>${escapeHtml(cliente.documento || "-")}</td>

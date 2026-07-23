@@ -21,6 +21,7 @@
     .stat { background:#f4fbff; border:1px solid #d7edf5; border-radius:8px; padding:12px; }
     .stat label { display:block; margin:0 0 4px; font-size:.72rem; color:#527083; text-transform:uppercase; letter-spacing:0; }
     .stat strong { color:#001e82; font-size:1.2rem; }
+    .stat.stat-pos strong { color:#059669; }
     label { display:block; font-size:.82rem; color:#35586a; margin-bottom:6px; text-transform:uppercase; letter-spacing:0; font-weight:700; }
     input { width:100%; padding:10px 12px; border:1px solid #cde7f0; border-radius:8px; background:#f4fbff; font-family:inherit; }
     input:focus { outline:none; border-color:#0b46eb; box-shadow:0 0 0 3px rgba(11,70,235,.18); background:#f8fcff; }
@@ -32,6 +33,8 @@
     .num { text-align:right; white-space:nowrap; }
     .empty { color:#638092; padding: 14px 4px; }
     .badge { display:inline-block; background:#eaf9fe; color:#0032c8; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
+    .badge-pos { display:inline-block; background:#ecfdf5; color:#059669; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
+    .badge-fe  { display:inline-block; background:#eaf9fe; color:#0032c8; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
   </style>
 </head>
 <body>
@@ -50,20 +53,28 @@
     <div class="cardx">
       <div class="stats-grid">
         <div class="stat">
-          <label>Resolucion demo</label>
+          <label>Resolucion FE</label>
           <strong id="stat-resolucion">18760000001</strong>
         </div>
         <div class="stat">
-          <label>Rango autorizado</label>
+          <label>Rango FE autorizado</label>
           <strong id="stat-rango">1 - 1000</strong>
         </div>
         <div class="stat">
-          <label>Facturas generadas</label>
+          <label>Facturas FE generadas</label>
           <strong id="stat-generadas">0</strong>
         </div>
         <div class="stat">
-          <label>Siguiente consecutivo</label>
+          <label>Siguiente FE</label>
           <strong id="stat-siguiente">FE-0001</strong>
+        </div>
+        <div class="stat stat-pos">
+          <label>Facturas POS generadas</label>
+          <strong id="stat-pos-generadas">0</strong>
+        </div>
+        <div class="stat stat-pos">
+          <label>Siguiente POS</label>
+          <strong id="stat-pos-siguiente">POS-001</strong>
         </div>
       </div>
     </div>
@@ -78,6 +89,7 @@
           <thead>
             <tr>
               <th>Factura</th>
+              <th>Tipo</th>
               <th>Fecha</th>
               <th>Cliente</th>
               <th>Documento</th>

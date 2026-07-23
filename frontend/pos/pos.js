@@ -19,12 +19,24 @@ const isDev = activeUserCode === '1110591592';
 const TERCEROS_DB_KEY       = isDev ? 'amc_terceros_db_v1'        : `amc_terceros_db_v1_${activeUserCode}`;
 const PRODUCTOS_DB_KEY      = isDev ? 'amc_productos_db_v1'       : `amc_productos_db_v1_${activeUserCode}`;
 const FACTURAS_DB_KEY       = isDev ? 'amc_facturas_generadas_db_v1' : `amc_facturas_generadas_db_v1_${activeUserCode}`;
+const PREVIEW_KEY           = isDev ? 'amc_factura_preview_v1'    : `amc_factura_preview_v1_${activeUserCode}`;
+
+// ── Resolución POS ───────────────────────────────────────────────────────────
+const RESOLUCION_POS = {
+  prefijo: 'POS',
+  desde: 1,
+  hasta: 1000,
+  numeroResolucion: '18764111157293',
+  vigenciaDesde: '12 de junio de 2026',
+  vigenciaHasta: '12 de junio de 2028',
+};
 
 // ── Estado del POS ───────────────────────────────────────────────────────────
 const posState = {
   carrito: [],          // [{ producto, codigo, precio, cantidad, iva, retencion }]
   tercero: null,        // objeto tercero seleccionado
   medioPago: 'EFECTIVO',
+  ventaActual: null,    // última venta procesada (para ver tirilla)
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,6 +50,11 @@ function formatoMoneda(valor) {
 function normalizarTexto(s) {
   return String(s || '').trim().toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Quita puntos, guiones y espacios — útil para comparar NITs/cédulas formateados */
+function limpiarDocumento(s) {
+  return String(s || '').replace(/[.\-\s]/g, '');
 }
 
 function escapeHtml(text) {
@@ -365,10 +382,15 @@ function actualizarTotales() {
 // ── Autocomplete Tercero ─────────────────────────────────────────────────────
 function buscarTerceros(query) {
   const q = normalizarTexto(query);
-  if (q.length < 4) return [];
+  // Versión limpia (sin puntos/guiones) para comparar contra documentos formateados
+  const qDoc = limpiarDocumento(normalizarTexto(query));
+  if (q.length < 3) return [];
   return cargarTerceros()
     .filter((t) => {
-      return normalizarTexto(t.nombre).includes(q) || normalizarTexto(t.documento).includes(q);
+      const docLimpio = limpiarDocumento(normalizarTexto(t.documento || ''));
+      return normalizarTexto(t.nombre).includes(q)
+        || docLimpio.includes(qDoc)
+        || normalizarTexto(t.documento || '').includes(q);
     })
     .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
     .slice(0, 8);
@@ -385,7 +407,7 @@ function initTerceroAutocomplete() {
     const resultados = buscarTerceros(input.value);
     activeIndex = -1;
 
-    if (input.value.trim().length < 4) {
+    if (input.value.trim().length < 3) {
       dropdown.classList.remove('visible');
       dropdown.innerHTML = '';
       return;
@@ -428,7 +450,7 @@ function initTerceroAutocomplete() {
   }
 
   input.addEventListener('input', render);
-  input.addEventListener('focus', () => { if (input.value.trim().length >= 4) render(); });
+  input.addEventListener('focus', () => { if (input.value.trim().length >= 3) render(); });
   input.addEventListener('keydown', (e) => {
     const items = dropdown.querySelectorAll('.pos-ac-item');
     if (!items.length || !dropdown.classList.contains('visible')) return;
@@ -534,14 +556,20 @@ function initBusquedaProductosPOS() {
 }
 
 // ── Generar y guardar venta POS ──────────────────────────────────────────────
-const RESOLUCION_POS = { prefijo: 'POS', desde: 1, hasta: 9999 };
-
 function obtenerSiguienteConsecutivoPOS() {
   const facturas = cargarFacturas();
+  // Solo cuenta facturas POS para su propio consecutivo
   const posFacturas = facturas.filter((f) => f.tipo === 'POS');
-  const usados = posFacturas.map((f) => Number(f.consecutivo)).filter((n) => n >= 1);
-  const ultimo = usados.length ? Math.max(...usados) : 0;
-  return ultimo + 1;
+  const usados = posFacturas
+    .map((f) => Number(f.consecutivo))
+    .filter((n) => Number.isInteger(n) && n >= RESOLUCION_POS.desde);
+  const ultimo = usados.length ? Math.max(...usados) : RESOLUCION_POS.desde - 1;
+  const siguiente = ultimo + 1;
+  if (siguiente > RESOLUCION_POS.hasta) {
+    alert('El rango de la resolución POS está agotado (POS-001 a POS-1000). Contacte al administrador.');
+    return null;
+  }
+  return siguiente;
 }
 
 function procesarVenta() {
@@ -551,19 +579,37 @@ function procesarVenta() {
     return;
   }
 
-  const totales    = calcularTotalesCarrito();
   const consecutivo = obtenerSiguienteConsecutivoPOS();
-  const numero     = `${RESOLUCION_POS.prefijo}-${String(consecutivo).padStart(4, '0')}`;
-  const medioPago  = $('pos-medio-pago').value;
-  const tercero    = posState.tercero;
+  if (!consecutivo) return; // rango agotado
+
+  const totales   = calcularTotalesCarrito();
+  const numero    = `${RESOLUCION_POS.prefijo}-${String(consecutivo).padStart(3, '0')}`;
+  const medioPago = $('pos-medio-pago').value;
+  const tercero   = posState.tercero;
+
+  // Calcular IVA por tarifa para el desglose en tirilla
+  const ivaPorTarifa = {};
+  posState.carrito.forEach((item) => {
+    const tarifa = String(item.iva);
+    const valorIva = item.precio * item.cantidad * (item.iva / 100);
+    ivaPorTarifa[tarifa] = (ivaPorTarifa[tarifa] || 0) + valorIva;
+  });
 
   const venta = {
     id: 'POS-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
     tipo: 'POS',
     consecutivo,
     numeroFactura: numero,
-    cufe: '',
+    cufe: generarCufePos(),
     generadoEn: new Date().toISOString(),
+    resolucion: {
+      numero: RESOLUCION_POS.numeroResolucion,
+      prefijo: RESOLUCION_POS.prefijo,
+      desde: RESOLUCION_POS.desde,
+      hasta: RESOLUCION_POS.hasta,
+      vigenciaDesde: RESOLUCION_POS.vigenciaDesde,
+      vigenciaHasta: RESOLUCION_POS.vigenciaHasta,
+    },
     cliente: {
       nombre: tercero.nombre,
       documento: tercero.documento,
@@ -575,7 +621,7 @@ function procesarVenta() {
     lineas: posState.carrito.map((item) => ({
       producto: item.nombre,
       codigo:   item.codigo,
-      unidad:   'UNIDAD',
+      unidad:   'Unidad',
       cantidad: item.cantidad,
       unitario: item.precio,
       base:     item.precio * item.cantidad,
@@ -586,29 +632,45 @@ function procesarVenta() {
       total:    item.precio * item.cantidad * (1 + item.iva / 100) - item.precio * item.cantidad * (item.retencion / 100),
     })),
     totales: {
-      base: totales.base,
-      iva: totales.iva,
-      retencion: totales.retencion,
-      total: totales.total,
+      base:         totales.base,
+      iva:          totales.iva,
+      retencion:    totales.retencion,
+      total:        totales.total,
+      ivaPorTarifa, // necesario para el desglose en la tirilla
     },
     medioPago,
     medioPagoLabel: { EFECTIVO: 'Efectivo', TRANSFERENCIA: 'Transferencia bancaria', TARJETA: 'Tarjeta débito / crédito' }[medioPago] || medioPago,
     observaciones: '',
   };
 
+  // Guardar en base de facturas (misma BD que FE, con tipo POS)
   const facturas = cargarFacturas();
   facturas.push(venta);
   guardarFacturas(facturas);
 
+  // Guardar en sessionStorage para poder abrir la tirilla
+  posState.ventaActual = venta;
+  sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(venta));
+
   // Mostrar modal de éxito
+  $('pos-modal-numero').textContent = numero;
   $('pos-modal-msg').textContent =
-    `Venta ${numero} · ${totales.articulos} artículo${totales.articulos !== 1 ? 's' : ''} · ${formatoMoneda(totales.total)} · Medio: ${venta.medioPagoLabel}`;
+    `${totales.articulos} artículo${totales.articulos !== 1 ? 's' : ''} · ${formatoMoneda(totales.total)} · ${venta.medioPagoLabel}`;
   $('pos-modal-exito').classList.add('active');
+}
+
+/** Genera un CUFE demo para factura POS */
+function generarCufePos() {
+  const chars = '0123456789abcdef';
+  let s = '';
+  for (let i = 0; i < 96; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
 }
 
 function nuevaVenta() {
   posState.carrito = [];
   posState.tercero = null;
+  posState.ventaActual = null;
   $('pos-modal-exito').classList.remove('active');
   $('pos-tercero-display').textContent = '— Seleccione cliente —';
   $('pos-medio-pago').value = 'EFECTIVO';
@@ -659,6 +721,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Modal nueva venta
   $('btn-modal-nueva-venta').addEventListener('click', nuevaVenta);
+
+  // Modal ver factura (tirilla)
+  $('btn-modal-ver-factura').addEventListener('click', () => {
+    if (posState.ventaActual) {
+      sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(posState.ventaActual));
+    }
+    window.location.href = '../prefactura.html';
+  });
 
   // Botón cerrar caja → volver al inicio
   $('btn-cerrar-caja').addEventListener('click', () => {

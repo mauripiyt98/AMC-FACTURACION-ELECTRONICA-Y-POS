@@ -94,7 +94,7 @@
             type="text"
             id="pos-tercero-input"
             class="pos-tercero-input"
-            placeholder="Escriba nombre o documento (mín. 4 caracteres)..."
+            placeholder="Buscar por nombre, cédula o NIT (mín. 3 caracteres)..."
             autocomplete="off"
           >
           <div id="pos-tercero-dropdown" class="pos-ac-dropdown" role="listbox"></div>
@@ -156,8 +156,13 @@
     <div class="pos-modal">
       <div class="pos-modal-icon">✅</div>
       <h3>¡Venta Registrada!</h3>
+      <div class="pos-modal-numero-wrap">
+        <span class="pos-modal-num-label">Factura</span>
+        <strong id="pos-modal-numero" class="pos-modal-num">POS-000</strong>
+      </div>
       <p id="pos-modal-msg">La venta fue procesada correctamente.</p>
       <div class="pos-modal-btns">
+        <button class="btn-modal-ver" id="btn-modal-ver-factura" type="button">🖨️ Ver factura (tirilla)</button>
         <button class="btn-modal-ok" id="btn-modal-nueva-venta" type="button">Nueva venta</button>
       </div>
     </div>

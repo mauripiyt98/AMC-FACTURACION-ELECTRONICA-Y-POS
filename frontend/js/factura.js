@@ -298,6 +298,20 @@ window.addEventListener("load", function () {
     if ($("t-cliente-nombre")) $("t-cliente-nombre").textContent = nombreCli;
     if ($("t-cliente-doc"))    $("t-cliente-doc").textContent    = docCli;
 
+    // Resolución POS dinámica
+    const resLegal = $("t-resolucion-legal");
+    if (resLegal) {
+      const res = data.resolucion || {};
+      const numRes     = res.numero     || '18764111157293';
+      const prefRes    = res.prefijo    || 'POS';
+      const desdeRes   = res.desde     || 1;
+      const hastaRes   = res.hasta     || 1000;
+      const vigDesde   = res.vigenciaDesde || '12 de junio de 2026';
+      const vigHasta   = res.vigenciaHasta || '12 de junio de 2028';
+      resLegal.textContent =
+        `${numRes} del ${vigDesde}, v\u00e1lida desde ${vigDesde} hasta ${vigHasta}. Prefijo ${prefRes}, numeraci\u00f3n desde ${desdeRes} hasta ${hastaRes}`;
+    }
+
     const linkBack = document.querySelector(".toolbar-back");
     if (linkBack) {
       linkBack.href = "pos/pos.html";
