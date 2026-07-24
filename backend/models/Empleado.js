@@ -12,10 +12,8 @@ class Empleado {
     }
     params.push(limit, offset);
     const { rows } = await client.query(
-      `SELECT id, nombre, documento, email, telefono, ciudad, direccion, cuenta_bancaria,
-              fecha_inicio_contrato, tipo_contrato, salario, numero_contrato, cargo,
-              tipo_cotizante, fondo_salud, fondo_pension, caja_compensacion, arl,
-              nivel_riesgo_arl, creado_en, actualizado_en
+      `SELECT id, nombre, documento, ciudad, fecha_inicio_contrato, tipo_contrato,
+              salario, cargo, creado_en, actualizado_en
        FROM empleados ${where} ORDER BY nombre ASC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params

@@ -42,6 +42,24 @@
       </div></section>
       <div class="form-actions"><button class="primary" type="submit">Guardar empleado</button><button class="secondary" id="btn-limpiar" type="button">Limpiar formulario</button></div>
     </form>
+
+    <section class="employee-database" aria-labelledby="empleados-title">
+      <div class="database-header">
+        <div>
+          <p class="eyebrow">Base de empleados</p>
+          <h2 id="empleados-title">Empleados creados</h2>
+          <p>Consulta los empleados registrados para esta empresa. Los datos sensibles, como cuentas bancarias, correos y teléfonos, no se muestran aquí.</p>
+        </div>
+        <button id="btn-actualizar-empleados" class="secondary" type="button">Actualizar listado</button>
+      </div>
+      <div class="employee-search">
+        <label for="buscar-empleado">Buscar empleado</label>
+        <input id="buscar-empleado" type="search" autocomplete="off" placeholder="Nombre o número de documento">
+      </div>
+      <p id="empleados-resumen" class="database-summary" aria-live="polite"></p>
+      <div id="lista-empleados" class="employee-list" aria-live="polite"></div>
+      <p id="empleados-vacio" class="empty-employees" hidden>No hay empleados registrados todavía.</p>
+    </section>
   </main>
   <script src="crear-empleado.js"></script>
   <script src="../js/app-footer.js"></script>
