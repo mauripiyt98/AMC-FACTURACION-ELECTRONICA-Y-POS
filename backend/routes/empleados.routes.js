@@ -23,18 +23,4 @@ router.post('/', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-router.get('/:id', async (req, res, next) => {
-  try {
-    const empleado = await EmpleadoService.obtener(req.dbClient, req.empresaId, req.params.id);
-    res.json({ success: true, empleado });
-  } catch (error) { next(error); }
-});
-
-router.put('/:id', async (req, res, next) => {
-  try {
-    const empleado = await EmpleadoService.actualizar(req.dbClient, req.empresaId, req.params.id, req.body);
-    res.json({ success: true, empleado });
-  } catch (error) { next(error); }
-});
-
 module.exports = router;
