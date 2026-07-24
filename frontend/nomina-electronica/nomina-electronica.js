@@ -66,6 +66,11 @@ function pintarCalculos(calculos) {
   $('neto').textContent = formato(calculos.neto);
 }
 
+function actualizarCalculosEnTiempoReal(input) {
+  formatearInput(input);
+  pintarCalculos(obtenerCalculos());
+}
+
 function cargarNominas() {
   try {
     const nominas = JSON.parse(localStorage.getItem(NOMINAS_DB_KEY) || '[]');
@@ -242,23 +247,55 @@ async function guardarEnApi(empleado, calculos) {
   return data.nomina;
 }
 
-async function liquidarNomina() {
-  const empleado = {
+function obtenerEmpleadoFormulario() {
+  return {
     nombre: $('nombre').value.trim(),
     documento: $('doc').value.trim(),
     cargo: $('cargo').value.trim(),
     cuenta: $('cuenta').value.trim(),
   };
-  const calculos = obtenerCalculos();
+}
 
+function validarDatosNomina(empleado, calculos) {
   if (!empleado.nombre || !empleado.documento || !empleado.cargo || !empleado.cuenta) {
-    mostrarMensaje('Complete los datos del empleado para generar la nómina.', 'error');
+    return 'Complete los datos del empleado para generar la nómina.';
+  }
+  if (calculos.salario <= 0) return 'Debe ingresar un salario base válido.';
+  return null;
+}
+
+function cerrarConfirmacionNomina() {
+  $('modal-confirmar-nomina').hidden = true;
+}
+
+function solicitarConfirmacionNomina() {
+  const empleado = obtenerEmpleadoFormulario();
+  const calculos = obtenerCalculos();
+  const error = validarDatosNomina(empleado, calculos);
+  if (error) {
+    mostrarMensaje(error, 'error');
     return;
   }
-  if (calculos.salario <= 0) {
-    mostrarMensaje('Debe ingresar un salario base válido.', 'error');
-    return;
-  }
+
+  pintarCalculos(calculos);
+  const resumen = $('resumen-confirmacion-nomina');
+  resumen.replaceChildren();
+  const nombre = document.createElement('strong');
+  const valores = document.createElement('span');
+  const total = document.createElement('span');
+  nombre.textContent = empleado.nombre;
+  valores.textContent = `Documento: ${empleado.documento} · Salario: ${formato(calculos.salario)} · Bonificaciones: ${formato(calculos.bonificaciones)}`;
+  total.textContent = `Neto a pagar: ${formato(calculos.neto)}`;
+  resumen.append(nombre, valores, total);
+  $('modal-confirmar-nomina').hidden = false;
+  $('btn-confirmar-generar').focus();
+}
+
+async function liquidarNomina() {
+  const empleado = obtenerEmpleadoFormulario();
+  const calculos = obtenerCalculos();
+  const error = validarDatosNomina(empleado, calculos);
+  if (error) return mostrarMensaje(error, 'error');
   pintarCalculos(calculos);
 
   const btn = document.querySelector('.btn-generar');
@@ -315,7 +352,7 @@ function limpiar() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  ['salario', 'bonificaciones'].forEach((id) => $(id).addEventListener('input', (event) => formatearInput(event.target)));
+  ['salario', 'bonificaciones'].forEach((id) => $(id).addEventListener('input', (event) => actualizarCalculosEnTiempoReal(event.target)));
   $('nombre').addEventListener('input', programarBusqueda);
   $('doc').addEventListener('input', programarBusqueda);
   document.addEventListener('click', (event) => {
@@ -324,7 +361,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') ocultarSugerencias();
   });
-  $('form-nomina').addEventListener('submit', (event) => { event.preventDefault(); liquidarNomina(); });
+  $('form-nomina').addEventListener('submit', (event) => { event.preventDefault(); solicitarConfirmacionNomina(); });
   $('btn-limpiar').addEventListener('click', limpiar);
   $('btn-nominas-generadas').addEventListener('click', () => sessionStorage.setItem('amc_nominas_access_v1', 'true'));
+  $('btn-confirmar-generar').addEventListener('click', () => {
+    cerrarConfirmacionNomina();
+    liquidarNomina();
+  });
+  $('btn-cancelar-generar').addEventListener('click', cerrarConfirmacionNomina);
+  $('modal-confirmar-nomina').addEventListener('click', (event) => {
+    if (event.target === $('modal-confirmar-nomina')) cerrarConfirmacionNomina();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !$('modal-confirmar-nomina').hidden) cerrarConfirmacionNomina();
+  });
 });

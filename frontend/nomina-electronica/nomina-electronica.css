@@ -40,5 +40,21 @@
 .nomina-right-panel .nomina-note { display: block; color: #638092; font-size: .78rem; line-height: 1.4; }
 .nomina-nav-active { background: #eaf4ff; border-left: 4px solid #0032c8; color: #001e82 !important; font-weight: 800; }
 #mensaje .alert { margin: 0 0 16px; }
+.nomina-confirm-modal { position:fixed; z-index:1000; inset:0; display:grid; place-items:center; padding:20px; background:rgba(0,30,130,.45); }
+.nomina-confirm-modal[hidden] { display:none; }
+.nomina-confirm-dialog { box-sizing:border-box; width:min(470px,100%); padding:26px; border:1px solid #cde7f0; border-radius:14px; background:#f8fcff; box-shadow:0 24px 48px rgba(0,30,80,.28); text-align:center; }
+.nomina-confirm-icon { display:grid; place-items:center; width:46px; height:46px; margin:0 auto 12px; border-radius:50%; background:#eaf9fe; color:#001e82; font-size:1.5rem; font-weight:900; }
+.nomina-confirm-dialog h2 { margin:0; color:#001e82; font-size:1.25rem; }
+.nomina-confirm-dialog > p { margin:10px 0 16px; color:#527083; line-height:1.45; }
+.nomina-confirm-summary { padding:13px; border:1px solid #d7edf5; border-radius:9px; background:#fff; color:#35586a; text-align:left; }
+.nomina-confirm-summary strong,.nomina-confirm-summary span { display:block; }
+.nomina-confirm-summary strong { color:#001e82; font-size:1rem; }
+.nomina-confirm-summary span { margin-top:5px; font-size:.88rem; }
+.nomina-confirm-actions { display:flex; gap:10px; margin-top:20px; }
+.nomina-confirm-actions button { flex:1; padding:11px 14px; border-radius:7px; font:inherit; font-weight:800; cursor:pointer; }
+.btn-confirmar-generar { border:1px solid #001e82; background:#001e82; color:#fff; }
+.btn-confirmar-generar:hover { background:#0032c8; }
+.btn-cancelar-generar { border:1px solid #001e82; background:#fff; color:#001e82; }
+.btn-cancelar-generar:hover { background:#eaf9fe; }
 @media (max-width: 980px) { .nomina-right-panel { display: none; } }
-@media (max-width: 680px) { .nomina-grid, .form-grid { grid-template-columns: 1fr; } .nomina-intro { align-items: flex-start; flex-direction: column; } .nomina-actions, .nomina-intro .btn-secondary, .btn-nominas-generadas, .btn-crear-empleados { width: 100%; } }
+@media (max-width: 680px) { .nomina-grid, .form-grid { grid-template-columns: 1fr; } .nomina-intro { align-items: flex-start; flex-direction: column; } .nomina-actions, .nomina-intro .btn-secondary, .btn-nominas-generadas, .btn-crear-empleados { width: 100%; } .nomina-confirm-modal { padding:12px; }.nomina-confirm-actions { flex-direction:column; } }

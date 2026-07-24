@@ -84,6 +84,19 @@
       <div class="info-box"><h3>Reglas aplicadas</h3><p>Salud: 4% de la base.</p><p>Pensión: 4% de la base.</p><p>FSP: aplica desde 4 SMMLV según el rango salarial.</p><p class="nomina-note">Valores y reglas trasladados del proyecto AMC Nómina Electrónica compartido.</p></div>
     </aside>
   </div>
+
+  <div id="modal-confirmar-nomina" class="nomina-confirm-modal" hidden>
+    <section class="nomina-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmar-nomina-title">
+      <div class="nomina-confirm-icon" aria-hidden="true">✓</div>
+      <h2 id="confirmar-nomina-title">Confirmar generación de nómina</h2>
+      <p>Revise los valores antes de generar el documento. Esta acción creará una nueva nómina electrónica.</p>
+      <div id="resumen-confirmacion-nomina" class="nomina-confirm-summary"></div>
+      <div class="nomina-confirm-actions">
+        <button id="btn-confirmar-generar" type="button" class="btn-confirmar-generar">Generar</button>
+        <button id="btn-cancelar-generar" type="button" class="btn-cancelar-generar">Cancelar</button>
+      </div>
+    </section>
+  </div>
   <script src="nomina-electronica.js"></script>
   <script src="../js/app-footer.js"></script>
 </body>
