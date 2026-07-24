@@ -60,6 +60,46 @@
       <div id="lista-empleados" class="employee-list" aria-live="polite"></div>
       <p id="empleados-vacio" class="empty-employees" hidden>No hay empleados registrados todavía.</p>
     </section>
+
+    <div id="modal-detalle-empleado" class="employee-modal" hidden>
+      <section class="employee-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="detalle-empleado-title">
+        <header class="modal-header"><h2 id="detalle-empleado-title">Información del empleado</h2><button class="modal-close" type="button" data-close-modal="modal-detalle-empleado" aria-label="Cerrar detalle">×</button></header>
+        <div id="detalle-empleado-contenido" class="employee-detail-content"></div>
+      </section>
+    </div>
+
+    <div id="modal-editar-empleado" class="employee-modal" hidden>
+      <section class="employee-modal-dialog modal-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="editar-empleado-title">
+        <header class="modal-header"><h2 id="editar-empleado-title">Editar empleado</h2><button class="modal-close" type="button" data-close-modal="modal-editar-empleado" aria-label="Cerrar edición">×</button></header>
+        <form id="form-editar-empleado" novalidate>
+          <section class="modal-form-section"><h3>Datos personales y contacto</h3><div class="modal-grid">
+            <div class="full"><label for="edit-nombre">Nombre completo *</label><input id="edit-nombre" type="text" required></div>
+            <div><label for="edit-documento">Número de documento *</label><input id="edit-documento" type="text" inputmode="numeric" required></div>
+            <div><label for="edit-email">Correo electrónico *</label><input id="edit-email" type="email" required></div>
+            <div><label for="edit-telefono">Número de teléfono *</label><input id="edit-telefono" type="text" inputmode="tel" required></div>
+            <div><label for="edit-ciudad">Ciudad *</label><input id="edit-ciudad" type="text" required></div>
+            <div><label for="edit-direccion">Dirección *</label><input id="edit-direccion" type="text" required></div>
+            <div class="full"><label for="edit-cuenta">Cuenta bancaria *</label><input id="edit-cuenta" type="text" required></div>
+          </div></section>
+          <section class="modal-form-section"><h3>Contrato y cargo</h3><div class="modal-grid">
+            <div><label for="edit-fecha-inicio">Fecha de inicio de contrato *</label><input id="edit-fecha-inicio" type="date" required></div>
+            <div><label for="edit-tipo-contrato">Tipo de contrato *</label><select id="edit-tipo-contrato" required><option value="">Seleccione</option><option value="FIJO">Fijo</option><option value="INDEFINIDO">Indefinido</option></select></div>
+            <div><label for="edit-salario">Valor de salario *</label><input id="edit-salario" type="text" inputmode="numeric" autocomplete="off" required></div>
+            <div><label for="edit-numero-contrato">Número de contrato *</label><input id="edit-numero-contrato" type="text" required></div>
+            <div class="full"><label for="edit-cargo">Cargo *</label><input id="edit-cargo" type="text" required></div>
+            <div class="full"><label for="edit-tipo-cotizante">Tipo de cotizante *</label><select id="edit-tipo-cotizante" required><option value="">Seleccione</option><option value="DEPENDIENTE">Dependiente</option><option value="INDEPENDIENTE">Independiente</option></select></div>
+          </div></section>
+          <section class="modal-form-section"><h3>Seguridad social</h3><div class="modal-grid">
+            <div><label for="edit-fondo-salud">Fondo de salud *</label><input id="edit-fondo-salud" type="text" required></div>
+            <div><label for="edit-fondo-pension">Fondo de pensión *</label><input id="edit-fondo-pension" type="text" required></div>
+            <div><label for="edit-caja-compensacion">Caja de compensación *</label><input id="edit-caja-compensacion" type="text" required></div>
+            <div><label for="edit-arl">ARL *</label><input id="edit-arl" type="text" required></div>
+            <div class="full"><label for="edit-nivel-riesgo-arl">Nivel de riesgo ARL *</label><input id="edit-nivel-riesgo-arl" type="text" required></div>
+          </div></section>
+          <div class="modal-form-actions"><button class="primary" type="submit">Guardar cambios</button><button class="secondary" type="button" data-close-modal="modal-editar-empleado">Cancelar</button></div>
+        </form>
+      </section>
+    </div>
   </main>
   <script src="crear-empleado.js"></script>
   <script src="../js/app-footer.js"></script>
