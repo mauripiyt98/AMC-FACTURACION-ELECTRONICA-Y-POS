@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nóminas generadas - AMC</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="nominas-generadas.css">
+</head>
+<body>
+  <main class="nominas-wrap">
+    <header class="nominas-topbar">
+      <div>
+        <p class="eyebrow">Nómina electrónica</p>
+        <h1>Nóminas generadas</h1>
+        <p class="hint">Historial de documentos de nómina. Rango demo: NE001 a NE1000.</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn-primary" href="nomina-electronica.html">Liquidar nómina</a>
+        <a class="btn-secondary-link" href="../index.html">Volver al inicio</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="stats-grid">
+        <div class="stat"><span>Prefijo</span><strong>NE</strong></div>
+        <div class="stat"><span>Rango autorizado demo</span><strong>001 - 1000</strong></div>
+        <div class="stat"><span>Nóminas generadas</span><strong id="stat-generadas">0</strong></div>
+        <div class="stat"><span>Siguiente consecutivo</span><strong id="stat-siguiente">NE001</strong></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <label for="buscar">Buscar nómina</label>
+      <input id="buscar" type="search" placeholder="NE001, nombre, documento, cargo o fecha">
+      <p id="empty" class="empty" hidden>Aún no hay nóminas generadas.</p>
+      <div class="table-wrap">
+        <table aria-label="Nóminas generadas">
+          <thead>
+            <tr><th>Nómina</th><th>Fecha</th><th>Empleado</th><th>Documento</th><th>Cargo</th><th class="num">Neto a pagar</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody id="nominas-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="nominas-generadas.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

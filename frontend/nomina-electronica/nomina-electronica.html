@@ -36,7 +36,10 @@
         <div id="mensaje" role="status" aria-live="polite"></div>
         <section class="nomina-intro">
           <div><h2>Liquidar nómina</h2><p>Ingrese la información del empleado y los valores del período para calcular los devengados, deducciones y neto a pagar.</p></div>
-          <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar formulario</button>
+          <div class="nomina-actions">
+            <a class="btn-nominas-generadas" id="btn-nominas-generadas" href="nominas-generadas.html">Nóminas generadas</a>
+            <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar formulario</button>
+          </div>
         </section>
 
         <form id="form-nomina" novalidate>
@@ -68,7 +71,7 @@
             </section>
             <section class="card nomina-total-card">
               <span>Neto a pagar</span><strong id="neto">$ 0</strong><small>Salario + auxilio + bonificaciones − deducciones</small>
-              <button type="submit" class="btn-generar">Calcular nómina</button>
+              <button type="submit" class="btn-generar">Generar nómina electrónica</button>
             </section>
           </div>
         </form>

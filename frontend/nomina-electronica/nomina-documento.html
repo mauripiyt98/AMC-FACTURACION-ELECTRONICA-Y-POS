@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documento de nómina electrónica - AMC</title>
+  <script src="../js/auth-check.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <link rel="stylesheet" href="nomina-documento.css">
+</head>
+<body>
+  <div class="toolbar no-print">
+    <a href="nominas-generadas.html">← Volver a nóminas generadas</a>
+    <button id="btn-pdf" type="button">Descargar PDF</button>
+  </div>
+  <main id="documento-nomina" class="documento">
+    <header class="documento-head">
+      <div class="brand"><img id="logo-emisor" src="../../assets/logo.png" alt="Logo de la empresa"><div><h1>NÓMINA ELECTRÓNICA</h1><p>Documento soporte de pago de nómina</p></div></div>
+      <div class="numero"><span>Consecutivo</span><strong id="numero-nomina">NE001</strong><small>Generada: <span id="fecha-generacion"></span></small></div>
+    </header>
+
+    <section class="bloques">
+      <article><h2>Empleador / emisor</h2><p id="empresa-nombre"></p><p id="empresa-nit"></p><p id="empresa-direccion"></p><p id="empresa-contacto"></p></article>
+      <article><h2>Empleado</h2><p id="empleado-nombre"></p><p id="empleado-documento"></p><p id="empleado-cargo"></p><p id="empleado-cuenta"></p></article>
+    </section>
+
+    <section class="detalle">
+      <h2>Detalle de liquidación</h2>
+      <table><thead><tr><th>Concepto</th><th class="num">Valor</th></tr></thead>
+        <tbody id="devengados-body"></tbody>
+        <tbody id="deducciones-body"></tbody>
+        <tfoot><tr><th>Neto a pagar</th><th class="num" id="neto-pagar"></th></tr></tfoot>
+      </table>
+    </section>
+
+    <section class="validacion">
+      <div><h2>CUDE de demostración</h2><p id="cude"></p><small>Identificador de prueba. No tiene validez fiscal ante la DIAN.</small></div>
+      <div class="qr"><canvas id="qr-canvas" aria-label="Código QR de la nómina"></canvas><small>Código QR de demostración</small></div>
+    </section>
+    <footer>Documento generado con AMC Facturación Electrónica y POS. La liquidación y el CUDE se presentan únicamente para demostración mientras se configura el envío a producción.</footer>
+  </main>
+  <script src="nomina-documento.js"></script>
+</body>
+</html>

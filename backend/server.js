@@ -15,6 +15,7 @@ const tercerosRoutes = require('./routes/terceros.routes');
 const productosRoutes = require('./routes/productos.routes');
 const facturasRoutes  = require('./routes/facturas.routes');
 const usuariosRoutes  = require('./routes/usuarios.routes');
+const nominasRoutes   = require('./routes/nominas.routes');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -90,6 +91,7 @@ app.use('/api/terceros',  tercerosRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/facturas',  facturasRoutes);
 app.use('/api/usuarios',  usuariosRoutes);
+app.use('/api/nominas',   nominasRoutes);
 
 // ── Manejo de rutas no encontradas y errores ─────────────
 app.use(notFound);
