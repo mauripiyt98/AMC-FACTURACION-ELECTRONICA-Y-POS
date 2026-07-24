@@ -28,6 +28,7 @@
 .employee-suggestion { width: 100%; padding: 10px 11px; border: 0; border-bottom: 1px solid #e4f2f7; background: #fff; color: #173e52; text-align: left; font: inherit; cursor: pointer; }
 .employee-suggestion:last-child { border-bottom: 0; }
 .employee-suggestion:hover { background: #eaf4ff; }.employee-suggestion strong, .employee-suggestion span { display: block; }.employee-suggestion span { margin-top: 2px; color: #527083; font-size: .78rem; }
+.employee-suggestion-empty { margin:0; padding:10px 11px; color:#638092; font-size:.84rem; }
 .nomina-total-card { margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; border: 1px solid #8ebbf7; background: linear-gradient(135deg, #eaf4ff, #f8fcff); }
 .nomina-total-card > span { color: #35586a; font-weight: 700; }
 .nomina-total-card strong { color: #001e82; font-size: 2rem; line-height: 1.2; margin: 6px 0; }

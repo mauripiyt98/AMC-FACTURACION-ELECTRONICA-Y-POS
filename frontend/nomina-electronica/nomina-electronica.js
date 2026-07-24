@@ -12,8 +12,11 @@ const activeUserCode = sessionStorage.getItem('amc_active_user_code') || '111059
 const isDev = activeUserCode === '1110591592';
 const NOMINAS_DB_KEY = isDev ? 'amc_nominas_generadas_db_v1' : `amc_nominas_generadas_db_v1_${activeUserCode}`;
 const PREVIEW_KEY = isDev ? 'amc_nomina_preview_v1' : `amc_nomina_preview_v1_${activeUserCode}`;
+const EMPLEADOS_DB_KEY = isDev ? 'amc_empleados_db_v1' : `amc_empleados_db_v1_${activeUserCode}`;
 const API_BASE = 'http://localhost:3000/api';
 const $ = (id) => document.getElementById(id);
+let searchTimer = null;
+let searchSequence = 0;
 
 function limpiarNumero(valor) {
   return parseFloat(String(valor || '').replace(/[^\d]/g, '')) || 0;
@@ -89,6 +92,141 @@ function generarCudeDemo(consecutivo, neto) {
 
 function getToken() {
   try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}').token || null; } catch { return null; }
+}
+
+function normalizar(texto) {
+  return String(texto || '').trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function cargarEmpleadosLocales() {
+  try {
+    const empleados = JSON.parse(localStorage.getItem(EMPLEADOS_DB_KEY) || '[]');
+    return Array.isArray(empleados) ? empleados : [];
+  } catch {
+    return [];
+  }
+}
+
+function ocultarSugerencias() {
+  ['sugerencias-nombre', 'sugerencias-doc'].forEach((id) => {
+    const container = $(id);
+    container.replaceChildren();
+    container.classList.remove('visible');
+  });
+}
+
+async function buscarEmpleadosEnApi(texto) {
+  const token = getToken();
+  const response = await fetch(`${API_BASE}/empleados?${new URLSearchParams({ search: texto, limit: '10' })}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (response.status === 401) {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('amc_user_v2');
+    window.location.replace('../login.html');
+    return [];
+  }
+  if (!response.ok) throw new Error(data.message || 'No fue posible buscar empleados.');
+  return Array.isArray(data.empleados) ? data.empleados : [];
+}
+
+async function obtenerEmpleadoCompleto(empleado) {
+  if (!getToken()) return empleado;
+  const response = await fetch(`${API_BASE}/empleados/${encodeURIComponent(empleado.id)}`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (response.status === 401) {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('amc_user_v2');
+    window.location.replace('../login.html');
+    throw new Error('Sesión expirada');
+  }
+  if (!response.ok) throw new Error(data.message || 'No fue posible cargar la información del empleado.');
+  return data.empleado;
+}
+
+function seleccionarEmpleado(empleado) {
+  $('nombre').value = empleado.nombre || '';
+  $('doc').value = empleado.documento || '';
+  $('cargo').value = empleado.cargo || '';
+  $('cuenta').value = empleado.cuenta_bancaria || empleado.cuenta || '';
+  $('salario').value = Number(empleado.salario || 0).toLocaleString('es-CO');
+  pintarCalculos(obtenerCalculos());
+  ocultarSugerencias();
+}
+
+function mostrarSugerencias(empleados, destino) {
+  ['sugerencias-nombre', 'sugerencias-doc'].filter((id) => id !== destino).forEach((id) => {
+    $(id).replaceChildren();
+    $(id).classList.remove('visible');
+  });
+  const container = $(destino);
+  container.replaceChildren();
+  if (!empleados.length) {
+    const empty = document.createElement('p');
+    empty.className = 'employee-suggestion-empty';
+    empty.textContent = 'No se encontraron empleados.';
+    container.append(empty);
+    container.classList.add('visible');
+    return;
+  }
+
+  empleados.forEach((empleado) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'employee-suggestion';
+    const name = document.createElement('strong');
+    const metadata = document.createElement('span');
+    name.textContent = empleado.nombre || 'Empleado sin nombre';
+    metadata.textContent = `${empleado.documento || 'Sin documento'} · ${empleado.cargo || 'Sin cargo'}`;
+    button.append(name, metadata);
+    button.addEventListener('click', async () => {
+      try {
+        button.disabled = true;
+        seleccionarEmpleado(await obtenerEmpleadoCompleto(empleado));
+      } catch (error) {
+        mostrarMensaje(error.message || 'No fue posible cargar el empleado.', 'error');
+        button.disabled = false;
+      }
+    });
+    container.append(button);
+  });
+  container.classList.add('visible');
+}
+
+async function buscarYMostrarEmpleados(texto, destino) {
+  const query = String(texto || '').trim();
+  const currentSearch = ++searchSequence;
+  if (query.length < 2) {
+    ocultarSugerencias();
+    return;
+  }
+  try {
+    let empleados;
+    if (getToken()) {
+      empleados = await buscarEmpleadosEnApi(query);
+    } else {
+      const queryNormalizado = normalizar(query);
+      empleados = cargarEmpleadosLocales().filter((empleado) => (
+        normalizar(empleado.nombre).includes(queryNormalizado) || normalizar(empleado.documento).includes(queryNormalizado)
+      )).slice(0, 10);
+    }
+    if (currentSearch !== searchSequence) return;
+    mostrarSugerencias(empleados, destino);
+  } catch (error) {
+    if (currentSearch !== searchSequence) return;
+    ocultarSugerencias();
+    mostrarMensaje(error.message || 'No fue posible buscar empleados.', 'error');
+  }
+}
+
+function programarBusqueda(event) {
+  const destino = event.target.id === 'nombre' ? 'sugerencias-nombre' : 'sugerencias-doc';
+  const texto = event.target.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => buscarYMostrarEmpleados(texto, destino), 250);
 }
 
 async function guardarEnApi(empleado, calculos) {
@@ -178,6 +316,14 @@ function limpiar() {
 
 document.addEventListener('DOMContentLoaded', () => {
   ['salario', 'bonificaciones'].forEach((id) => $(id).addEventListener('input', (event) => formatearInput(event.target)));
+  $('nombre').addEventListener('input', programarBusqueda);
+  $('doc').addEventListener('input', programarBusqueda);
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.autocomplete-wrap')) ocultarSugerencias();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') ocultarSugerencias();
+  });
   $('form-nomina').addEventListener('submit', (event) => { event.preventDefault(); liquidarNomina(); });
   $('btn-limpiar').addEventListener('click', limpiar);
   $('btn-nominas-generadas').addEventListener('click', () => sessionStorage.setItem('amc_nominas_access_v1', 'true'));
