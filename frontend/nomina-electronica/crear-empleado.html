@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear empleado - AMC</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="crear-empleado.css">
+</head>
+<body>
+  <main class="employee-wrap">
+    <header class="employee-topbar">
+      <div><p class="eyebrow">Nómina electrónica</p><h1>Crear empleado</h1><p>Los campos marcados son obligatorios y se guardan en una base independiente de clientes.</p></div>
+      <div class="employee-actions"><a href="nomina-electronica.html">Volver a nómina</a><a class="secondary" href="../index.html">Ir a inicio</a></div>
+    </header>
+    <div id="mensaje" role="status" aria-live="polite"></div>
+    <form id="form-empleado" class="employee-card" novalidate>
+      <section><h2>Datos personales y contacto</h2><div class="employee-grid">
+        <div class="full"><label for="nombre">Nombre completo *</label><input id="nombre" type="text" required></div>
+        <div><label for="documento">Número de documento *</label><input id="documento" type="text" inputmode="numeric" required></div>
+        <div><label for="email">Correo electrónico *</label><input id="email" type="email" required></div>
+        <div><label for="telefono">Número de teléfono *</label><input id="telefono" type="text" inputmode="tel" required></div>
+        <div><label for="ciudad">Ciudad *</label><input id="ciudad" type="text" required></div>
+        <div><label for="direccion">Dirección *</label><input id="direccion" type="text" required></div>
+        <div class="full"><label for="cuenta">Cuenta bancaria *</label><input id="cuenta" type="text" placeholder="Banco y número de cuenta" required></div>
+      </div></section>
+      <section><h2>Contrato y cargo</h2><div class="employee-grid">
+        <div><label for="fecha-inicio">Fecha de inicio de contrato *</label><input id="fecha-inicio" type="date" required></div>
+        <div><label for="tipo-contrato">Tipo de contrato *</label><select id="tipo-contrato" required><option value="">Seleccione</option><option value="FIJO">Fijo</option><option value="INDEFINIDO">Indefinido</option></select></div>
+        <div><label for="salario">Valor de salario *</label><input id="salario" type="text" inputmode="numeric" autocomplete="off" placeholder="$ 0" required></div>
+        <div><label for="numero-contrato">Número de contrato *</label><input id="numero-contrato" type="text" required></div>
+        <div class="full"><label for="cargo">Cargo *</label><input id="cargo" type="text" required></div>
+        <div class="full"><label for="tipo-cotizante">Tipo de cotizante *</label><select id="tipo-cotizante" required><option value="">Seleccione</option><option value="DEPENDIENTE">Dependiente</option><option value="INDEPENDIENTE">Independiente</option></select></div>
+      </div></section>
+      <section><h2>Seguridad social</h2><div class="employee-grid">
+        <div><label for="fondo-salud">Fondo de salud *</label><input id="fondo-salud" type="text" required></div>
+        <div><label for="fondo-pension">Fondo de pensión *</label><input id="fondo-pension" type="text" required></div>
+        <div><label for="caja-compensacion">Fondo de caja de compensación *</label><input id="caja-compensacion" type="text" required></div>
+        <div><label for="arl">ARL *</label><input id="arl" type="text" required></div>
+        <div class="full"><label for="nivel-riesgo-arl">Nivel de riesgo ARL *</label><input id="nivel-riesgo-arl" type="text" placeholder="Ej: Nivel I" required></div>
+      </div></section>
+      <div class="form-actions"><button class="primary" type="submit">Guardar empleado</button><button class="secondary" id="btn-limpiar" type="button">Limpiar formulario</button></div>
+    </form>
+  </main>
+  <script src="crear-empleado.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

@@ -38,6 +38,7 @@
           <div><h2>Liquidar nómina</h2><p>Ingrese la información del empleado y los valores del período para calcular los devengados, deducciones y neto a pagar.</p></div>
           <div class="nomina-actions">
             <a class="btn-nominas-generadas" id="btn-nominas-generadas" href="nominas-generadas.html">Nóminas generadas</a>
+            <a class="btn-crear-empleados" href="crear-empleado.html">Crear empleados</a>
             <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar formulario</button>
           </div>
         </section>
@@ -47,8 +48,8 @@
             <section class="card nomina-card">
               <div class="card-header"><h3>Datos del empleado</h3></div>
               <div class="form-grid">
-                <div class="full"><label for="nombre">Nombre completo</label><input id="nombre" type="text" placeholder="Ej: Juan Pérez"></div>
-                <div><label for="doc">Documento</label><input id="doc" type="text" placeholder="Ej: 1234567890"></div>
+                <div class="full autocomplete-wrap"><label for="nombre">Nombre completo</label><input id="nombre" type="text" autocomplete="off" placeholder="Escriba mínimo 4 letras para buscar un empleado"><div class="employee-suggestions" id="sugerencias-nombre"></div></div>
+                <div class="autocomplete-wrap"><label for="doc">Documento</label><input id="doc" type="text" autocomplete="off" placeholder="Escriba mínimo 4 dígitos"><div class="employee-suggestions" id="sugerencias-doc"></div></div>
                 <div><label for="cargo">Cargo</label><input id="cargo" type="text" placeholder="Ej: Auxiliar administrativo"></div>
                 <div class="full"><label for="cuenta">Cuenta bancaria</label><input id="cuenta" type="text" placeholder="Banco y número de cuenta"></div>
               </div>
