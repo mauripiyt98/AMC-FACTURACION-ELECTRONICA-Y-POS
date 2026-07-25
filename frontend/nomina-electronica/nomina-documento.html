@@ -17,12 +17,16 @@
   <main id="documento-nomina" class="documento">
     <header class="documento-head">
       <div class="brand"><img id="logo-emisor" src="../../assets/logo.png" alt="Logo de la empresa"><div><h1>NÓMINA ELECTRÓNICA</h1><p>Documento soporte de pago de nómina</p></div></div>
-      <div class="numero"><span>Consecutivo</span><strong id="numero-nomina">NE001</strong><small>Generada: <span id="fecha-generacion"></span></small></div>
+      <div class="numero">
+        <span>Consecutivo</span><strong id="numero-nomina">NE001</strong>
+        <small>Generada: <span id="fecha-generacion"></span></small>
+        <small class="periodo-label">Período: <span id="periodo-nomina">—</span></small>
+      </div>
     </header>
 
     <section class="bloques">
       <article><h2>Empleador / emisor</h2><p id="empresa-nombre"></p><p id="empresa-nit"></p><p id="empresa-direccion"></p><p id="empresa-contacto"></p></article>
-      <article><h2>Empleado</h2><p id="empleado-nombre"></p><p id="empleado-documento"></p><p id="empleado-cargo"></p><p id="empleado-cuenta"></p></article>
+      <article><h2>Empleado</h2><p id="empleado-nombre"></p><p id="empleado-documento"></p><p id="empleado-cargo"></p><p id="empleado-cuenta"></p><p id="empleado-periodo-doc"></p></article>
     </section>
 
     <section class="detalle">
@@ -36,7 +40,10 @@
 
     <section class="validacion">
       <div><h2>CUDE de demostración</h2><p id="cude"></p><small>Identificador de prueba. No tiene validez fiscal ante la DIAN.</small></div>
-      <div class="qr"><canvas id="qr-canvas" aria-label="Código QR de la nómina"></canvas><small>Código QR de demostración</small></div>
+      <div class="qr">
+        <img id="qr-imagen-nomina" src="../../assets/qr.png" alt="Código QR de demostración de nómina" style="width:112px;height:112px;display:block;margin:0 auto 5px;">
+        <small>Código QR de demostración</small>
+      </div>
     </section>
     <footer>Documento generado con AMC Facturación Electrónica y POS. La liquidación y el CUDE se presentan únicamente para demostración mientras se configura el envío a producción.</footer>
   </main>

@@ -26,12 +26,17 @@ window.addEventListener('load', () => {
   $('empleado-documento').textContent = `Documento: ${empleado.documento || '—'}`;
   $('empleado-cargo').textContent = `Cargo: ${empleado.cargo || '—'}`;
   $('empleado-cuenta').textContent = `Cuenta bancaria: ${empleado.cuenta || '—'}`;
+  // Período de nómina
+  const periodo = nomina.periodo || {};
+  const periodoTexto = (periodo.mesLabel && periodo.anio) ? `${periodo.mesLabel} ${periodo.anio}` : '—';
+  const periodoEl = $('periodo-nomina');
+  if (periodoEl) periodoEl.textContent = periodoTexto;
+  const periodoDoc = $('empleado-periodo-doc');
+  if (periodoDoc) periodoDoc.textContent = `Período de nómina: ${periodoTexto}`;
   $('devengados-body').innerHTML = `<tr class="seccion"><td colspan="2">Devengados</td></tr><tr><td>Salario base</td><td class="num">${moneda(nomina.salario)}</td></tr><tr><td>Auxilio de transporte</td><td class="num">${moneda(nomina.auxilio)}</td></tr><tr><td>Bonificaciones</td><td class="num">${moneda(nomina.bonificaciones)}</td></tr>`;
   $('deducciones-body').innerHTML = `<tr class="seccion"><td colspan="2">Deducciones</td></tr><tr><td>Salud (4%)</td><td class="num">${moneda(nomina.salud)}</td></tr><tr><td>Pensión (4%)</td><td class="num">${moneda(nomina.pension)}</td></tr><tr><td>Fondo de Solidaridad Pensional</td><td class="num">${moneda(nomina.fsp)}</td></tr>`;
   $('neto-pagar').textContent = moneda(nomina.neto);
   $('cude').textContent = nomina.cude || 'CUDE no disponible';
-  const qrValue = `AMC|NOMINA|${nomina.numeroNomina}|${nomina.cude}|${nomina.neto}`;
-  if (typeof QRCode !== 'undefined') QRCode.toCanvas($('qr-canvas'), qrValue, { width: 112, margin: 1 });
   $('btn-pdf').addEventListener('click', () => {
     if (typeof html2pdf === 'undefined') { window.print(); return; }
     const button = $('btn-pdf'); button.disabled = true; button.textContent = 'Generando PDF…';

@@ -247,6 +247,14 @@ async function guardarEnApi(empleado, calculos) {
   return data.nomina;
 }
 
+function obtenerPeriodoNomina() {
+  return {
+    mes: $('mes-periodo').value || '',
+    mesLabel: $('mes-label').textContent.trim() === 'Seleccionar mes' ? '' : $('mes-label').textContent.trim(),
+    anio: $('anio-periodo').value.trim() || '',
+  };
+}
+
 function obtenerEmpleadoFormulario() {
   return {
     nombre: $('nombre').value.trim(),
@@ -256,11 +264,13 @@ function obtenerEmpleadoFormulario() {
   };
 }
 
-function validarDatosNomina(empleado, calculos) {
+function validarDatosNomina(empleado, calculos, periodo) {
   if (!empleado.nombre || !empleado.documento || !empleado.cargo || !empleado.cuenta) {
     return 'Complete los datos del empleado para generar la nómina.';
   }
   if (calculos.salario <= 0) return 'Debe ingresar un salario base válido.';
+  if (!periodo.mes) return 'Seleccione el mes del período de nómina.';
+  if (!periodo.anio || Number(periodo.anio) < 2020) return 'Ingrese un año válido para el período de nómina.';
   return null;
 }
 
@@ -271,7 +281,8 @@ function cerrarConfirmacionNomina() {
 function solicitarConfirmacionNomina() {
   const empleado = obtenerEmpleadoFormulario();
   const calculos = obtenerCalculos();
-  const error = validarDatosNomina(empleado, calculos);
+  const periodo = obtenerPeriodoNomina();
+  const error = validarDatosNomina(empleado, calculos, periodo);
   if (error) {
     mostrarMensaje(error, 'error');
     return;
@@ -281,12 +292,14 @@ function solicitarConfirmacionNomina() {
   const resumen = $('resumen-confirmacion-nomina');
   resumen.replaceChildren();
   const nombre = document.createElement('strong');
+  const periodo_span = document.createElement('span');
   const valores = document.createElement('span');
   const total = document.createElement('span');
   nombre.textContent = empleado.nombre;
+  periodo_span.textContent = `Período: ${periodo.mesLabel} ${periodo.anio}`;
   valores.textContent = `Documento: ${empleado.documento} · Salario: ${formato(calculos.salario)} · Bonificaciones: ${formato(calculos.bonificaciones)}`;
   total.textContent = `Neto a pagar: ${formato(calculos.neto)}`;
-  resumen.append(nombre, valores, total);
+  resumen.append(nombre, periodo_span, valores, total);
   $('modal-confirmar-nomina').hidden = false;
   $('btn-confirmar-generar').focus();
 }
@@ -294,7 +307,8 @@ function solicitarConfirmacionNomina() {
 async function liquidarNomina() {
   const empleado = obtenerEmpleadoFormulario();
   const calculos = obtenerCalculos();
-  const error = validarDatosNomina(empleado, calculos);
+  const periodo = obtenerPeriodoNomina();
+  const error = validarDatosNomina(empleado, calculos, periodo);
   if (error) return mostrarMensaje(error, 'error');
   pintarCalculos(calculos);
 
@@ -313,6 +327,7 @@ async function liquidarNomina() {
         numeroNomina: nomina.numero_nomina,
         cude: nomina.cude,
         empleado,
+        periodo,
         ...calculos,
         generadoEn: nomina.generado_en,
         estado: nomina.estado || 'GENERADA',
@@ -327,6 +342,7 @@ async function liquidarNomina() {
         numeroNomina: numeroNomina(consecutivo),
         cude: generarCudeDemo(consecutivo, calculos.neto),
         empleado,
+        periodo,
         ...calculos,
         generadoEn: new Date().toISOString(),
         estado: 'GENERADA',
@@ -349,9 +365,57 @@ function limpiar() {
   ['auxilio', 'salud', 'pension', 'fsp'].forEach((id) => { $(id).value = '$ 0'; });
   $('neto').textContent = '$ 0';
   $('mensaje').innerHTML = '';
+  // Limpiar selector de mes
+  $('mes-periodo').value = '';
+  $('mes-label').textContent = 'Seleccionar mes';
+  $('mes-dropdown').querySelectorAll('li').forEach((li) => li.removeAttribute('aria-selected'));
+  $('btn-mes-periodo').setAttribute('aria-expanded', 'false');
+  $('mes-dropdown').hidden = true;
+}
+
+function initMesDropdown() {
+  const btn = $('btn-mes-periodo');
+  const dropdown = $('mes-dropdown');
+  const hiddenInput = $('mes-periodo');
+  const mesLabel = $('mes-label');
+
+  function toggleDropdown(open) {
+    dropdown.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) {
+      const selected = dropdown.querySelector('[aria-selected="true"]') || dropdown.querySelector('li');
+      selected && selected.focus();
+    }
+  }
+
+  function selectMonth(li) {
+    dropdown.querySelectorAll('li').forEach((item) => item.removeAttribute('aria-selected'));
+    li.setAttribute('aria-selected', 'true');
+    hiddenInput.value = li.dataset.value;
+    mesLabel.textContent = li.textContent.trim();
+    toggleDropdown(false);
+    btn.focus();
+  }
+
+  btn.addEventListener('click', () => toggleDropdown(dropdown.hidden));
+
+  dropdown.querySelectorAll('li').forEach((li) => {
+    li.addEventListener('click', () => selectMonth(li));
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMonth(li); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); const next = li.nextElementSibling; if (next) next.focus(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); const prev = li.previousElementSibling; if (prev) prev.focus(); }
+      if (e.key === 'Escape') toggleDropdown(false);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nomina-mes-wrap')) toggleDropdown(false);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initMesDropdown();
   ['salario', 'bonificaciones'].forEach((id) => $(id).addEventListener('input', (event) => actualizarCalculosEnTiempoReal(event.target)));
   $('nombre').addEventListener('input', programarBusqueda);
   $('doc').addEventListener('input', programarBusqueda);

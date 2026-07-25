@@ -57,6 +57,33 @@
             <section class="card nomina-card">
               <div class="card-header"><h3>Devengados</h3></div>
               <div class="form-grid">
+                <!-- Periodo de nómina (exigido por DIAN) -->
+                <div class="nomina-mes-wrap">
+                  <label for="btn-mes-periodo">Mes del período</label>
+                  <button type="button" id="btn-mes-periodo" class="nomina-mes-btn" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="mes-label">Seleccionar mes</span>
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <ul id="mes-dropdown" class="nomina-mes-dropdown" role="listbox" aria-label="Meses del año" hidden>
+                    <li role="option" data-value="01" tabindex="0">Enero</li>
+                    <li role="option" data-value="02" tabindex="0">Febrero</li>
+                    <li role="option" data-value="03" tabindex="0">Marzo</li>
+                    <li role="option" data-value="04" tabindex="0">Abril</li>
+                    <li role="option" data-value="05" tabindex="0">Mayo</li>
+                    <li role="option" data-value="06" tabindex="0">Junio</li>
+                    <li role="option" data-value="07" tabindex="0">Julio</li>
+                    <li role="option" data-value="08" tabindex="0">Agosto</li>
+                    <li role="option" data-value="09" tabindex="0">Septiembre</li>
+                    <li role="option" data-value="10" tabindex="0">Octubre</li>
+                    <li role="option" data-value="11" tabindex="0">Noviembre</li>
+                    <li role="option" data-value="12" tabindex="0">Diciembre</li>
+                  </ul>
+                  <input type="hidden" id="mes-periodo" name="mes-periodo">
+                </div>
+                <div>
+                  <label for="anio-periodo">Año del período</label>
+                  <input id="anio-periodo" type="number" min="2020" max="2099" placeholder="Ej: 2026" autocomplete="off">
+                </div>
                 <div><label for="salario">Salario base</label><input id="salario" inputmode="numeric" autocomplete="off" placeholder="$ 0"></div>
                 <div><label for="bonificaciones">Bonificaciones</label><input id="bonificaciones" inputmode="numeric" autocomplete="off" placeholder="$ 0"></div>
                 <div class="full"><label for="auxilio">Auxilio de transporte</label><input id="auxilio" readonly value="$ 0"></div>
