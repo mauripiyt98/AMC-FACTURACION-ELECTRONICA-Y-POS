@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventarios - AMC Facturación</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="inventarios.css">
+</head>
+<body>
+  <main class="inventory-page">
+    <header class="inventory-header">
+      <div>
+        <a class="back-link" href="../index.html">← Volver al inicio</a>
+        <h1>Productos y servicios</h1>
+        <p>Gestión de productos / servicios</p>
+      </div>
+    </header>
+
+    <section class="inventory-card" aria-label="Listado de productos y servicios">
+      <div class="inventory-toolbar">
+        <label class="search-box" for="buscar-producto">
+          <span aria-hidden="true">⌕</span>
+          <input id="buscar-producto" type="search" placeholder="Buscar producto o servicio">
+        </label>
+        <button type="button" class="btn-outline" data-development="Filtros">⚙ Filtros</button>
+        <div class="toolbar-spacer"></div>
+        <button type="button" class="btn-outline" data-development="Ver reportes">Ver reportes</button>
+        <a class="btn-primary" href="../productos/crear-producto.html">Crear / Importar</a>
+      </div>
+
+      <div id="inventory-message" aria-live="polite"></div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Nombre</th>
+              <th>Código</th>
+              <th>Unidad</th>
+              <th class="num">Precio unitario</th>
+              <th>Estado</th>
+              <th class="num">Stock total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-list"></tbody>
+        </table>
+      </div>
+      <p id="inventory-empty" class="inventory-empty" hidden>No hay productos o servicios creados todavía.</p>
+    </section>
+  </main>
+  <script src="inventarios.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

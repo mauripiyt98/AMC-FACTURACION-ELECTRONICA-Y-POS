@@ -104,6 +104,7 @@
       path.indexOf('/productos/')         !== -1 ||
       path.indexOf('/terceros/')          !== -1 ||
       path.indexOf('/facturas-generadas/') !== -1 ||
+      path.indexOf('/inventarios/')        !== -1 ||
       path.indexOf('/nomina-electronica/') !== -1 ||
       path.indexOf('/usuario/')           !== -1;
 

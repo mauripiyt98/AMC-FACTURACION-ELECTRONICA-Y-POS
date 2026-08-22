@@ -333,12 +333,12 @@ function cargarClienteSeleccionado() {
 }
 
 function cargarProductosDB() {
-  if (useApi && apiData.loaded) return apiData.productos;
+  if (useApi && apiData.loaded) return apiData.productos.filter((p) => p.activo !== false);
   const raw = localStorage.getItem(PRODUCTOS_DB_KEY);
   if (!raw) return [];
   try {
     const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
+    return Array.isArray(arr) ? arr.filter((p) => p.activo !== false) : [];
   } catch {
     return [];
   }
@@ -1090,10 +1090,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const btnWelcomeInventarios = $("btn-welcome-inventarios");
   if (btnWelcomeInventarios) {
     btnWelcomeInventarios.addEventListener("click", () => {
-      abrirModal(
-        "Modulo Inventarios / Bodegas en Desarrollo",
-        "El modulo Inventarios / Bodegas se encuentra actualmente en proceso de desarrollo. Estara disponible proximamente en una futura actualizacion."
-      );
+      window.location.href = "inventarios/inventarios.html";
     });
   }
 

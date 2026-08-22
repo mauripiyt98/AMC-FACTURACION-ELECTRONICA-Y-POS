@@ -93,7 +93,8 @@ document.addEventListener("DOMContentLoaded", () => {
           tipo: p.tipo,
           iva: p.iva,
           unidadMedida: p.unidad_medida,
-          precioBase: p.precio_base || 0
+          precioBase: p.precio_base || 0,
+          activo: p.activo !== false
         }));
         return state.list;
       } catch (err) {
@@ -121,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tipo: $("p-tipo").value,
       iva: parseNumero($("p-iva").value),
       unidadMedida: $("p-unidad").value,
+      precioBase: parseNumero($("p-precio").value),
     };
   }
 
@@ -131,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "p-tipo": "PRODUCTO",
       "p-iva": "19",
       "p-unidad": "UNIDAD",
+      "p-precio": "0",
     };
 
     Object.entries(valores).forEach(([id, value]) => {
@@ -170,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("p-tipo").value = item.tipo || "PRODUCTO";
     $("p-iva").value = String(item.iva !== undefined ? item.iva : "19");
     $("p-unidad").value = item.unidadMedida || item.unidad_medida || "UNIDAD";
+    $("p-precio").value = item.precioBase ?? item.precio_base ?? 0;
     actualizarModoFormulario();
   }
 
@@ -311,7 +315,8 @@ document.addEventListener("DOMContentLoaded", () => {
           codigo: datos.codigo,
           tipo: datos.tipo,
           iva: datos.iva,
-          unidad_medida: datos.unidadMedida
+          unidad_medida: datos.unidadMedida,
+          precio_base: datos.precioBase
         };
 
         let response;
@@ -337,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
             state.list[idx] = guardado;
           }
         } else {
-          guardado = { id: 'local_' + Date.now().toString(), ...datos, creadoEn: new Date().toISOString() };
+          guardado = { id: 'local_' + Date.now().toString(), ...datos, activo: true, creadoEn: new Date().toISOString() };
           state.list.push(guardado);
         }
         localStorage.setItem(PRODUCTOS_DB_KEY, JSON.stringify(state.list));

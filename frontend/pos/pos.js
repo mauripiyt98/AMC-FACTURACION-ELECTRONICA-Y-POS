@@ -109,11 +109,11 @@ function cargarTerceros() {
 }
 
 function cargarProductos() {
-  if (useApi && apiData.loaded) return apiData.productos;
+  if (useApi && apiData.loaded) return apiData.productos.filter((p) => p.activo !== false);
   try {
     const raw = localStorage.getItem(PRODUCTOS_DB_KEY);
     const arr = JSON.parse(raw || '[]');
-    return Array.isArray(arr) ? arr : [];
+    return Array.isArray(arr) ? arr.filter((p) => p.activo !== false) : [];
   } catch { return []; }
 }
 
@@ -165,7 +165,7 @@ function obtenerProductosMasVendidos() {
     resultado.push({
       nombre: p.nombre,
       codigo: p.codigo || '',
-      precio: Number(p.precio || p.valorUnitario || p.precio_venta || 0),
+      precio: Number(p.precio || p.precio_base || p.precioBase || p.valorUnitario || p.precio_venta || 0),
       iva: Number(p.iva || 19),
       retencion: Number(p.retencion || 0),
       count: stats ? stats.count : 0,
@@ -230,7 +230,7 @@ function agregarAlCarrito(prod) {
     posState.carrito.push({
       nombre: prod.nombre || prod.producto || '',
       codigo: prod.codigo || '',
-      precio: Number(prod.precio || prod.valorUnitario || prod.precio_venta || 0),
+      precio: Number(prod.precio || prod.precio_base || prod.precioBase || prod.valorUnitario || prod.precio_venta || 0),
       cantidad: 1,
       iva: Number(prod.iva !== undefined ? prod.iva : 19),
       retencion: Number(prod.retencion || 0),
@@ -516,7 +516,7 @@ function initBusquedaProductosPOS() {
     dropdown.innerHTML = resultados.map((p, i) => `
       <div class="pos-ac-item" data-index="${i}" role="option">
         <strong>${escapeHtml(p.nombre)}</strong>
-        <span>Cód: ${escapeHtml(p.codigo || '—')} · ${Number(p.precio || p.precio_venta || 0) > 0 ? formatoMoneda(Number(p.precio || p.precio_venta || 0)) : 'Sin precio'} · IVA ${p.iva || 0}%</span>
+        <span>Cód: ${escapeHtml(p.codigo || '—')} · ${Number(p.precio || p.precio_base || p.precioBase || p.precio_venta || 0) > 0 ? formatoMoneda(Number(p.precio || p.precio_base || p.precioBase || p.precio_venta || 0)) : 'Sin precio'} · IVA ${p.iva || 0}%</span>
       </div>
     `).join('');
     dropdown.classList.add('visible');
@@ -528,7 +528,7 @@ function initBusquedaProductosPOS() {
         agregarAlCarrito({
           nombre: prod.nombre,
           codigo: prod.codigo || '',
-          precio: Number(prod.precio || prod.valorUnitario || prod.precio_venta || 0),
+          precio: Number(prod.precio || prod.precio_base || prod.precioBase || prod.valorUnitario || prod.precio_venta || 0),
           iva: Number(prod.iva !== undefined ? prod.iva : 19),
           retencion: Number(prod.retencion !== undefined ? prod.retencion : 0),
         });
@@ -559,7 +559,7 @@ function initBusquedaProductosPOS() {
         agregarAlCarrito({
           nombre: prod.nombre,
           codigo: prod.codigo || '',
-          precio: Number(prod.precio || prod.valorUnitario || prod.precio_venta || 0),
+          precio: Number(prod.precio || prod.precio_base || prod.precioBase || prod.valorUnitario || prod.precio_venta || 0),
           iva: Number(prod.iva !== undefined ? prod.iva : 19),
           retencion: Number(prod.retencion !== undefined ? prod.retencion : 0)
         });
