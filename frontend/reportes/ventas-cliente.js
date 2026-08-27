@@ -98,10 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const totals = totalesReporte();
     const filtroCliente = state.filtrosAplicados?.tercero;
     const rows = state.rows.map((item) => `<tr><td>${escapeHtml(item.cliente_documento)}</td><td>${escapeHtml(item.cliente_nombre)}</td><td class="num">${number(item.numero_facturas)}</td><td class="num">${money(item.valor_bruto)}</td><td class="num">${money(item.descuentos)}</td><td class="num">${money(item.subtotal)}</td><td class="num">${money(item.iva)}</td><td class="num">${money(item.retenciones)}</td><td class="num">${money(item.total)}</td></tr>`).join('');
+    const stage = document.createElement('div');
+    stage.className = 'pdf-export-stage';
     const doc = document.createElement('article');
     doc.className = 'pdf-export-document';
     doc.innerHTML = `<header class="pdf-export-header"><div class="pdf-export-brand"><span>AMC</span><div><p class="pdf-export-eyebrow">INFORME CONTABLE</p><h1>Reporte de ventas por cliente</h1><p><strong>${escapeHtml(state.empresa.nombre)}</strong></p><p>NIT / identificación: ${escapeHtml(state.empresa.identificacion)}</p></div></div><div class="pdf-export-meta"><strong>Fecha y hora de emisión</strong><br>${escapeHtml(generado)}<br><br><strong>Estado</strong><br><span>Reporte consolidado</span></div></header><section class="pdf-export-summary"><div><span>Período consultado</span><strong>${escapeHtml(periodoActual())}</strong></div><div><span>Clientes con ventas</span><strong>${state.rows.length}</strong></div><div><span>Total facturado</span><strong>${money(totals.total)}</strong></div></section><div class="pdf-export-period"><strong>Alcance del reporte</strong><br>${filtroCliente ? `Cliente filtrado: ${escapeHtml(filtroCliente.nombre)} · ${escapeHtml(filtroCliente.documento)}` : 'Consolidado de todos los clientes incluidos en la consulta.'}</div><table><thead><tr><th>Identificación</th><th>Cliente</th><th class="num">Facturas</th><th class="num">Valor bruto</th><th class="num">Descuentos</th><th class="num">Subtotal</th><th class="num">IVA</th><th class="num">Retenciones</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="2">Total general</td><td class="num">${totals.numero_facturas}</td><td class="num">${money(totals.valor_bruto)}</td><td class="num">${money(totals.descuentos)}</td><td class="num">${money(totals.subtotal)}</td><td class="num">${money(totals.iva)}</td><td class="num">${money(totals.retenciones)}</td><td class="num">${money(totals.total)}</td></tr></tfoot></table><footer class="pdf-export-footer"><span>AMC Facturación Electrónica y POS</span><span>Facturas anuladas excluidas · Documento generado automáticamente</span></footer>`;
-    document.body.appendChild(doc);
+    stage.appendChild(doc);
+    document.body.appendChild(stage);
     return doc;
   }
 
@@ -120,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error al exportar PDF:', error);
       notify('No fue posible generar el PDF. Inténtalo nuevamente.', true);
     } finally {
-      doc.remove(); button.disabled = false; button.textContent = previous;
+      doc.parentElement?.remove(); button.disabled = false; button.textContent = previous;
     }
   }
 
