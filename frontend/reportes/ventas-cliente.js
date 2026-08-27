@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rows = state.rows.map((item) => `<tr><td>${escapeHtml(item.cliente_documento)}</td><td>${escapeHtml(item.cliente_nombre)}</td><td class="num">${number(item.numero_facturas)}</td><td class="num">${money(item.valor_bruto)}</td><td class="num">${money(item.descuentos)}</td><td class="num">${money(item.subtotal)}</td><td class="num">${money(item.iva)}</td><td class="num">${money(item.retenciones)}</td><td class="num">${money(item.total)}</td></tr>`).join('');
     const doc = document.createElement('article');
     doc.className = 'pdf-export-document';
-    doc.innerHTML = `<header class="pdf-export-header"><div><h1>Reporte de ventas por cliente</h1><p><strong>${escapeHtml(state.empresa.nombre)}</strong></p><p>Identificación: ${escapeHtml(state.empresa.identificacion)}</p></div><div class="pdf-export-meta"><strong>Fecha y hora del reporte</strong><br>${escapeHtml(generado)}<br><br><strong>Elaborado por</strong><br>AMC Facturación Electrónica y POS</div></header><div class="pdf-export-period"><strong>Período consultado:</strong> ${escapeHtml(periodoActual())}${filtroCliente ? `<br><strong>Cliente filtrado:</strong> ${escapeHtml(filtroCliente.nombre)} · ${escapeHtml(filtroCliente.documento)}` : ''}</div><table><thead><tr><th>Identificación</th><th>Cliente</th><th class="num">Facturas</th><th class="num">Valor bruto</th><th class="num">Descuentos</th><th class="num">Subtotal</th><th class="num">IVA</th><th class="num">Retenciones</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="2">Total general</td><td class="num">${totals.numero_facturas}</td><td class="num">${money(totals.valor_bruto)}</td><td class="num">${money(totals.descuentos)}</td><td class="num">${money(totals.subtotal)}</td><td class="num">${money(totals.iva)}</td><td class="num">${money(totals.retenciones)}</td><td class="num">${money(totals.total)}</td></tr></tfoot></table><footer class="pdf-export-footer">Reporte contable generado desde AMC Facturación Electrónica y POS · Facturas anuladas excluidas.</footer>`;
+    doc.innerHTML = `<header class="pdf-export-header"><div class="pdf-export-brand"><span>AMC</span><div><p class="pdf-export-eyebrow">INFORME CONTABLE</p><h1>Reporte de ventas por cliente</h1><p><strong>${escapeHtml(state.empresa.nombre)}</strong></p><p>NIT / identificación: ${escapeHtml(state.empresa.identificacion)}</p></div></div><div class="pdf-export-meta"><strong>Fecha y hora de emisión</strong><br>${escapeHtml(generado)}<br><br><strong>Estado</strong><br><span>Reporte consolidado</span></div></header><section class="pdf-export-summary"><div><span>Período consultado</span><strong>${escapeHtml(periodoActual())}</strong></div><div><span>Clientes con ventas</span><strong>${state.rows.length}</strong></div><div><span>Total facturado</span><strong>${money(totals.total)}</strong></div></section><div class="pdf-export-period"><strong>Alcance del reporte</strong><br>${filtroCliente ? `Cliente filtrado: ${escapeHtml(filtroCliente.nombre)} · ${escapeHtml(filtroCliente.documento)}` : 'Consolidado de todos los clientes incluidos en la consulta.'}</div><table><thead><tr><th>Identificación</th><th>Cliente</th><th class="num">Facturas</th><th class="num">Valor bruto</th><th class="num">Descuentos</th><th class="num">Subtotal</th><th class="num">IVA</th><th class="num">Retenciones</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="2">Total general</td><td class="num">${totals.numero_facturas}</td><td class="num">${money(totals.valor_bruto)}</td><td class="num">${money(totals.descuentos)}</td><td class="num">${money(totals.subtotal)}</td><td class="num">${money(totals.iva)}</td><td class="num">${money(totals.retenciones)}</td><td class="num">${money(totals.total)}</td></tr></tfoot></table><footer class="pdf-export-footer"><span>AMC Facturación Electrónica y POS</span><span>Facturas anuladas excluidas · Documento generado automáticamente</span></footer>`;
     document.body.appendChild(doc);
     return doc;
   }
@@ -113,7 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const doc = construirDocumentoPdf();
     button.disabled = true; button.textContent = 'Generando PDF…';
     try {
-      await html2pdf().set({ margin: [6, 6, 6, 6], filename: `Reporte-ventas-clientes-${archivoSeguro($('fecha-desde').value)}-${archivoSeguro($('fecha-hasta').value)}.pdf`, image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 1.5, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(doc).save();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (document.fonts?.ready) await document.fonts.ready;
+      await html2pdf().set({ margin: [6, 6, 6, 6], filename: `Reporte-ventas-clientes-${archivoSeguro($('fecha-desde').value)}-${archivoSeguro($('fecha-hasta').value)}.pdf`, image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: doc.scrollWidth, windowHeight: doc.scrollHeight }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, pagebreak: { mode: ['css', 'legacy'] } }).from(doc).save();
     } catch (error) {
       console.error('Error al exportar PDF:', error);
       notify('No fue posible generar el PDF. Inténtalo nuevamente.', true);
@@ -132,31 +134,66 @@ document.addEventListener('DOMContentLoaded', () => {
       const generated = new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeStyle: 'short' }).format(new Date());
       const totals = totalesReporte();
       const filtroCliente = state.filtrosAplicados?.tercero;
-      const data = [
-        ['REPORTE DE VENTAS POR CLIENTE'],
-        ['Empresa', state.empresa.nombre],
-        ['Identificación', state.empresa.identificacion],
-        ['Fecha y hora del reporte', generated],
-        ['Período consultado', periodoActual()],
-        ...(filtroCliente ? [['Cliente filtrado', `${filtroCliente.nombre} · ${filtroCliente.documento}`]] : []),
-        [],
-        ['Identificación', 'Cliente', 'Facturas', 'Valor bruto', 'Descuentos', 'Subtotal', 'IVA', 'Retenciones', 'Total'],
-        ...state.rows.map((item) => [item.cliente_documento, item.cliente_nombre, number(item.numero_facturas), number(item.valor_bruto), number(item.descuentos), number(item.subtotal), number(item.iva), number(item.retenciones), number(item.total)]),
-        ['TOTAL GENERAL', '', totals.numero_facturas, totals.valor_bruto, totals.descuentos, totals.subtotal, totals.iva, totals.retenciones, totals.total],
+      const metadata = [
+        'REPORTE DE VENTAS POR CLIENTE',
+        `Empresa: ${state.empresa.nombre}`,
+        `Identificación: ${state.empresa.identificacion}`,
+        `Fecha y hora del reporte: ${generated}`,
+        `Período consultado: ${periodoActual()}`,
+        ...(filtroCliente ? [`Cliente filtrado: ${filtroCliente.nombre} · ${filtroCliente.documento}`] : []),
       ];
+      const headerRow = metadata.length + 3;
+      const dataStartRow = headerRow + 1;
+      const totalRow = dataStartRow + state.rows.length;
+      const footerRow = totalRow + 3;
+      const data = Array.from({ length: footerRow }, () => Array(10).fill(null));
+      metadata.forEach((value, index) => { data[index + 1][1] = value; });
+      data[headerRow - 1] = [null, 'Identificación', 'Cliente', 'Facturas', 'Valor bruto', 'Descuentos', 'Subtotal', 'IVA', 'Retenciones', 'Total'];
+      state.rows.forEach((item, index) => {
+        data[dataStartRow - 1 + index] = [null, item.cliente_documento, item.cliente_nombre, number(item.numero_facturas), number(item.valor_bruto), number(item.descuentos), number(item.subtotal), number(item.iva), number(item.retenciones), number(item.total)];
+      });
+      data[totalRow - 1] = [null, 'TOTAL GENERAL', '', totals.numero_facturas, totals.valor_bruto, totals.descuentos, totals.subtotal, totals.iva, totals.retenciones, totals.total];
+      data[footerRow - 1][5] = `Generado: ${new Intl.DateTimeFormat('es-CO', { dateStyle: 'short', timeStyle: 'short' }).format(new Date())}`;
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.aoa_to_sheet(data);
-      worksheet['!cols'] = [{ wch: 18 }, { wch: 32 }, { wch: 11 }, { wch: 16 }, { wch: 15 }, { wch: 16 }, { wch: 15 }, { wch: 15 }, { wch: 16 }];
-      const headerRow = filtroCliente ? 8 : 7;
-      const lastRow = headerRow + state.rows.length + 1;
-      for (let col = 4; col <= 9; col++) {
-        for (let row = headerRow + 1; row <= lastRow; row++) {
-          const cell = worksheet[XLSX.utils.encode_cell({ r: row - 1, c: col - 1 })];
-          if (cell) cell.z = '$#,##0.00';
+      const range = (row, col) => XLSX.utils.encode_cell({ r: row - 1, c: col - 1 });
+      const setStyle = (fromRow, toRow, fromCol, toCol, style) => {
+        for (let row = fromRow; row <= toRow; row++) for (let col = fromCol; col <= toCol; col++) {
+          const ref = range(row, col);
+          if (!worksheet[ref]) worksheet[ref] = { t: 's', v: '' };
+          worksheet[ref].s = style;
         }
-      }
+      };
+      const greenLight = 'EAF1DD';
+      const greenTitle = 'C4D79B';
+      const greenHeader = '77933C';
+      const border = { top: { style: 'thin', color: { rgb: '1F1F1F' } }, bottom: { style: 'thin', color: { rgb: '1F1F1F' } }, left: { style: 'thin', color: { rgb: '1F1F1F' } }, right: { style: 'thin', color: { rgb: '1F1F1F' } } };
+      const titleStyle = { fill: { fgColor: { rgb: greenTitle } }, font: { name: 'Arial Rounded MT Bold', sz: 14, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const metaStyle = { fill: { fgColor: { rgb: greenLight } }, font: { name: 'Arial Rounded MT Bold', sz: 12, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const tableHeaderStyle = { fill: { fgColor: { rgb: greenHeader } }, font: { name: 'Arial Rounded MT Bold', sz: 12, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const dataStyle = { font: { name: 'Arial Rounded MT Bold', sz: 11, bold: true, color: { rgb: '000000' } }, alignment: { vertical: 'center' }, border };
+      const numberStyle = { ...dataStyle, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '$#,##0.00' };
+      const totalStyle = { ...numberStyle, fill: { fgColor: { rgb: 'F2F2F2' } }, font: { name: 'Arial Rounded MT Bold', sz: 11, bold: true, color: { rgb: '000000' } } };
+      worksheet['!merges'] = [
+        { s: { r: 1, c: 1 }, e: { r: 1, c: 9 } },
+        ...metadata.slice(1).map((_, index) => ({ s: { r: index + 2, c: 1 }, e: { r: index + 2, c: 9 } })),
+      ];
+      worksheet['!cols'] = [{ wch: 3 }, { wch: 18 }, { wch: 32 }, { wch: 11 }, { wch: 16 }, { wch: 15 }, { wch: 16 }, { wch: 15 }, { wch: 16 }, { wch: 16 }];
+      worksheet['!rows'] = [{ hpt: 8 }, { hpt: 28 }, ...metadata.slice(1).map(() => ({ hpt: 23 })), { hpt: 8 }, { hpt: 25 }, ...state.rows.map(() => ({ hpt: 22 })), { hpt: 23 }, { hpt: 8 }, { hpt: 20 }];
+      worksheet['!autofilter'] = { ref: `B${headerRow}:J${totalRow - 1}` };
+      worksheet['!freeze'] = { xSplit: 0, ySplit: headerRow, topLeftCell: `B${dataStartRow}`, activePane: 'bottomLeft', state: 'frozen' };
+      worksheet['!margins'] = { left: .25, right: .25, top: .5, bottom: .5, header: .2, footer: .2 };
+      setStyle(2, 2, 2, 10, titleStyle);
+      setStyle(3, metadata.length + 1, 2, 10, metaStyle);
+      setStyle(headerRow, headerRow, 2, 10, tableHeaderStyle);
+      setStyle(dataStartRow, totalRow - 1, 2, 4, dataStyle);
+      setStyle(dataStartRow, totalRow - 1, 5, 10, numberStyle);
+      setStyle(totalRow, totalRow, 2, 3, totalStyle);
+      setStyle(totalRow, totalRow, 4, 10, totalStyle);
+      for (let row = dataStartRow; row <= totalRow; row++) for (let col = 5; col <= 10; col++) worksheet[range(row, col)].z = '$#,##0.00';
+      workbook.Props = { Title: 'Reporte de ventas por cliente', Subject: 'Reporte contable AMC', Author: 'AMC Facturación Electrónica y POS' };
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Ventas por cliente');
-      XLSX.writeFile(workbook, `Reporte-ventas-clientes-${archivoSeguro($('fecha-desde').value)}-${archivoSeguro($('fecha-hasta').value)}.xlsx`);
+      XLSX.writeFile(workbook, `Reporte-ventas-clientes-${archivoSeguro($('fecha-desde').value)}-${archivoSeguro($('fecha-hasta').value)}.xlsx`, { cellStyles: true });
     } catch (error) {
       console.error('Error al exportar Excel:', error);
       notify('No fue posible generar el archivo Excel. Inténtalo nuevamente.', true);
