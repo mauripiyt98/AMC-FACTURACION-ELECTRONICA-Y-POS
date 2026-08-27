@@ -7,6 +7,8 @@
   <script src="../js/auth-check.js"></script>
   <link rel="stylesheet" href="../css/estilos.css">
   <link rel="stylesheet" href="reportes.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 </head>
 <body>
   <main class="reports-page sales-report">
@@ -22,7 +24,7 @@
         <div id="client-options" class="client-options" hidden></div>
         <p id="selected-client" class="selected-client" hidden></p>
       </div>
-      <div class="filter-actions"><button type="button" id="btn-consultar" class="btn-primary">Consultar reporte</button><button type="button" id="btn-limpiar" class="btn-outline">Limpiar</button></div>
+      <div class="filter-actions"><button type="button" id="btn-consultar" class="btn-primary">Consultar reporte</button><button type="button" id="btn-limpiar" class="btn-outline">Limpiar</button><button type="button" id="btn-exportar-pdf" class="btn-outline btn-export">Exportar a PDF</button><button type="button" id="btn-exportar-excel" class="btn-outline btn-export">Exportar a Excel</button></div>
     </section>
 
     <section class="report-table-card" aria-label="Resultados del reporte">
