@@ -168,12 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const greenTitle = 'C4D79B';
       const greenHeader = '77933C';
       const border = { top: { style: 'thin', color: { rgb: '1F1F1F' } }, bottom: { style: 'thin', color: { rgb: '1F1F1F' } }, left: { style: 'thin', color: { rgb: '1F1F1F' } }, right: { style: 'thin', color: { rgb: '1F1F1F' } } };
-      const titleStyle = { fill: { fgColor: { rgb: greenTitle } }, font: { name: 'Arial Rounded MT Bold', sz: 14, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
-      const metaStyle = { fill: { fgColor: { rgb: greenLight } }, font: { name: 'Arial Rounded MT Bold', sz: 12, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
-      const tableHeaderStyle = { fill: { fgColor: { rgb: greenHeader } }, font: { name: 'Arial Rounded MT Bold', sz: 12, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const titleStyle = { fill: { patternType: 'solid', fgColor: { rgb: greenTitle } }, font: { name: 'Arial Rounded MT Bold', sz: 14, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const metaStyle = { fill: { patternType: 'solid', fgColor: { rgb: greenLight } }, font: { name: 'Arial Rounded MT Bold', sz: 12, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const tableHeaderStyle = { fill: { patternType: 'solid', fgColor: { rgb: greenHeader } }, font: { name: 'Arial Rounded MT Bold', sz: 12, bold: true, color: { rgb: '000000' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
       const dataStyle = { font: { name: 'Arial Rounded MT Bold', sz: 11, bold: true, color: { rgb: '000000' } }, alignment: { vertical: 'center' }, border };
       const numberStyle = { ...dataStyle, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '$#,##0.00' };
-      const totalStyle = { ...numberStyle, fill: { fgColor: { rgb: 'F2F2F2' } }, font: { name: 'Arial Rounded MT Bold', sz: 11, bold: true, color: { rgb: '000000' } } };
+      const totalStyle = { ...numberStyle, fill: { patternType: 'solid', fgColor: { rgb: 'F2F2F2' } }, font: { name: 'Arial Rounded MT Bold', sz: 11, bold: true, color: { rgb: '000000' } } };
       worksheet['!merges'] = [
         { s: { r: 1, c: 1 }, e: { r: 1, c: 9 } },
         ...metadata.slice(1).map((_, index) => ({ s: { r: index + 2, c: 1 }, e: { r: index + 2, c: 9 } })),
