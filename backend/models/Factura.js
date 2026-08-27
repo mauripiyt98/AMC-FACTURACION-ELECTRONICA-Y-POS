@@ -168,6 +168,50 @@ class Factura {
     );
     return rows[0];
   }
+
+  /**
+   * Acumula las ventas por cliente dentro de un rango de fechas.
+   * Los descuentos aún no se persisten en el modelo de factura, por lo que
+   * se exponen como cero hasta que se habilite ese concepto en facturación.
+   */
+  static async ventasPorCliente(client, empresaId, { desde, hasta, terceroId } = {}) {
+    const params = [empresaId];
+    let where = 'WHERE f.empresa_id = $1 AND f.estado != \'ANULADA\'';
+
+    if (desde) {
+      params.push(desde);
+      where += ` AND f.generado_en >= $${params.length}::date`;
+    }
+    if (hasta) {
+      params.push(hasta);
+      // Incluir todo el día final, sin depender de la hora de generación.
+      where += ` AND f.generado_en < ($${params.length}::date + INTERVAL '1 day')`;
+    }
+    if (terceroId) {
+      params.push(terceroId);
+      where += ` AND f.tercero_id = $${params.length}`;
+    }
+
+    const { rows } = await client.query(
+      `SELECT
+         COALESCE(f.tercero_id::text, f.cliente_documento) AS cliente_id,
+         f.cliente_documento,
+         MAX(f.cliente_nombre) AS cliente_nombre,
+         COUNT(*)::int AS numero_facturas,
+         COALESCE(SUM(f.total_base), 0) AS valor_bruto,
+         0::numeric AS descuentos,
+         COALESCE(SUM(f.total_base), 0) AS subtotal,
+         COALESCE(SUM(f.total_iva), 0) AS iva,
+         COALESCE(SUM(f.total_retencion), 0) AS retenciones,
+         COALESCE(SUM(f.total_factura), 0) AS total
+       FROM facturas f
+       ${where}
+       GROUP BY COALESCE(f.tercero_id::text, f.cliente_documento), f.cliente_documento
+       ORDER BY total DESC, cliente_nombre ASC`,
+      params
+    );
+    return rows;
+  }
 }
 
 module.exports = Factura;

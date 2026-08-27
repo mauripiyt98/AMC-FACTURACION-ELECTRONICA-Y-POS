@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ventas por cliente - AMC Facturación</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="reportes.css">
+</head>
+<body>
+  <main class="reports-page sales-report">
+    <a class="back-link" href="reportes.html">← Volver a reportes</a>
+    <header class="reports-header compact"><div><h1>Ventas por cliente</h1><p>Facturación consolidada por tercero dentro del período seleccionado.</p></div></header>
+
+    <section class="filters-card" aria-label="Filtros del reporte">
+      <div class="filter-group"><label for="fecha-desde">Desde</label><input id="fecha-desde" type="date"></div>
+      <div class="filter-group"><label for="fecha-hasta">Hasta</label><input id="fecha-hasta" type="date"></div>
+      <div class="filter-group client-filter">
+        <label for="buscar-cliente">Cliente</label>
+        <input id="buscar-cliente" type="search" autocomplete="off" placeholder="Nombre o identificación (mín. 3)">
+        <div id="client-options" class="client-options" hidden></div>
+        <p id="selected-client" class="selected-client" hidden></p>
+      </div>
+      <div class="filter-actions"><button type="button" id="btn-consultar" class="btn-primary">Consultar reporte</button><button type="button" id="btn-limpiar" class="btn-outline">Limpiar</button></div>
+    </section>
+
+    <section class="report-table-card" aria-label="Resultados del reporte">
+      <div id="report-message" aria-live="polite"></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Identificación</th><th>Cliente</th><th class="num">Facturas</th><th class="num">Valor bruto</th><th class="num">Descuentos</th><th class="num">Subtotal</th><th class="num">IVA</th><th class="num">Retenciones</th><th class="num">Total</th></tr></thead>
+          <tbody id="report-rows"></tbody>
+          <tfoot id="report-total"></tfoot>
+        </table>
+      </div>
+      <p id="report-empty" class="empty-state" hidden>No hay facturas para los filtros seleccionados.</p>
+    </section>
+    <p class="report-note">Las facturas anuladas no se incluyen. Los descuentos se mostrarán cuando se habiliten en el proceso de facturación.</p>
+  </main>
+  <script src="ventas-cliente.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

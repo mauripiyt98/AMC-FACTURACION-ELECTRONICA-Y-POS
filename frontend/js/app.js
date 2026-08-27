@@ -1059,14 +1059,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  // Tarjeta Reportes Ventas/Productos (En Desarrollo)
+  // Tarjeta Reportes Ventas/Productos
   const btnWelcomeReportes = $("btn-welcome-reportes");
   if (btnWelcomeReportes) {
     btnWelcomeReportes.addEventListener("click", () => {
-      abrirModal(
-        "Módulo Reportes en Desarrollo",
-        "El módulo de Reportes de Ventas/Productos se encuentra actualmente en desarrollo. Próximamente incluirá indicadores de venta, análisis por período y más."
-      );
+      window.location.href = "reportes/reportes.html";
     });
   }
 
