@@ -252,6 +252,28 @@ class Factura {
     );
     return rows;
   }
+
+  /**
+   * Devuelve el ingreso neto antes de impuestos por mes. Una factura anulada se
+   * excluye porque representa una reversión/devolución de la venta original.
+   */
+  static async ventasComparativasPorMes(client, empresaId, anio) {
+    const inicio = `${anio}-01-01`;
+    const fin = `${anio + 1}-01-01`;
+    const { rows } = await client.query(
+      `SELECT EXTRACT(MONTH FROM generado_en)::int AS mes,
+              COALESCE(SUM(total_base), 0) AS total
+       FROM facturas
+       WHERE empresa_id = $1
+         AND estado != 'ANULADA'
+         AND generado_en >= $2::date
+         AND generado_en < $3::date
+       GROUP BY EXTRACT(MONTH FROM generado_en)
+       ORDER BY mes ASC`,
+      [empresaId, inicio, fin]
+    );
+    return rows;
+  }
 }
 
 module.exports = Factura;

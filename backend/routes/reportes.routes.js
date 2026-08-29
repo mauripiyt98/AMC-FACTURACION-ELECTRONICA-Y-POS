@@ -60,4 +60,19 @@ router.get('/ventas-por-producto', async (req, res, next) => {
   }
 });
 
+/** GET /api/reportes/ventas-comparativas?anio=AAAA */
+router.get('/ventas-comparativas', async (req, res, next) => {
+  try {
+    const { anio } = req.query;
+    const year = Number(anio);
+    if (!Number.isInteger(year) || year < 2000 || year > 9999) {
+      throw new ValidationError('Selecciona un año válido para el reporte');
+    }
+    const ventas = await FacturaService.ventasComparativasPorMes(req.dbClient, req.empresaId, year);
+    res.json({ success: true, ventas });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

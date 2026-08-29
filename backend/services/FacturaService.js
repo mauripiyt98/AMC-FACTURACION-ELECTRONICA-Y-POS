@@ -146,6 +146,10 @@ class FacturaService {
   static async ventasPorProducto(client, empresaId, filtros = {}) {
     return Factura.ventasPorProducto(client, empresaId, filtros);
   }
+
+  static async ventasComparativasPorMes(client, empresaId, anio) {
+    return Factura.ventasComparativasPorMes(client, empresaId, anio);
+  }
 }
 
 /**

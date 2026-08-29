@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparativo de ventas por períodos - AMC Facturación</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="reportes.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+</head>
+<body>
+  <main class="reports-page comparative-report">
+    <a class="back-link" href="reportes.html">← Volver a reportes</a>
+    <header class="reports-header compact"><div><h1>Comparativo de ventas por períodos</h1><p>Ingresos mensuales netos antes de impuestos para el año seleccionado.</p></div></header>
+    <section class="filters-card comparative-filters" aria-label="Filtros del reporte comparativo">
+      <div class="filter-group"><label for="anio">Año</label><input id="anio" type="number" min="2000" max="9999" step="1" inputmode="numeric"></div>
+      <div class="filter-actions"><button type="button" id="btn-consultar" class="btn-primary">Consultar reporte</button><button type="button" id="btn-limpiar" class="btn-outline">Limpiar</button><button type="button" id="btn-exportar-pdf" class="btn-outline btn-export">Exportar a PDF</button></div>
+    </section>
+    <div id="report-message" aria-live="polite"></div>
+    <section class="comparative-grid" aria-label="Resultados comparativos">
+      <article class="comparative-card chart-card"><header><span aria-hidden="true">▥</span><h2>Ventas por mes (COP)</h2></header><div class="chart-wrap"><canvas id="sales-chart" aria-label="Gráfico de barras de ventas mensuales" role="img"></canvas></div></article>
+      <article class="comparative-card detail-card"><header><span aria-hidden="true">☷</span><h2>Ventas por mes (detalle)</h2></header><table><thead><tr><th>Mes</th><th class="num">Ventas antes de impuestos (COP)</th></tr></thead><tbody id="month-detail"></tbody><tfoot id="month-total"></tfoot></table></article>
+    </section>
+    <p class="report-note">Las ventas se muestran antes de impuestos. Las facturas anuladas se excluyen del ingreso mensual como reversión de la venta.</p>
+  </main>
+  <script src="comparativo-ventas.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>
