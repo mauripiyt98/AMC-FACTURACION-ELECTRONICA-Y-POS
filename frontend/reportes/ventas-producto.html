@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ventas por producto y/o servicio - AMC Facturación</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="reportes.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script>
+</head>
+<body>
+  <main class="reports-page sales-report">
+    <a class="back-link" href="reportes.html">← Volver a reportes</a>
+    <header class="reports-header compact"><div><h1>Ventas por producto y/o servicio</h1><p>Facturación consolidada por cada producto o servicio dentro del período seleccionado.</p></div></header>
+    <section class="filters-card" aria-label="Filtros del reporte">
+      <div class="filter-group"><label for="fecha-desde">Desde</label><input id="fecha-desde" type="date"></div>
+      <div class="filter-group"><label for="fecha-hasta">Hasta</label><input id="fecha-hasta" type="date"></div>
+      <div class="filter-group client-filter">
+        <label for="buscar-producto">Producto o servicio</label>
+        <input id="buscar-producto" type="search" autocomplete="off" placeholder="Código o nombre (mín. 2)">
+        <div id="product-options" class="client-options" hidden></div>
+        <p id="selected-product" class="selected-client" hidden></p>
+      </div>
+      <div class="filter-actions"><button type="button" id="btn-consultar" class="btn-primary">Consultar reporte</button><button type="button" id="btn-limpiar" class="btn-outline">Limpiar</button><button type="button" id="btn-exportar-pdf" class="btn-outline btn-export">Exportar a PDF</button><button type="button" id="btn-exportar-excel" class="btn-outline btn-export">Exportar a Excel</button></div>
+    </section>
+    <section class="report-table-card" aria-label="Resultados del reporte">
+      <div id="report-message" aria-live="polite"></div>
+      <div class="table-scroll">
+        <table class="product-report-table">
+          <thead><tr><th>Código</th><th>Producto o servicio</th><th class="num">Cantidad vendida</th><th class="num">Valor bruto</th><th class="num">IVA</th><th class="num">Retenciones</th><th class="num">Total</th></tr></thead>
+          <tbody id="report-rows"></tbody>
+          <tfoot id="report-total"></tfoot>
+        </table>
+      </div>
+      <p id="report-empty" class="empty-state" hidden>No hay productos o servicios facturados para los filtros seleccionados.</p>
+    </section>
+    <p class="report-note">Las facturas anuladas no se incluyen. Los valores se obtienen de las líneas facturadas en el período consultado.</p>
+  </main>
+  <script src="ventas-producto.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

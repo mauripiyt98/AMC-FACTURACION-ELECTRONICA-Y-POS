@@ -212,6 +212,46 @@ class Factura {
     );
     return rows;
   }
+
+  /** Acumula líneas facturadas por producto o servicio dentro de un período. */
+  static async ventasPorProducto(client, empresaId, { desde, hasta, productoId } = {}) {
+    const params = [empresaId];
+    let where = "WHERE f.empresa_id = $1 AND lf.empresa_id = $1 AND f.estado != 'ANULADA'";
+
+    if (desde) {
+      params.push(desde);
+      where += ` AND f.generado_en >= $${params.length}::date`;
+    }
+    if (hasta) {
+      params.push(hasta);
+      where += ` AND f.generado_en < ($${params.length}::date + INTERVAL '1 day')`;
+    }
+    if (productoId) {
+      params.push(productoId);
+      where += ` AND lf.producto_id = $${params.length}`;
+    }
+
+    const { rows } = await client.query(
+      `SELECT
+         COALESCE(lf.producto_id::text, CONCAT(COALESCE(lf.codigo, ''), ':', lf.nombre)) AS producto_id,
+         COALESCE(lf.codigo, 'SIN-CÓDIGO') AS producto_codigo,
+         MAX(lf.nombre) AS producto_nombre,
+         COALESCE(MAX(p.tipo), 'PRODUCTO / SERVICIO') AS tipo,
+         COALESCE(SUM(lf.cantidad), 0) AS cantidad_total,
+         COALESCE(SUM(lf.base), 0) AS valor_bruto,
+         COALESCE(SUM(lf.valor_iva), 0) AS iva,
+         COALESCE(SUM(lf.valor_retencion), 0) AS retenciones,
+         COALESCE(SUM(lf.total), 0) AS total
+       FROM facturas f
+       INNER JOIN lineas_factura lf ON lf.factura_id = f.id AND lf.empresa_id = f.empresa_id
+       LEFT JOIN productos p ON p.id = lf.producto_id AND p.empresa_id = lf.empresa_id
+       ${where}
+       GROUP BY COALESCE(lf.producto_id::text, CONCAT(COALESCE(lf.codigo, ''), ':', lf.nombre)), COALESCE(lf.codigo, 'SIN-CÓDIGO')
+       ORDER BY total DESC, producto_nombre ASC`,
+      params
+    );
+    return rows;
+  }
 }
 
 module.exports = Factura;
