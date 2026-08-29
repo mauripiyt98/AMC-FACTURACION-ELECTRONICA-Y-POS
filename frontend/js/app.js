@@ -1036,6 +1036,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
+  const btnWelcomeCotizacion = $("btn-welcome-cotizacion");
+  if (btnWelcomeCotizacion) {
+    btnWelcomeCotizacion.addEventListener("click", () => {
+      abrirModal("Módulo en Desarrollo", "La creación de cotizaciones estará disponible próximamente.");
+    });
+  }
+
+  const btnWelcomeFacturaCompra = $("btn-welcome-factura-compra");
+  if (btnWelcomeFacturaCompra) {
+    btnWelcomeFacturaCompra.addEventListener("click", () => {
+      abrirModal("Módulo en Desarrollo", "El ingreso de facturas de compra estará disponible próximamente.");
+    });
+  }
+
   const lnkInicio = $("lnk-inicio");
   if (lnkInicio) {
     lnkInicio.addEventListener("click", (e) => {
