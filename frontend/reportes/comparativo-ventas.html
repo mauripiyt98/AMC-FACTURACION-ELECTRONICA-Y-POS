@@ -7,7 +7,6 @@
   <script src="../js/auth-check.js"></script>
   <link rel="stylesheet" href="../css/estilos.css">
   <link rel="stylesheet" href="reportes.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
 </head>
 <body>
@@ -20,7 +19,7 @@
     </section>
     <div id="report-message" aria-live="polite"></div>
     <section class="comparative-grid" aria-label="Resultados comparativos">
-      <article class="comparative-card chart-card"><header><span aria-hidden="true">▥</span><h2>Ventas por mes (COP)</h2></header><div class="chart-wrap"><canvas id="sales-chart" aria-label="Gráfico de barras de ventas mensuales" role="img"></canvas></div></article>
+      <article class="comparative-card chart-card"><header><span aria-hidden="true">▥</span><h2>Ventas por mes (COP)</h2></header><div id="sales-chart" class="chart-wrap" aria-label="Gráfico de barras de ventas mensuales" role="img"></div></article>
       <article class="comparative-card detail-card"><header><span aria-hidden="true">☷</span><h2>Ventas por mes (detalle)</h2></header><table><thead><tr><th>Mes</th><th class="num">Ventas antes de impuestos (COP)</th></tr></thead><tbody id="month-detail"></tbody><tfoot id="month-total"></tfoot></table></article>
     </section>
     <p class="report-note">Las ventas se muestran antes de impuestos. Las facturas anuladas se excluyen del ingreso mensual como reversión de la venta.</p>

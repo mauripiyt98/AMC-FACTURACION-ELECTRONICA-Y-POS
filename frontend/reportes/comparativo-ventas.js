@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = 'http://localhost:3000/api';
   const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const $ = (id) => document.getElementById(id);
-  const state = { rows: [], empresa: { nombre: 'AMC Facturación Electrónica y POS', identificacion: 'No disponible' }, chart: null, anioConsultado: null };
+  const state = { rows: [], empresa: { nombre: 'AMC Facturación Electrónica y POS', identificacion: 'No disponible' }, anioConsultado: null };
 
   function getToken() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}').token || null; } catch { return null; } }
   function number(value) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
@@ -56,19 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return totals.map((total, index) => ({ mes: index + 1, total }));
   }
 
+  function chartMetrics(rows = state.rows) {
+    const step = 5000000;
+    const maximum = Math.max(step, Math.ceil(Math.max(...rows.map((row) => row.total), 0) / step) * step);
+    return { maximum, ticks: Array.from({ length: maximum / step + 1 }, (_, index) => maximum - index * step) };
+  }
+
+  function chartMarkup(rows = state.rows, className = '') {
+    const { maximum, ticks } = chartMetrics(rows);
+    return `<div class="sales-bar-chart ${className}"><div class="sales-y-axis">${ticks.map((tick) => `<span>${tick ? `${moneyPlain(tick / 1000000)} M` : '0'}</span>`).join('')}</div><div class="sales-plot"><div class="sales-grid">${ticks.map((tick) => `<i style="bottom:${(tick / maximum) * 100}%"></i>`).join('')}</div><div class="sales-bars">${rows.map((row) => `<div class="sales-bar-slot" style="--bar-height:${(row.total / maximum) * 100}%"><span class="sales-bar-value">${row.total ? money(row.total) : ''}</span><div class="sales-bar"></div><span class="sales-bar-month">${row.mes}</span></div>`).join('')}</div></div></div>`;
+  }
+
   function renderChart() {
-    if (typeof Chart === 'undefined') throw new Error('No se pudo cargar el gráfico. Verifica tu conexión e inténtalo de nuevo.');
-    const context = $('sales-chart').getContext('2d');
-    if (state.chart) state.chart.destroy();
-    state.chart = new Chart(context, {
-      type: 'bar',
-      data: { labels: state.rows.map((row) => row.mes), datasets: [{ label: 'Ventas antes de impuestos', data: state.rows.map((row) => row.total), backgroundColor: '#386ff3', hoverBackgroundColor: '#1a53dc', borderRadius: 6, maxBarThickness: 42 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => ` ${money(context.raw)}` } } },
-        scales: { x: { grid: { display: false }, ticks: { color: '#35586a' } }, y: { beginAtZero: true, grid: { color: '#dbe8ef', borderDash: [3, 4] }, ticks: { color: '#527083', callback: (value) => moneyPlain(value) } } },
-      },
-    });
+    const chart = $('sales-chart');
+    chart.innerHTML = chartMarkup();
+    requestAnimationFrame(() => chart.querySelector('.sales-bar-chart')?.classList.add('is-loaded'));
   }
 
   function render(rows) {
@@ -92,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function validarExportacion() {
-    if (state.anioConsultado && state.chart) return true;
+    if (state.anioConsultado) return true;
     notify('Consulta primero el año que deseas exportar.', true);
     return false;
   }
@@ -102,8 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const annualTotal = state.rows.reduce((sum, row) => sum + row.total, 0);
     const stage = document.createElement('div'); stage.className = 'pdf-export-stage';
     const doc = document.createElement('article'); doc.className = 'pdf-export-document comparative-pdf';
-    const chartImage = state.chart.toBase64Image('image/png', 1);
-    doc.innerHTML = `<header class="pdf-export-header"><div class="pdf-export-brand"><span>AMC</span><div><p class="pdf-export-eyebrow">INFORME CONTABLE</p><h1>Comparativo de ventas por períodos</h1><p><strong>${state.empresa.nombre}</strong></p><p>NIT / identificación: ${state.empresa.identificacion}</p></div></div><div class="pdf-export-meta"><strong>Fecha y hora de emisión</strong><br>${generated}<br><br><strong>Año analizado</strong><br><span>${state.anioConsultado}</span></div></header><section class="pdf-export-summary"><div><span>Período consultado</span><strong>Enero a diciembre de ${state.anioConsultado}</strong></div><div><span>Ventas anuales</span><strong>${money(annualTotal)}</strong></div><div><span>Base del cálculo</span><strong>Antes de impuestos</strong></div></section><section class="comparative-pdf-content"><div><h2>Ventas por mes (COP)</h2><img src="${chartImage}" alt="Gráfico de barras de ventas mensuales"></div><div><h2>Ventas por mes (detalle)</h2><table><thead><tr><th>Mes</th><th class="num">Ventas (COP)</th></tr></thead><tbody>${state.rows.map((row) => `<tr><td>${row.mes}</td><td class="num">${money(row.total)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total anual</td><td class="num">${money(annualTotal)}</td></tr></tfoot></table></div></section><footer class="pdf-export-footer"><span>AMC Facturación Electrónica y POS</span><span>Valores antes de impuestos · Facturas anuladas excluidas</span></footer>`;
+    doc.innerHTML = `<header class="pdf-export-header"><div class="pdf-export-brand"><span>AMC</span><div><p class="pdf-export-eyebrow">INFORME CONTABLE</p><h1>Comparativo de ventas por períodos</h1><p><strong>${state.empresa.nombre}</strong></p><p>NIT / identificación: ${state.empresa.identificacion}</p></div></div><div class="pdf-export-meta"><strong>Fecha y hora de emisión</strong><br>${generated}<br><br><strong>Año analizado</strong><br><span>${state.anioConsultado}</span></div></header><section class="pdf-export-summary"><div><span>Período consultado</span><strong>Enero a diciembre de ${state.anioConsultado}</strong></div><div><span>Ventas anuales</span><strong>${money(annualTotal)}</strong></div><div><span>Base del cálculo</span><strong>Antes de impuestos</strong></div></section><section class="comparative-pdf-content"><div><h2>Ventas por mes (COP)</h2>${chartMarkup(state.rows, 'sales-bar-chart-pdf')}</div><div><h2>Ventas por mes (detalle)</h2><table><thead><tr><th>Mes</th><th class="num">Ventas (COP)</th></tr></thead><tbody>${state.rows.map((row) => `<tr><td>${row.mes}</td><td class="num">${money(row.total)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total anual</td><td class="num">${money(annualTotal)}</td></tr></tfoot></table></div></section><footer class="pdf-export-footer"><span>AMC Facturación Electrónica y POS</span><span>Valores antes de impuestos · Facturas anuladas excluidas</span></footer>`;
     stage.appendChild(doc); document.body.appendChild(stage); return doc;
   }
 
