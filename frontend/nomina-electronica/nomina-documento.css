@@ -1,6 +1,6 @@
 :root { --azul: #001e82; --celeste: #eaf4ff; --borde: #cde7f0; --texto: #173e52; }
 * { box-sizing: border-box; }
-body { margin: 0; background: #eef7fb; color: var(--texto); font-family: Arial, Helvetica, sans-serif; }
+body { margin: 0; background: #eef7fb; color: var(--texto); font-family: sans-serif; }
 .toolbar { max-width: 900px; margin: 18px auto 0; padding: 0 16px; display: flex; justify-content: space-between; gap: 12px; }
 .toolbar a, .toolbar button { padding: 10px 14px; border: 1px solid var(--azul); border-radius: 6px; background: #fff; color: var(--azul); font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
 .toolbar button { background: var(--azul); color: #fff; }

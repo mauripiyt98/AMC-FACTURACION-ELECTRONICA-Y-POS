@@ -13,7 +13,7 @@
   --danger-light: #fff0f4;
   --shadow: 0 4px 24px rgba(11, 70, 235, 0.12);
   --radius: 14px;
-  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font: sans-serif;
 }
 
 * {
