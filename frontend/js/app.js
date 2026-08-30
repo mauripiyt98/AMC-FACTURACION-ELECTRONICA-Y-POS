@@ -1050,6 +1050,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
+  const btnWelcomeContabilidad = $("btn-welcome-contabilidad");
+  if (btnWelcomeContabilidad) {
+    btnWelcomeContabilidad.addEventListener("click", () => {
+      abrirModal("Módulo en Desarrollo", "El módulo de contabilidad estará disponible próximamente.");
+    });
+  }
+
   const lnkInicio = $("lnk-inicio");
   if (lnkInicio) {
     lnkInicio.addEventListener("click", (e) => {
