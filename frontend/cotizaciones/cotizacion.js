@@ -1,4 +1,13 @@
-// ── Configuración y Contexto ────────────────────────────────────────────────
+/**
+ * cotizacion.js — Lógica de creación de cotizaciones
+ *
+ * Mantiene la arquitectura idéntica al formulario de facturas:
+ * - Soporte dual: API REST (/api/cotizaciones) y localStorage (modo offline).
+ * - Autocompletado de terceros y productos en tiempo real.
+ * - Consecutivo propio: COTZ-0001 a COTZ-1000.
+ */
+'use strict';
+
 const SESSION_KEY = 'amc_session_v2';
 function getToken() {
   try {
@@ -6,6 +15,7 @@ function getToken() {
     return s.token || null;
   } catch { return null; }
 }
+
 const token = getToken();
 const useApi = !!token;
 const API_BASE = 'http://localhost:3000/api';
@@ -22,7 +32,7 @@ async function apiFetch(endpoint, options = {}) {
   });
   if (res.status === 401) {
     sessionStorage.clear();
-    window.location.replace('login.html');
+    window.location.replace('../login.html');
     throw new Error('Sesión expirada');
   }
   const data = await res.json();
@@ -30,8 +40,6 @@ async function apiFetch(endpoint, options = {}) {
   return data;
 }
 
-// El catálogo de terceros no tiene un límite funcional. Se consulta por
-// páginas para que los primeros 50 registros no oculten el resto.
 async function cargarTodosLosTercerosApi() {
   const pageSize = 500;
   const terceros = [];
@@ -51,13 +59,15 @@ async function cargarTodosLosTercerosApi() {
 const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
 const isDev = activeUserCode === "1110591592";
 
-const STORAGE_KEY = isDev ? "amc_factura_preview_v1" : `amc_factura_preview_v1_${activeUserCode}`;
+const TERCEROS_DB_KEY = isDev ? "amc_terceros_db_v1" : `amc_terceros_db_v1_${activeUserCode}`;
+const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
+const COTIZACIONES_DB_KEY = isDev ? "amc_cotizaciones_generadas_db_v1" : `amc_cotizaciones_generadas_db_v1_${activeUserCode}`;
 
-const MEDIOS_PAGO = [
-  { value: "EFECTIVO",       label: "Efectivo" },
-  { value: "TRANSFERENCIA",  label: "Transferencia bancaria" },
-  { value: "TARJETA",        label: "Tarjeta débito / crédito" },
-];
+const RANGO_COTIZACION = {
+  prefijo: "COTZ",
+  desde: 1,
+  hasta: 1000
+};
 
 // ── Utilidades ──────────────────────────────────────────────────────────────
 function formatoMoneda(valor) {
@@ -128,26 +138,6 @@ function formatInputWithDots(input) {
   input.setSelectionRange(newSelectionStart, newSelectionStart);
 }
 
-// ── Estado ──────────────────────────────────────────────────────────────────
-const state = { lineas: [], clienteTercero: null };
-
-// ── Helpers DOM ─────────────────────────────────────────────────────────────
-const $ = (id) => document.getElementById(id);
-
-// ── Terceros (base de datos local) ──────────────────────────────────────────
-const TERCEROS_DB_KEY = isDev ? "amc_terceros_db_v1" : `amc_terceros_db_v1_${activeUserCode}`;
-const CLIENTE_SELECCIONADO_KEY = isDev ? "amc_cliente_seleccionado_v1" : `amc_cliente_seleccionado_v1_${activeUserCode}`;
-const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
-const PRODUCTO_SELECCIONADO_KEY = isDev ? "amc_producto_seleccionado_v1" : `amc_producto_seleccionado_v1_${activeUserCode}`;
-const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
-const RESOLUCION_FACTURACION_DEMO = {
-  prefijo: "FE",
-  desde: 1,
-  hasta: 1000,
-  numeroResolucion: "18760000001",
-  vigencia: "Demo academico",
-};
-
 function normalizarTexto(s) {
   return String(s || "")
     .trim()
@@ -156,6 +146,20 @@ function normalizarTexto(s) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+// ── Estado ──────────────────────────────────────────────────────────────────
+const state = { lineas: [], clienteTercero: null };
+const $ = (id) => document.getElementById(id);
+
+function mostrarMensaje(html, tipo = "success") {
+  const c = $("mensaje-cotizacion");
+  if (c) c.innerHTML = `<div class="alert alert-${tipo}">${html}</div>`;
+}
+function limpiarMensaje() {
+  const c = $("mensaje-cotizacion");
+  if (c) c.innerHTML = "";
+}
+
+// ── Terceros ────────────────────────────────────────────────────────────────
 function cargarTercerosDB() {
   if (useApi && apiData.loaded) return apiData.terceros;
   const raw = localStorage.getItem(TERCEROS_DB_KEY);
@@ -168,15 +172,15 @@ function cargarTercerosDB() {
   }
 }
 
-function sincronizarTerceroLocalDesdeFactura(cliente) {
+function sincronizarTerceroLocal(cliente) {
   const documento = normalizarTexto(cliente?.documento);
   if (!documento) return null;
 
   const terceros = cargarTercerosDB();
-  const indice = terceros.findIndex((tercero) => normalizarTexto(tercero.documento) === documento);
+  const indice = terceros.findIndex((t) => normalizarTexto(t.documento) === documento);
   const fecha = new Date().toISOString();
   const camposConValor = Object.fromEntries(
-    Object.entries(cliente).filter(([, valor]) => String(valor == null ? '' : valor).trim() !== '')
+    Object.entries(cliente).filter(([, v]) => String(v == null ? '' : v).trim() !== '')
   );
   let tercero;
 
@@ -243,7 +247,7 @@ function initBusquedaCliente(inputId, dropdownId) {
     }
 
     if (!resultados.length) {
-      dropdown.innerHTML = '<div class="ac-empty">Sin contactos. Cree uno en «Crear cliente».</div>';
+      dropdown.innerHTML = '<div class="ac-empty">Sin contactos en la base.</div>';
       dropdown.classList.add("visible");
       return;
     }
@@ -253,7 +257,7 @@ function initBusquedaCliente(inputId, dropdownId) {
         (t, i) => `
       <div class="ac-item" data-index="${i}" role="option">
         <strong>${escapeHtml(t.nombre)}</strong>
-        <span>Doc: ${escapeHtml(t.documento)}${t.email ? " · " + escapeHtml(t.email) : ""}${t.telefono ? " · Tel: " + escapeHtml(t.telefono) : ""}${t.direccion ? " · " + escapeHtml(t.direccion) : ""}${t.ciudad ? " · " + escapeHtml(t.ciudad) : ""}</span>
+        <span>Doc: ${escapeHtml(t.documento)}${t.email ? " · " + escapeHtml(t.email) : ""}${t.telefono ? " · Tel: " + escapeHtml(t.telefono) : ""}</span>
       </div>`
       )
       .join("");
@@ -317,21 +321,7 @@ function initBusquedaCliente(inputId, dropdownId) {
   });
 }
 
-function cargarClienteSeleccionado() {
-  const raw = localStorage.getItem(CLIENTE_SELECCIONADO_KEY);
-  if (!raw) return;
-  let c = null;
-  try {
-    c = JSON.parse(raw);
-  } catch {
-    c = null;
-  }
-  if (!c) return;
-
-  aplicarTerceroAlFormulario(c);
-  localStorage.removeItem(CLIENTE_SELECCIONADO_KEY);
-}
-
+// ── Productos ───────────────────────────────────────────────────────────────
 function cargarProductosDB() {
   if (useApi && apiData.loaded) return apiData.productos.filter((p) => p.activo !== false);
   const raw = localStorage.getItem(PRODUCTOS_DB_KEY);
@@ -342,54 +332,6 @@ function cargarProductosDB() {
   } catch {
     return [];
   }
-}
-
-function cargarFacturasGeneradasDB() {
-  const raw = localStorage.getItem(FACTURAS_GENERADAS_DB_KEY);
-  if (!raw) return [];
-  try {
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-function guardarFacturasGeneradasDB(arr) {
-  localStorage.setItem(FACTURAS_GENERADAS_DB_KEY, JSON.stringify(arr));
-}
-
-function obtenerSiguienteConsecutivo() {
-  const facturas = cargarFacturasGeneradasDB();
-  const usados = facturas
-    .map((f) => Number(f.consecutivo))
-    .filter((n) => Number.isInteger(n) && n >= RESOLUCION_FACTURACION_DEMO.desde);
-  const ultimo = usados.length ? Math.max(...usados) : RESOLUCION_FACTURACION_DEMO.desde - 1;
-  const siguiente = ultimo + 1;
-
-  if (siguiente > RESOLUCION_FACTURACION_DEMO.hasta) {
-    return null;
-  }
-
-  return siguiente;
-}
-
-function construirNumeroFactura(consecutivo) {
-  return RESOLUCION_FACTURACION_DEMO.prefijo + "-" + String(consecutivo).padStart(4, "0");
-}
-
-function generarCufeDemoFactura(consecutivo, total) {
-  const base = [
-    RESOLUCION_FACTURACION_DEMO.prefijo,
-    String(consecutivo).padStart(4, "0"),
-    Date.now(),
-    Math.round(total || 0),
-  ].join("-");
-  let hex = "";
-  for (let i = 0; i < base.length; i++) {
-    hex += base.charCodeAt(i).toString(16).toUpperCase().padStart(2, "0");
-  }
-  return (hex + "0".repeat(96)).slice(0, 96);
 }
 
 function buscarProductos(query) {
@@ -433,7 +375,7 @@ function initBusquedaProducto(inputId, dropdownId) {
     }
 
     if (!resultados.length) {
-      dropdown.innerHTML = '<div class="ac-empty">Sin productos. Cree uno en «Crear productos/servicios».</div>';
+      dropdown.innerHTML = '<div class="ac-empty">Sin productos encontrados.</div>';
       dropdown.classList.add("visible");
       return;
     }
@@ -507,21 +449,6 @@ function initBusquedaProducto(inputId, dropdownId) {
   });
 }
 
-function cargarProductoSeleccionado() {
-  const raw = localStorage.getItem(PRODUCTO_SELECCIONADO_KEY);
-  if (!raw) return;
-  let p = null;
-  try {
-    p = JSON.parse(raw);
-  } catch {
-    p = null;
-  }
-  if (!p) return;
-
-  aplicarProductoAlFormulario(p);
-  localStorage.removeItem(PRODUCTO_SELECCIONADO_KEY);
-}
-
 function buscarProductosPorCodigo(query) {
   const q = normalizarTexto(query);
   if (q.length < 1) return [];
@@ -553,7 +480,7 @@ function initBusquedaCodigo(inputId, dropdownId) {
     }
 
     if (!resultados.length) {
-      dropdown.innerHTML = '<div class="ac-empty">No se encontr\u00f3 ning\u00fan producto con ese c\u00f3digo.</div>';
+      dropdown.innerHTML = '<div class="ac-empty">No se encontró ningún producto con ese código.</div>';
       dropdown.classList.add("visible");
       return;
     }
@@ -562,8 +489,8 @@ function initBusquedaCodigo(inputId, dropdownId) {
       .map(
         (p, i) => `
       <div class="ac-item" data-index="${i}" role="option">
-        <strong>${escapeHtml(p.codigo)} \u2014 ${escapeHtml(p.nombre)}</strong>
-        <span>Tipo: ${escapeHtml(p.tipo)} \u00b7 IVA: ${escapeHtml(p.iva)}% \u00b7 U.M.: ${escapeHtml(p.unidadMedida)}</span>
+        <strong>${escapeHtml(p.codigo)} — ${escapeHtml(p.nombre)}</strong>
+        <span>Tipo: ${escapeHtml(p.tipo)} · IVA: ${escapeHtml(p.iva)}% · U.M.: ${escapeHtml(p.unidadMedida)}</span>
       </div>`
       )
       .join("");
@@ -583,7 +510,7 @@ function initBusquedaCodigo(inputId, dropdownId) {
     if (!producto) return;
     aplicarProductoAlFormulario(producto);
     cerrarTodosAutocomplete();
-    mostrarMensaje("\u2705 Producto/servicio cargado por c\u00f3digo.");
+    mostrarMensaje("✅ Producto/servicio cargado por código.");
   }
 
   function marcarActivo() {
@@ -627,12 +554,42 @@ function initBusquedaCodigo(inputId, dropdownId) {
   });
 }
 
-function mostrarMensaje(html, tipo = "success") {
-  $("mensaje").innerHTML = `<div class="alert alert-${tipo}">${html}</div>`;
+// ── Cotizaciones DB Local ───────────────────────────────────────────────────
+function cargarCotizacionesGeneradasDB() {
+  const raw = localStorage.getItem(COTIZACIONES_DB_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
 }
-function limpiarMensaje() { $("mensaje").innerHTML = ""; }
 
-// ── Cálculo de una línea ────────────────────────────────────────────────────
+function guardarCotizacionesGeneradasDB(arr) {
+  localStorage.setItem(COTIZACIONES_DB_KEY, JSON.stringify(arr));
+}
+
+function obtenerSiguienteConsecutivoCotizacion() {
+  const cotizaciones = cargarCotizacionesGeneradasDB();
+  const usados = cotizaciones
+    .map((c) => Number(c.consecutivo))
+    .filter((n) => Number.isInteger(n) && n >= RANGO_COTIZACION.desde);
+  const ultimo = usados.length ? Math.max(...usados) : RANGO_COTIZACION.desde - 1;
+  const siguiente = ultimo + 1;
+
+  if (siguiente > RANGO_COTIZACION.hasta) {
+    return null;
+  }
+
+  return siguiente;
+}
+
+function construirNumeroCotizacion(consecutivo) {
+  return RANGO_COTIZACION.prefijo + "-" + String(consecutivo).padStart(4, "0");
+}
+
+// ── Cálculo de Líneas ───────────────────────────────────────────────────────
 function leerLineaActual() {
   const producto        = $("producto").value.trim();
   const cantidad        = parseNumero($("cantidad").value);
@@ -651,16 +608,15 @@ function leerLineaActual() {
     return null;
   }
 
-  const base            = cantidad * unitario;          // cant × v.unit
-  const valorIva        = base * (tarifaIva / 100);     // IVA sobre base
-  const valorFactura    = base + valorIva;              // base + IVA
-  const valorRetencion  = base * (tarifaRetencion / 100); // rete. sobre base
-  const total           = valorFactura - valorRetencion; // neto a pagar
+  const base            = cantidad * unitario;
+  const valorIva        = base * (tarifaIva / 100);
+  const valorTotalItem  = base + valorIva;
+  const valorRetencion  = base * (tarifaRetencion / 100);
+  const total           = valorTotalItem - valorRetencion;
 
-  return { producto, codigo, unidad, cantidad, unitario, base, tarifaIva, valorIva, valorFactura, tarifaRetencion, valorRetencion, total };
+  return { producto, codigo, unidad, cantidad, unitario, base, tarifaIva, valorIva, valorTotalItem, tarifaRetencion, valorRetencion, total };
 }
 
-// ── Previsualización en tiempo real ─────────────────────────────────────────
 function calcularYPrevisualizarLinea() {
   const cantidad        = parseNumero($("cantidad").value);
   const unitario        = parseNumero($("unitario").value);
@@ -675,11 +631,11 @@ function calcularYPrevisualizarLinea() {
     return;
   }
 
-  const base            = cantidad * unitario;          // cant × v.unit
-  const valorIva        = base * (tarifaIva / 100);     // IVA sobre base
-  const valorFactura    = base + valorIva;              // base + IVA
-  const valorRetencion  = base * (tarifaRetencion / 100); // rete. sobre base
-  const total           = valorFactura - valorRetencion; // neto a pagar
+  const base            = cantidad * unitario;
+  const valorIva        = base * (tarifaIva / 100);
+  const valorTotalItem  = base + valorIva;
+  const valorRetencion  = base * (tarifaRetencion / 100);
+  const total           = valorTotalItem - valorRetencion;
 
   $("base").value          = formatoMoneda(base);
   $("valoriva").value      = formatoMoneda(valorIva);
@@ -687,11 +643,10 @@ function calcularYPrevisualizarLinea() {
   $("total").value         = formatoMoneda(total);
 }
 
-// ── Render tabla de líneas ──────────────────────────────────────────────────
 function renderTablaLineas() {
   const tbody = $("tabla-lineas-body");
   if (!state.lineas.length) {
-    tbody.innerHTML = '<tr><td colspan="13" class="lineas-empty">Agregue productos o servicios con «Agregar línea»</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" class="lineas-empty" style="text-align:center;padding:16px;color:#638092;">Agregue productos o servicios con «Agregar prod/serv»</td></tr>';
     return;
   }
   tbody.innerHTML = state.lineas.map((l, i) => `
@@ -708,7 +663,7 @@ function renderTablaLineas() {
       <td class="num">${l.tarifaRetencion > 0 ? l.tarifaRetencion + "%" : "—"}</td>
       <td class="num">${l.valorRetencion > 0 ? formatoMoneda(l.valorRetencion) : "—"}</td>
       <td class="num">${formatoMoneda(l.total)}</td>
-      <td><button type="button" class="btn-remove" data-index="${i}">✕</button></td>
+      <td><button type="button" class="btn-remove" data-index="${i}" style="background:#fff0f4;color:#d94d6a;border:none;padding:4px 8px;border-radius:6px;cursor:pointer;">✕</button></td>
     </tr>`).join("");
 
   tbody.querySelectorAll(".btn-remove").forEach((btn) => {
@@ -720,13 +675,11 @@ function renderTablaLineas() {
   });
 }
 
-// ── Totales globales ────────────────────────────────────────────────────────
 function totalesGlobales() {
   const t = state.lineas.reduce((acc, l) => {
-    acc.base         += l.base;
-    acc.iva          += l.valorIva;
-    acc.valorFactura += l.valorFactura;
-    acc.retencion    += l.valorRetencion;
+    acc.base      += l.base;
+    acc.iva       += l.valorIva;
+    acc.retencion += l.valorRetencion;
     const ki = String(l.tarifaIva);
     acc.ivaPorTarifa[ki] = (acc.ivaPorTarifa[ki] || 0) + l.valorIva;
     if (l.valorRetencion > 0) {
@@ -734,9 +687,9 @@ function totalesGlobales() {
       acc.retencionPorTarifa[kr] = (acc.retencionPorTarifa[kr] || 0) + l.valorRetencion;
     }
     return acc;
-  }, { base: 0, iva: 0, valorFactura: 0, retencion: 0, ivaPorTarifa: {}, retencionPorTarifa: {} });
+  }, { base: 0, iva: 0, retencion: 0, ivaPorTarifa: {}, retencionPorTarifa: {} });
 
-  t.total = t.valorFactura - t.retencion;
+  t.total = t.base + t.iva - t.retencion;
   return t;
 }
 
@@ -748,13 +701,11 @@ function actualizarResumen() {
   $("resumen-total").textContent     = formatoMoneda(t.total);
 }
 
-// ── Agregar línea ───────────────────────────────────────────────────────────
 function agregarLinea() {
   limpiarMensaje();
   const linea = leerLineaActual();
   if (!linea) return;
 
-  // Mostrar los valores calculados en los campos readonly
   $("base").value          = formatoMoneda(linea.base);
   $("valoriva").value      = formatoMoneda(linea.valorIva);
   $("valorretencion").value = formatoMoneda(linea.valorRetencion);
@@ -764,7 +715,6 @@ function agregarLinea() {
   renderTablaLineas();
   actualizarResumen();
 
-  // Limpiar campos de entrada para la siguiente línea
   setTimeout(() => {
     $("producto").value     = "";
     if ($("codigo")) $("codigo").value = "";
@@ -777,12 +727,11 @@ function agregarLinea() {
     $("retencion").value    = "0";
     $("valorretencion").value = "";
     $("total").value        = "";
-  }, 600);
+  }, 500);
 
-  mostrarMensaje("✅ Línea agregada a la factura.");
+  mostrarMensaje("✅ Línea agregada a la cotización.");
 }
 
-// ── Limpiar todo ────────────────────────────────────────────────────────────
 function limpiar() {
   state.lineas = [];
   state.clienteTercero = null;
@@ -790,21 +739,19 @@ function limpiar() {
    "cliente-telefono", "cliente-direccion", "cliente-ciudad", "cliente-email"].forEach(id => { const el = $(id); if (el) el.value = ""; });
   if ($("unidad")) $("unidad").value = "UNIDAD";
   if ($("observaciones")) $("observaciones").value = "";
-  ["base", "valoriva", "valorretencion", "total"].forEach(id => { $(id).value = ""; });
-  $("iva").value        = "19";
-  $("retencion").value  = "0";
-  $("medio-pago").value = "EFECTIVO";
+  ["base", "valoriva", "valorretencion", "total"].forEach(id => { const el = $(id); if (el) el.value = ""; });
+  $("iva").value       = "19";
+  $("retencion").value = "0";
   renderTablaLineas();
   actualizarResumen();
   limpiarMensaje();
 }
 
-// ── Generar factura → prefactura ────────────────────────────────────────────
-async function generarFactura() {
+async function generarCotizacion() {
   limpiarMensaje();
 
   if (!state.lineas.length) {
-    mostrarMensaje("Agregue al menos una línea a la factura antes de generar.", "error");
+    mostrarMensaje("Agregue al menos una línea a la cotización antes de generar.", "error");
     return;
   }
 
@@ -817,14 +764,14 @@ async function generarFactura() {
 
   const btn = $("btn-generar");
   const oldText = btn.textContent;
-  btn.textContent = "Procesando...";
+  btn.textContent = "Generando cotización...";
   btn.disabled = true;
 
   try {
-    let payload;
+    let cotizacionId;
+    let numeroCotizacion;
 
     if (useApi) {
-      // ── MODO API ──
       const reqBody = {
         cliente: {
           nombre,
@@ -844,37 +791,24 @@ async function generarFactura() {
           tarifa_iva: l.tarifaIva,
           tarifa_retencion: l.tarifaRetencion
         })),
-        medio_pago: $("medio-pago").value,
         observaciones: $("observaciones") ? $("observaciones").value.trim() : ""
       };
 
-      const res = await apiFetch('/facturas', {
+      const res = await apiFetch('/cotizaciones', {
         method: 'POST',
         body: JSON.stringify(reqBody)
       });
 
-      const f = res.factura;
-      // Compatibilidad con el visor de prefactura local
-      payload = {
-        id: f.id,
-        consecutivo: f.numero_factura ? parseInt(f.numero_factura.split('-')[1]) : f.consecutivo,
-        numeroFactura: f.numero_factura,
-        cufe: f.cufe,
-        resolucion: RESOLUCION_FACTURACION_DEMO,
-        cliente: reqBody.cliente,
-        lineas: state.lineas,
-        totales: totalesGlobales(),
-        medioPagoLabel: (MEDIOS_PAGO.find(m => m.value === reqBody.medio_pago) || {}).label || reqBody.medio_pago,
-        observaciones: reqBody.observaciones,
-        generadoEn: f.creado_en
-      };
-      // Mantiene el autocompletado vigente sin tener que recargar la página.
-      const terceroSincronizado = { id: f.tercero_id, ...reqBody.cliente };
-      const indice = apiData.terceros.findIndex((t) => String(t.id) === String(f.tercero_id));
+      const c = res.cotizacion;
+      cotizacionId = c.id;
+      numeroCotizacion = c.numero_cotizacion;
+
+      const terceroSincronizado = { id: c.tercero_id, ...reqBody.cliente };
+      const indice = apiData.terceros.findIndex((t) => String(t.id) === String(c.tercero_id));
       if (indice >= 0) apiData.terceros[indice] = { ...apiData.terceros[indice], ...terceroSincronizado };
       else apiData.terceros.push(terceroSincronizado);
     } else {
-      // ── MODO LOCAL (Fallback) ──
+      // Modo Local
       const cliente = {
         nombre, documento,
         direccion: $("cliente-direccion").value.trim(),
@@ -883,47 +817,40 @@ async function generarFactura() {
         email:     $("cliente-email").value.trim(),
       };
 
-      // Toda factura actualiza el maestro local por documento. Así un cliente
-      // nuevo se conserva y uno existente recibe los datos facturados.
-      const terceroRef = sincronizarTerceroLocalDesdeFactura(cliente);
-
+      const terceroRef = sincronizarTerceroLocal(cliente);
       const totales = totalesGlobales();
-      const medioPagoVal = $("medio-pago").value;
-      const consecutivo = obtenerSiguienteConsecutivo();
+      const consecutivo = obtenerSiguienteConsecutivoCotizacion();
 
       if (!consecutivo) {
-        throw new Error("El rango demo de facturación 1 a 1000 ya fue consumido. Configure una nueva resolución/rango.");
+        throw new Error("El rango de cotizaciones 1 a 1000 ya fue consumido.");
       }
 
-      const numeroFactura = construirNumeroFactura(consecutivo);
-      const cufeDemo = generarCufeDemoFactura(consecutivo, totales.total);
+      numeroCotizacion = construirNumeroCotizacion(consecutivo);
+      cotizacionId = "COTZ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
 
-      payload = {
-        id: "FAC-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+      const payload = {
+        id: cotizacionId,
         consecutivo,
-        numeroFactura,
-        cufe: cufeDemo,
-        resolucion: RESOLUCION_FACTURACION_DEMO,
+        numeroCotizacion,
         cliente,
         tercero: terceroRef,
         lineas: state.lineas,
         totales,
-        medioPago: medioPagoVal,
-        medioPagoLabel: (MEDIOS_PAGO.find(m => m.value === medioPagoVal) || {}).label || medioPagoVal,
         observaciones: $("observaciones") ? $("observaciones").value.trim() : "",
+        estado: 'GUARDADA',
         generadoEn: new Date().toISOString(),
       };
 
-      const facturas = cargarFacturasGeneradasDB();
-      facturas.push(payload);
-      guardarFacturasGeneradasDB(facturas);
+      const cotizaciones = cargarCotizacionesGeneradasDB();
+      cotizaciones.push(payload);
+      guardarCotizacionesGeneradasDB(cotizaciones);
     }
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    window.location.href = "prefactura.html" + (useApi ? `?id=${payload.id}` : "");
+    // Redirigir al listado de cotizaciones generadas
+    window.location.href = "cotizaciones-generadas.html?creada=" + encodeURIComponent(numeroCotizacion);
 
   } catch (err) {
-    mostrarMensaje(err.message || "Ocurrió un error al generar la factura", "error");
+    mostrarMensaje(err.message || "Ocurrió un error al generar la cotización", "error");
   } finally {
     btn.textContent = oldText;
     btn.disabled = false;
@@ -947,42 +874,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   renderTablaLineas();
   actualizarResumen();
 
-  // Trae cliente seleccionado desde terceros (si existe)
-  cargarClienteSeleccionado();
-  // Trae producto seleccionado (si existe)
-  cargarProductoSeleccionado();
-
-  // Búsqueda en vivo contra base de terceros
   initBusquedaCliente("cliente-nombre", "ac-nombre");
   initBusquedaCliente("cliente-documento", "ac-documento");
-  // Búsqueda en vivo de productos (por nombre)
   initBusquedaProducto("producto", "ac-producto");
-  // Búsqueda en vivo de productos (por código)
   initBusquedaCodigo("codigo", "ac-codigo");
 
   document.addEventListener("click", (e) => {
     if (!e.target.closest(".ac-field")) cerrarTodosAutocomplete();
   });
 
-  // Botón para ir al módulo de terceros
-  const btnCrear = $("btn-crear-clientes");
-  if (btnCrear) {
-    btnCrear.addEventListener("click", () => {
-      window.location.href = "terceros/terceros.html";
-    });
-  }
-
-  // Botón para ir al módulo de productos
-  const btnCrearProd = $("btn-crear-productos");
-  if (btnCrearProd) {
-    btnCrearProd.addEventListener("click", () => {
-      window.location.href = "productos/productos.html";
-    });
-  }
-
   $("btn-agregar").addEventListener("click", agregarLinea);
   $("btn-limpiar").addEventListener("click", limpiar);
-  $("btn-generar").addEventListener("click", generarFactura);
+  $("btn-generar").addEventListener("click", generarCotizacion);
 
   const inputUnitario = $("unitario");
   if (inputUnitario) {
@@ -998,247 +901,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   const selectIva = $("iva");
-  if (selectIva) {
-    selectIva.addEventListener("change", calcularYPrevisualizarLinea);
-  }
+  if (selectIva) selectIva.addEventListener("change", calcularYPrevisualizarLinea);
 
-  const selectRetencion = $("retencion");
-  if (selectRetencion) {
-    selectRetencion.addEventListener("change", calcularYPrevisualizarLinea);
-  }
-
-  // Botón para cerrar sesión
-  const btnCerrarSesion = $("btn-cerrar-sesion");
-  if (btnCerrarSesion) {
-    btnCerrarSesion.addEventListener("click", (e) => {
-      e.preventDefault();
-      sessionStorage.removeItem("amc_session_active");
-      window.location.replace("login.html");
-    });
-  }
-
-  // ── Navegación entre Secciones ─────────────────────────────────────────────
-  inicializarMensajeBienvenida();
-
-  // Enlaces y botones de navegación
-  const lnkCrearFactura = $("lnk-crear-factura");
-  if (lnkCrearFactura) {
-    lnkCrearFactura.addEventListener("click", (e) => {
-      e.preventDefault();
-      mostrarSeccion("crear-factura");
-    });
-  }
-
-  const btnWelcomeCrearFactura = $("btn-welcome-crear-factura");
-  if (btnWelcomeCrearFactura) {
-    btnWelcomeCrearFactura.addEventListener("click", () => {
-      mostrarSeccion("crear-factura");
-    });
-  }
-
-  const btnWelcomeCotizacion = $("btn-welcome-cotizacion");
-  if (btnWelcomeCotizacion) {
-    btnWelcomeCotizacion.addEventListener("click", () => {
-      window.location.href = "cotizaciones/cotizacion.html";
-    });
-  }
-
-  const btnWelcomeFacturaCompra = $("btn-welcome-factura-compra");
-  if (btnWelcomeFacturaCompra) {
-    btnWelcomeFacturaCompra.addEventListener("click", () => {
-      abrirModal("Módulo en Desarrollo", "El ingreso de facturas de compra estará disponible próximamente.");
-    });
-  }
-
-  const btnWelcomeContabilidad = $("btn-welcome-contabilidad");
-  if (btnWelcomeContabilidad) {
-    btnWelcomeContabilidad.addEventListener("click", () => {
-      abrirModal("Módulo en Desarrollo", "El módulo de contabilidad estará disponible próximamente.");
-    });
-  }
-
-  const lnkInicio = $("lnk-inicio");
-  if (lnkInicio) {
-    lnkInicio.addEventListener("click", (e) => {
-      e.preventDefault();
-      mostrarSeccion("inicio");
-    });
-  }
-
-  const btnFacturaIrInicio = $("btn-factura-ir-inicio");
-  if (btnFacturaIrInicio) {
-    btnFacturaIrInicio.addEventListener("click", () => {
-      mostrarSeccion("inicio");
-    });
-  }
-
-  // Tarjeta Facturación POS → navega al módulo POS
-  const btnWelcomePos = $("btn-welcome-pos");
-  if (btnWelcomePos) {
-    btnWelcomePos.addEventListener("click", () => {
-      window.location.href = "pos/pos.html";
-    });
-  }
-
-  // Tarjeta Reportes Ventas/Productos
-  const btnWelcomeReportes = $("btn-welcome-reportes");
-  if (btnWelcomeReportes) {
-    btnWelcomeReportes.addEventListener("click", () => {
-      window.location.href = "reportes/reportes.html";
-    });
-  }
-
-  // Tarjeta Facturas Generadas → navega al historial
-  const btnWelcomeFacturasGeneradas = $("btn-welcome-facturas-generadas");
-  if (btnWelcomeFacturasGeneradas) {
-    btnWelcomeFacturasGeneradas.addEventListener("click", () => {
-      window.location.href = "facturas-generadas/facturas-generadas.html";
-    });
-  }
-
-  // Tarjeta Nómina Electrónica (En Desarrollo)
-  const btnWelcomeAntony = $("btn-welcome-antony");
-  if (btnWelcomeAntony) {
-    btnWelcomeAntony.addEventListener("click", () => {
-      window.location.href = "nomina-electronica/nomina-electronica.html";
-    });
-  }
-
-  // Tarjeta Inventarios / Bodegas (En Desarrollo)
-  const btnWelcomeInventarios = $("btn-welcome-inventarios");
-  if (btnWelcomeInventarios) {
-    btnWelcomeInventarios.addEventListener("click", () => {
-      window.location.href = "inventarios/inventarios.html";
-    });
-  }
-
-  // Controles del Modal de Desarrollo
-  const btnModalCerrar = $("btn-modal-cerrar");
-  if (btnModalCerrar) {
-    btnModalCerrar.addEventListener("click", cerrarModal);
-  }
-
-  const modalOverlay = $("amc-modal-desarrollo");
-  if (modalOverlay) {
-    modalOverlay.addEventListener("click", (e) => {
-      if (e.target === modalOverlay) cerrarModal();
-    });
-  }
-
-  // Ruteo Automático al Iniciar
-  const urlParams = new URLSearchParams(window.location.search);
-  const secParam = urlParams.get("sec");
-  const tieneClienteSeleccionado = localStorage.getItem(CLIENTE_SELECCIONADO_KEY) !== null;
-  const tieneProductoSeleccionado = localStorage.getItem(PRODUCTO_SELECCIONADO_KEY) !== null;
-
-  if (secParam === "crear-factura" || tieneClienteSeleccionado || tieneProductoSeleccionado) {
-    mostrarSeccion("crear-factura");
-  } else {
-    mostrarSeccion("inicio");
-  }
-
-  // Ocultar la sección de creación de usuario en la barra lateral para clientes
-  const lnkCrearUsuario = document.getElementById("lnk-crear-usuario");
-  if (lnkCrearUsuario) {
-    lnkCrearUsuario.style.display = isDev ? "block" : "none";
-  }
+  const selectRete = $("retencion");
+  if (selectRete) selectRete.addEventListener("change", calcularYPrevisualizarLinea);
 });
-
-// ── Funciones de Control de UI ────────────────────────────────────────────────
-function mostrarSeccion(seccionId) {
-  const panelBienvenida = document.getElementById("panel-bienvenida");
-  const panelCrearFactura = document.getElementById("panel-crear-factura");
-  const lnkCrearFactura = document.getElementById("lnk-crear-factura");
-
-  if (!panelBienvenida || !panelCrearFactura) return;
-
-  // Limpiar clases active del menú
-  document.querySelectorAll(".sidebar-menu a").forEach(el => el.classList.remove("active"));
-
-  if (seccionId === "crear-factura") {
-    panelBienvenida.style.display = "none";
-    panelCrearFactura.style.display = "block";
-    if (lnkCrearFactura) lnkCrearFactura.classList.add("active");
-  } else {
-    panelBienvenida.style.display = "flex";
-    panelCrearFactura.style.display = "none";
-  }
-}
-
-function inicializarMensajeBienvenida() {
-  const welcomeTitle = document.getElementById("welcome-user-title");
-  const welcomeLogo = document.getElementById("welcome-logo");
-  const welcomeLogoBox = welcomeLogo ? welcomeLogo.closest(".welcome-logo-box") : null;
-  if (!welcomeTitle) return;
-
-  let userName = "";
-  let userLogo = "";
-
-  // Intentar cargar la razón social / nombre desde el perfil del emisor
-  try {
-    const profileKey = `amc_perfil_emisor_v1_${activeUserCode}`;
-    const rawProfile = localStorage.getItem(profileKey);
-    if (rawProfile) {
-      const profile = JSON.parse(rawProfile);
-      if (profile && profile.razonSocial) {
-        userName = profile.razonSocial;
-      }
-      if (profile && profile.logo) {
-        userLogo = profile.logo;
-      }
-    }
-  } catch (err) {
-    console.error("Error al leer perfil para la bienvenida:", err);
-  }
-
-  // Fallbacks si no se ha configurado el perfil de emisor aún
-  if (!userName) {
-    if (isDev) {
-      try {
-        const rawUser = localStorage.getItem("amc_developer_user");
-        if (rawUser) {
-          const user = JSON.parse(rawUser);
-          if (user && user.nombre) {
-            userName = user.nombre;
-          }
-        }
-      } catch (err) {
-        console.error("Error al cargar nombre del desarrollador:", err);
-      }
-      if (!userName) userName = "Principal Desarrollador";
-    } else {
-      userName = sessionStorage.getItem("amc_active_user_name") || `Usuario ${activeUserCode}`;
-    }
-  }
-
-  if (welcomeLogo && welcomeLogoBox) {
-    if (userLogo) {
-      welcomeLogo.src = userLogo;
-      welcomeLogoBox.style.display = "";
-    } else {
-      welcomeLogo.removeAttribute("src");
-      welcomeLogoBox.style.display = "none";
-    }
-  }
-
-  welcomeTitle.textContent = `¡Te damos la bienvenida, ${userName}!`;
-}
-
-function abrirModal(titulo, mensaje) {
-  const overlay = document.getElementById("amc-modal-desarrollo");
-  const modalTitulo = document.getElementById("modal-titulo");
-  const modalMensaje = document.getElementById("modal-mensaje");
-
-  if (overlay && modalTitulo && modalMensaje) {
-    modalTitulo.textContent = titulo;
-    modalMensaje.textContent = mensaje;
-    overlay.classList.add("active");
-  }
-}
-
-function cerrarModal() {
-  const overlay = document.getElementById("amc-modal-desarrollo");
-  if (overlay) {
-    overlay.classList.remove("active");
-  }
-}

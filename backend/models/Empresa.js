@@ -127,6 +127,29 @@ class Empresa {
     }
     return rows[0];
   }
+
+  /**
+   * Obtener y bloquear el siguiente consecutivo de cotización (SELECT FOR UPDATE).
+   * Rango fijo: COTZ-0001 a COTZ-1000.
+   */
+  static async nextConsecutivoCotizacion(client, empresaId) {
+    const { rows } = await client.query(
+      `UPDATE empresas
+       SET consecutivo_cotizacion = consecutivo_cotizacion + 1
+       WHERE id = $1
+       RETURNING consecutivo_cotizacion`,
+      [empresaId]
+    );
+    if (!rows[0]) throw new NotFoundError('Empresa');
+
+    const { consecutivo_cotizacion } = rows[0];
+    if (consecutivo_cotizacion > 1000) {
+      throw new ConflictError(
+        'El rango de cotizaciones (COTZ-0001 a COTZ-1000) ha sido agotado.'
+      );
+    }
+    return { consecutivo_cotizacion };
+  }
 }
 
 module.exports = Empresa;

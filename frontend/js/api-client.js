@@ -151,3 +151,18 @@ export const facturas = {
   cambiarEstado : (id, estado) =>
     apiFetch(`/facturas/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) }),
 };
+
+/** Cotizaciones */
+export const cotizaciones = {
+  listar  : (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/cotizaciones?${qs}`);
+  },
+  obtener       : (id)         => apiFetch(`/cotizaciones/${id}`),
+  stats         : ()           => apiFetch('/cotizaciones/stats'),
+  crear         : (data)       => apiFetch('/cotizaciones', { method: 'POST', body: JSON.stringify(data) }),
+  convertir     : (id)         => apiFetch(`/cotizaciones/${id}/convertir`, { method: 'POST' }),
+  cambiarEstado : (id, estado) =>
+    apiFetch(`/cotizaciones/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) }),
+};
+

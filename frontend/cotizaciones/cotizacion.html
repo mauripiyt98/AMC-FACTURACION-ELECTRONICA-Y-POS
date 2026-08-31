@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Cotización - AMC Facturación</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    .wrap { max-width: 780px; margin: 0 auto; padding: 18px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 0 16px; flex-wrap:wrap; }
+    .top-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn-sec { background:#001e82; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-sec:hover { background:#00155c; }
+    .btn-naranja { background:#0032c8; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-naranja:hover { background:#001e82; }
+
+    .btn-agregar-linea {
+      background: #0032c8; color: #f8fcff; border: none;
+      padding: 10px 28px; border-radius: 6px; font-size: 1rem;
+      font-weight: 700; cursor: pointer; transition: background 0.18s;
+    }
+    .btn-agregar-linea:hover { background: #001e82; }
+
+    .lineas-table th, .lineas-table td { font-size: 0.82rem; padding: 6px 8px; }
+    .lineas-table .num { text-align: right; }
+    .lineas-table thead th { background: #001e82; color: #f8fcff; }
+    .lineas-table tbody tr:nth-child(even) { background: #eef9fd; }
+
+    .totals-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; margin: 18px 0 10px;
+    }
+    .totals-grid .t-block { background:#eef9fd; border-radius:8px; padding:12px 16px; }
+    .totals-grid .t-block label { font-size:0.78rem; color:#527083; display:block; margin-bottom:4px; }
+    .totals-grid .t-block .t-val { font-size:1.15rem; font-weight:800; color:#001e82; }
+    .totals-grid .t-block.rojo .t-val { color:#d94d6a; }
+    .totals-grid .t-block.naranja .t-val { color:#0032c8; font-size:1.35rem; }
+
+    .ac-field { position: relative; }
+    .ac-dropdown {
+      position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+      z-index: 50; background: #f8fcff; border: 1px solid #cde7f0;
+      border-radius: 8px; box-shadow: 0 8px 24px rgba(11,70,235,.16);
+      max-height: 220px; overflow-y: auto; display: none;
+    }
+    .ac-dropdown.visible { display: block; }
+    .ac-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eaf5fa; transition: background .12s; }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item:hover, .ac-item.active { background: #eaf9fe; }
+    .ac-item strong { display: block; color: #001e82; font-size: .92rem; }
+    .ac-item span { display: block; color: #527083; font-size: .8rem; margin-top: 2px; }
+    .ac-empty { padding: 10px 12px; color: #638092; font-size: .85rem; }
+    .cliente-hint { font-size: .82rem; color: #638092; margin: 0 0 12px; }
+
+    #mensaje-cotizacion .alert { padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; text-align: center; margin-bottom: 12px; }
+    #mensaje-cotizacion .alert-success { background: #e8faff; color: #0032c8; border: 1px solid #a9e9f7; }
+    #mensaje-cotizacion .alert-error { background: #fff0f4; color: #d94d6a; border: 1px solid #f8b8c6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h2 style="margin:0;color:#001e82;">Crear Cotización</h2>
+        <div class="cliente-hint">Elabora propuestas comerciales para tus clientes. Consecutivo COTZ-0001 a COTZ-1000.</div>
+      </div>
+      <div class="top-actions">
+        <a class="btn-naranja" href="cotizaciones-generadas.html">Cotizaciones generadas</a>
+        <a class="btn-sec" href="../index.html">Volver al inicio</a>
+      </div>
+    </div>
+
+    <div id="mensaje-cotizacion"></div>
+
+    <!-- Cliente -->
+    <section class="card">
+      <div class="card-header">
+        <h3>Datos del cliente</h3>
+        <span class="badge">Adquirente</span>
+      </div>
+      <p class="cliente-hint">Escriba al menos 3 letras del nombre o 3 números del documento para buscar y cargar un contacto guardado.</p>
+      <div class="form-grid">
+        <div class="full ac-field">
+          <label for="cliente-nombre">Nombre o razón social</label>
+          <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez / Empresa XYZ S.A.S." autocomplete="off">
+          <div id="ac-nombre" class="ac-dropdown" role="listbox"></div>
+        </div>
+        <div class="ac-field">
+          <label for="cliente-documento">Documento / NIT</label>
+          <input type="text" id="cliente-documento" placeholder="Ej: 1234567890" autocomplete="off">
+          <div id="ac-documento" class="ac-dropdown" role="listbox"></div>
+        </div>
+        <div>
+          <label for="cliente-telefono">Teléfono</label>
+          <input type="text" id="cliente-telefono" placeholder="Opcional">
+        </div>
+        <div class="full">
+          <label for="cliente-direccion">Dirección</label>
+          <input type="text" id="cliente-direccion" placeholder="Ej: Calle 123 # 45-67">
+        </div>
+        <div class="full">
+          <label for="cliente-ciudad">Ciudad</label>
+          <input type="text" id="cliente-ciudad" placeholder="Ej: Bogotá, Medellín">
+        </div>
+        <div class="full">
+          <label for="cliente-email">Correo electrónico</label>
+          <input type="email" id="cliente-email" placeholder="correo@ejemplo.com">
+        </div>
+      </div>
+    </section>
+
+    <!-- Producto / línea -->
+    <section class="card">
+      <div class="card-header">
+        <h3>Detalle de cotización</h3>
+        <span class="badge">Productos y servicios</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="full ac-field">
+          <label for="producto">Producto o servicio</label>
+          <input type="text" id="producto" placeholder="Escriba el nombre o código para buscar..." autocomplete="off">
+          <div id="ac-producto" class="ac-dropdown" role="listbox"></div>
+        </div>
+        <div class="ac-field">
+          <label for="codigo">Código</label>
+          <input type="text" id="codigo" placeholder="Ej: P001" autocomplete="off">
+          <div id="ac-codigo" class="ac-dropdown" role="listbox"></div>
+        </div>
+        <div>
+          <label for="unidad">Unidad de medida</label>
+          <select id="unidad">
+            <option value="UNIDAD" selected>Unidad</option>
+            <option value="GALON">Galón</option>
+          </select>
+        </div>
+        <div>
+          <label for="cantidad">Cantidad</label>
+          <input type="number" id="cantidad" min="0" step="any" placeholder="0">
+        </div>
+        <div>
+          <label for="unitario">Valor unitario (COP)</label>
+          <input type="text" id="unitario" placeholder="0">
+        </div>
+        <div>
+          <label for="base">Valor base</label>
+          <input type="text" id="base" readonly>
+        </div>
+        <div>
+          <label for="iva">Tarifa IVA</label>
+          <select id="iva">
+            <option value="0">IVA 0%</option>
+            <option value="5">IVA 5%</option>
+            <option value="19" selected>IVA 19%</option>
+          </select>
+        </div>
+        <div>
+          <label for="valoriva">Valor impuesto (IVA)</label>
+          <input type="text" id="valoriva" readonly>
+        </div>
+        <div>
+          <label for="retencion">Retención en la fuente</label>
+          <select id="retencion">
+            <option value="0">Sin retención</option>
+            <option value="2.5">Retefuente 2.5%</option>
+            <option value="4">Retefuente 4%</option>
+            <option value="6">Retefuente 6%</option>
+            <option value="11">Retefuente 11%</option>
+          </select>
+        </div>
+        <div>
+          <label for="valorretencion">Valor retención</label>
+          <input type="text" id="valorretencion" readonly>
+        </div>
+        <div>
+          <label for="total">Total línea (neto)</label>
+          <input type="text" id="total" readonly>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top: 14px;">
+        <button type="button" class="btn-agregar-linea" id="btn-agregar">➕ Agregar prod/serv</button>
+      </div>
+
+      <!-- Tabla de líneas -->
+      <div class="lineas-table-wrap" style="margin-top:18px;">
+        <table class="lineas-table" aria-label="Líneas de la cotización">
+          <thead>
+            <tr>
+              <th>#</th><th>Código</th><th>Descripción</th><th>U.M.</th>
+              <th>Cant.</th><th>V. unit.</th><th>Valor base</th><th>IVA %</th>
+              <th>Valor IVA</th><th>Rete. %</th><th>Valor rete.</th><th>Total neto</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tabla-lineas-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Totalizados -->
+    <section class="card">
+      <div class="card-header">
+        <h3>Resumen de cotización</h3>
+      </div>
+
+      <div class="totals-grid">
+        <div class="t-block">
+          <label>Subtotal (base gravable)</label>
+          <div class="t-val" id="resumen-base">$ 0</div>
+        </div>
+        <div class="t-block">
+          <label>Total IVA</label>
+          <div class="t-val" id="resumen-iva">$ 0</div>
+        </div>
+        <div class="t-block rojo">
+          <label>Total retención en la fuente (–)</label>
+          <div class="t-val" id="resumen-retencion">$ 0</div>
+        </div>
+        <div class="t-block naranja">
+          <label>TOTAL COTIZACIÓN</label>
+          <div class="t-val" id="resumen-total">$ 0</div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-bottom:10px;">
+        <button type="button" class="btn-secondary" id="btn-limpiar">Limpiar todo</button>
+      </div>
+
+      <div style="margin: 10px 0 16px;">
+        <label for="observaciones">Observaciones</label>
+        <textarea id="observaciones" rows="3" placeholder="Ej: Cotización válida por 30 días / Condiciones de pago..."></textarea>
+      </div>
+
+      <button type="button" class="btn-generar" id="btn-generar">
+        Generar cotización →
+      </button>
+    </section>
+  </div>
+
+  <script src="cotizacion.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

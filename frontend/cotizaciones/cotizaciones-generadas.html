@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotizaciones generadas - AMC Facturación</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 18px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 10px 0 16px; flex-wrap:wrap; }
+    .top-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn-sec { background:#001e82; color:#f8fcff; border:none; padding:8px 14px; border-radius:6px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; font-size: 0.82rem; }
+    .btn-sec:hover { background:#00155c; }
+    .btn-naranja { background:#0032c8; color:#f8fcff; border:none; padding:10px 16px; border-radius:6px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-naranja:hover { background:#001e82; }
+
+    .btn-convertir {
+      background: #059669; color: #ffffff; border: none; padding: 8px 14px;
+      border-radius: 6px; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem;
+      transition: background 0.18s, transform 0.1s;
+    }
+    .btn-convertir:hover { background: #047857; transform: translateY(-1px); }
+    .btn-convertir:disabled { opacity: 0.55; cursor: not-allowed; transform: none; background: #6b7280; }
+
+    .btn-pdf {
+      background: #0284c7; color: #ffffff; border: none; padding: 8px 14px;
+      border-radius: 6px; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem;
+      transition: background 0.18s;
+    }
+    .btn-pdf:hover { background: #0369a1; }
+
+    .cardx { background:#f8fcff; border-radius:10px; box-shadow: 0 10px 18px rgba(0,0,0,.06); padding:16px; margin-bottom:14px; border:1px solid #cde7f0; }
+    .hint { font-size:.85rem; color:#527083; margin: 6px 0 0; }
+    .stats-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px; }
+    .stat { background:#f4fbff; border:1px solid #d7edf5; border-radius:8px; padding:12px; }
+    .stat label { display:block; margin:0 0 4px; font-size:.72rem; color:#527083; text-transform:uppercase; letter-spacing:0; }
+    .stat strong { color:#001e82; font-size:1.2rem; }
+    .stat.stat-facturada strong { color:#059669; }
+    label { display:block; font-size:.82rem; color:#35586a; margin-bottom:6px; text-transform:uppercase; letter-spacing:0; font-weight:700; }
+    input { width:100%; padding:10px 12px; border:1px solid #cde7f0; border-radius:8px; background:#f4fbff; font-family:inherit; }
+    input:focus { outline:none; border-color:#0b46eb; box-shadow:0 0 0 3px rgba(11,70,235,.18); background:#f8fcff; }
+
+    .table-wrap { overflow-x:auto; margin-top:12px; }
+    table { width:100%; border-collapse:collapse; font-size:.86rem; }
+    th { text-align:left; background:#001e82; color:#f8fcff; padding:9px 8px; white-space:nowrap; }
+    td { border-bottom:1px solid #d7edf5; padding:9px 8px; vertical-align:middle; }
+    .num { text-align:right; white-space:nowrap; }
+    .empty { color:#638092; padding: 14px 4px; }
+    .badge { display:inline-block; background:#eaf9fe; color:#0032c8; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
+    .badge-cotz { display:inline-block; background:#e0f2fe; color:#0369a1; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
+    .badge-facturada { display:inline-block; background:#ecfdf5; color:#059669; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
+    .badge-guardada { display:inline-block; background:#fef3c7; color:#b45309; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
+    
+    .acciones-col { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+    /* Modal de Confirmación */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(18, 51, 68, 0.6); backdrop-filter: blur(4px);
+      z-index: 1000; display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 12px; max-width: 480px; width: 90%;
+      padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); border: 1px solid #cde7f0;
+      text-align: center;
+    }
+    .modal-box h3 { margin: 0 0 10px; color: #001e82; font-size: 1.25rem; }
+    .modal-box p { color: #527083; font-size: 0.92rem; line-height: 1.5; margin: 0 0 20px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-cancelar { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .btn-confirmar { background: #059669; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+
+    /* Contenedor invisible para construir el PDF de la cotización */
+    #pdf-cotizacion-stage {
+      position: absolute; left: -9999px; top: -9999px; width: 794px;
+      background: #fff; color: #123344; font-family: sans-serif;
+    }
+    .pdf-card {
+      padding: 30px; border: 1px solid #e2e8f0; background: #ffffff;
+    }
+    .pdf-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 2px solid #0032c8; padding-bottom: 16px; margin-bottom: 20px;
+    }
+    .pdf-header h1 { margin: 0; color: #0032c8; font-size: 1.5rem; }
+    .pdf-header .sub { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+    .pdf-number { text-align: right; }
+    .pdf-number strong { font-size: 1.3rem; color: #001e82; display: block; }
+    .pdf-number span { font-size: 0.8rem; color: #64748b; }
+    .pdf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; font-size: 0.85rem; }
+    .pdf-box { background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+    .pdf-box h4 { margin: 0 0 6px; color: #0032c8; font-size: 0.9rem; text-transform: uppercase; }
+    .pdf-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 20px; }
+    .pdf-table th { background: #0032c8; color: #fff; padding: 8px; text-align: left; }
+    .pdf-table td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+    .pdf-totals { width: 280px; margin-left: auto; font-size: 0.85rem; }
+    .pdf-totals-row { display: flex; justify-content: space-between; padding: 4px 0; }
+    .pdf-totals-row.total-final { font-size: 1.1rem; font-weight: bold; color: #001e82; border-top: 2px solid #0032c8; padding-top: 8px; margin-top: 4px; }
+    .pdf-footer { margin-top: 30px; font-size: 0.75rem; color: #94a3b8; text-align: center; border-top: 1px dashed #cbd5e1; padding-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h2 style="margin:0;color:#001e82;">Cotizaciones generadas</h2>
+        <div class="hint">Base de cotizaciones comerciales emitidas en el sistema. Rango configurado: COTZ-0001 a COTZ-1000.</div>
+      </div>
+      <div class="top-actions">
+        <a class="btn-naranja" href="cotizacion.html">➕ Crear cotización</a>
+        <a class="btn-sec" href="../index.html">Volver al inicio</a>
+      </div>
+    </div>
+
+    <div id="alerta-global"></div>
+
+    <div class="cardx">
+      <div class="stats-grid">
+        <div class="stat">
+          <label>Documento comercial</label>
+          <strong>COTIZACIÓN</strong>
+        </div>
+        <div class="stat">
+          <label>Rango autorizado</label>
+          <strong id="stat-rango">COTZ-0001 a 1000</strong>
+        </div>
+        <div class="stat">
+          <label>Cotizaciones generadas</label>
+          <strong id="stat-generadas">0</strong>
+        </div>
+        <div class="stat">
+          <label>Siguiente cotización</label>
+          <strong id="stat-siguiente">COTZ-0001</strong>
+        </div>
+        <div class="stat stat-facturada">
+          <label>Convertidas a Factura (FE)</label>
+          <strong id="stat-convertidas">0</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="cardx">
+      <h3 style="margin:0 0 10px;color:#001e82;">Consultar cotizaciones</h3>
+      <label for="buscar">Buscar por número, cliente, documento o fecha</label>
+      <input id="buscar" type="text" placeholder="Ej: COTZ-0001 / 900123456 / Juan Pérez">
+      <div id="empty" class="empty" style="display:none;text-align:center;padding:20px;color:#638092;">Aún no hay cotizaciones generadas.</div>
+      <div class="table-wrap">
+        <table aria-label="Cotizaciones generadas">
+          <thead>
+            <tr>
+              <th>Cotización</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Documento</th>
+              <th>Líneas</th>
+              <th class="num">Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="cotizaciones-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación para Convertir a Factura Electrónica -->
+  <div id="modal-confirmar" class="modal-overlay">
+    <div class="modal-box">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">⚡</div>
+      <h3>¿Convertir a Factura Electrónica?</h3>
+      <p>
+        Esta acción emitirá automáticamente una <strong>Factura Electrónica de Venta</strong> formal con los mismos datos del cliente, productos y totales de la cotización <strong id="modal-cotz-num">COTZ-0001</strong>.<br><br>
+        Se asignará el siguiente consecutivo oficial de Facturación Electrónica (FE) y se registrará en el módulo de <strong>Facturas Generadas</strong>.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancelar" id="btn-modal-cancelar">Cancelar</button>
+        <button type="button" class="btn-confirmar" id="btn-modal-confirmar">Sí, convertir a Factura</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor invisible para renderizar el PDF de cotización -->
+  <div id="pdf-cotizacion-stage">
+    <div class="pdf-card" id="pdf-cotizacion-document">
+      <div class="pdf-header">
+        <div>
+          <h1 id="pdf-emisor-nombre">AMC Facturación</h1>
+          <div class="sub" id="pdf-emisor-nit">NIT: 1.110.591.592-3</div>
+          <div class="sub" id="pdf-emisor-dir">Bogotá, Colombia</div>
+          <div class="sub" id="pdf-emisor-email">contacto@amc.com</div>
+        </div>
+        <div class="pdf-number">
+          <span style="text-transform:uppercase;font-weight:700;color:#0032c8;letter-spacing:1px;">PROPUESTA COMERCIAL</span>
+          <strong id="pdf-numero">COTZ-0001</strong>
+          <span id="pdf-fecha">Fecha: 30/08/2026</span>
+        </div>
+      </div>
+
+      <div class="pdf-grid">
+        <div class="pdf-box">
+          <h4>Datos del Cliente / Tercero</h4>
+          <div><strong id="pdf-cli-nombre">Cliente</strong></div>
+          <div>NIT / CC: <span id="pdf-cli-doc">---</span></div>
+          <div>Dirección: <span id="pdf-cli-dir">---</span></div>
+          <div>Ciudad: <span id="pdf-cli-ciudad">---</span></div>
+          <div>Teléfono: <span id="pdf-cli-tel">---</span></div>
+          <div>Email: <span id="pdf-cli-email">---</span></div>
+        </div>
+        <div class="pdf-box">
+          <h4>Condiciones Comerciales</h4>
+          <div><strong>Validez de oferta:</strong> 30 días calendario</div>
+          <div><strong>Forma de pago propuesta:</strong> Contado / Transferencia</div>
+          <div id="pdf-obs-container" style="margin-top:6px;"><strong>Observaciones:</strong> <span id="pdf-obs">---</span></div>
+        </div>
+      </div>
+
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Código</th>
+            <th>Descripción del Producto / Servicio</th>
+            <th>U.M.</th>
+            <th style="text-align:right;">Cant.</th>
+            <th style="text-align:right;">V. Unitario</th>
+            <th style="text-align:right;">IVA %</th>
+            <th style="text-align:right;">Total</th>
+          </tr>
+        </thead>
+        <tbody id="pdf-lineas-body"></tbody>
+      </table>
+
+      <div class="pdf-totals">
+        <div class="pdf-totals-row">
+          <span>Subtotal base:</span>
+          <span id="pdf-subtotal">$ 0</span>
+        </div>
+        <div class="pdf-totals-row">
+          <span>Total IVA:</span>
+          <span id="pdf-iva">$ 0</span>
+        </div>
+        <div class="pdf-totals-row" id="pdf-row-rete">
+          <span>Retención en fuente:</span>
+          <span id="pdf-retencion">$ 0</span>
+        </div>
+        <div class="pdf-totals-row total-final">
+          <span>TOTAL PROPUESTA:</span>
+          <span id="pdf-total">$ 0</span>
+        </div>
+      </div>
+
+      <div class="pdf-footer">
+        Este documento es una cotización informativa y no constituye una factura electrónica ni comprobante fiscal.<br>
+        Generado por Sistema de Facturación Electrónica y Control POS AMC.
+      </div>
+    </div>
+  </div>
+
+  <script src="cotizaciones-generadas.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>
