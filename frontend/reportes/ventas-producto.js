@@ -173,7 +173,15 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       if (document.fonts?.ready) await document.fonts.ready;
-      await html2pdf().set({ margin: [4, 4, 4, 4], filename: `Reporte-ventas-productos-${archivoSeguro($('fecha-desde').value)}-${archivoSeguro($('fecha-hasta').value)}.pdf`, image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: doc.scrollWidth, windowHeight: doc.scrollHeight }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, pagebreak: { mode: ['css', 'legacy'] } }).from(doc).save();
+      const opt = {
+        margin: [5, 5, 5, 5],
+        filename: `Reporte-ventas-productos-${archivoSeguro($('fecha-desde').value)}-${archivoSeguro($('fecha-hasta').value)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+      await html2pdf().set(opt).from(doc).save();
     } catch (error) { console.error('Error al exportar PDF:', error); notify('No fue posible generar el PDF. Inténtalo nuevamente.', true); }
     finally { doc.parentElement?.remove(); button.disabled = false; button.textContent = previous; }
   }

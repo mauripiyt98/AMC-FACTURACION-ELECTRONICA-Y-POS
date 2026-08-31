@@ -99,12 +99,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return false;
   }
 
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+  }
+
   function construirDocumentoPdf() {
     const generated = new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeStyle: 'short' }).format(new Date());
     const annualTotal = state.rows.reduce((sum, row) => sum + row.total, 0);
     const stage = document.createElement('div'); stage.className = 'pdf-export-stage';
     const doc = document.createElement('article'); doc.className = 'pdf-export-document comparative-pdf';
-    doc.innerHTML = `<header class="pdf-export-header"><div class="pdf-export-brand"><span>AMC</span><div><p class="pdf-export-eyebrow">INFORME CONTABLE</p><h1>Comparativo de ventas por períodos</h1><p><strong>${state.empresa.nombre}</strong></p><p>NIT / identificación: ${state.empresa.identificacion}</p></div></div><div class="pdf-export-meta"><strong>Fecha y hora de emisión</strong><br>${generated}<br><br><strong>Año analizado</strong><br><span>${state.anioConsultado}</span></div></header><section class="pdf-export-summary"><div><span>Período consultado</span><strong>Enero a diciembre de ${state.anioConsultado}</strong></div><div><span>Ventas anuales</span><strong>${money(annualTotal)}</strong></div><div><span>Base del cálculo</span><strong>Antes de impuestos</strong></div></section><section class="comparative-pdf-content"><div><h2>Ventas por mes (COP)</h2>${chartMarkup(state.rows, 'sales-bar-chart-pdf')}</div><div><h2>Ventas por mes (detalle)</h2><table><thead><tr><th>Mes</th><th class="num">Ventas (COP)</th></tr></thead><tbody>${state.rows.map((row) => `<tr><td>${row.mes}</td><td class="num">${money(row.total)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total anual</td><td class="num">${money(annualTotal)}</td></tr></tfoot></table></div></section><footer class="pdf-export-footer"><span>AMC Facturación Electrónica y POS</span><span>Valores antes de impuestos · Facturas anuladas excluidas</span></footer>`;
+    doc.innerHTML = `<header class="pdf-export-header"><div class="pdf-export-brand"><span>AMC</span><div><p class="pdf-export-eyebrow">INFORME CONTABLE</p><h1>Comparativo de ventas por períodos</h1><p><strong>${escapeHtml(state.empresa.nombre)}</strong></p><p>NIT / identificación: ${escapeHtml(state.empresa.identificacion)}</p></div></div><div class="pdf-export-meta"><strong>Fecha y hora de emisión</strong><br>${escapeHtml(generated)}<br><br><strong>Año analizado</strong><br><span>${escapeHtml(String(state.anioConsultado))}</span></div></header><section class="pdf-export-summary"><div><span>Período consultado</span><strong>Enero a diciembre de ${escapeHtml(String(state.anioConsultado))}</strong></div><div><span>Ventas anuales</span><strong>${money(annualTotal)}</strong></div><div><span>Base del cálculo</span><strong>Antes de impuestos</strong></div></section><section class="comparative-pdf-content"><div><h2>Ventas por mes (COP)</h2>${chartMarkup(state.rows, 'sales-bar-chart-pdf')}</div><div><h2>Ventas por mes (detalle)</h2><table><thead><tr><th>Mes</th><th class="num">Ventas (COP)</th></tr></thead><tbody>${state.rows.map((row) => `<tr><td>${escapeHtml(row.mes)}</td><td class="num">${money(row.total)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total anual</td><td class="num">${money(annualTotal)}</td></tr></tfoot></table></div></section><footer class="pdf-export-footer"><span>AMC Facturación Electrónica y POS</span><span>Valores antes de impuestos · Facturas anuladas excluidas</span></footer>`;
     stage.appendChild(doc); document.body.appendChild(stage); return doc;
   }
 
@@ -115,7 +121,16 @@ document.addEventListener('DOMContentLoaded', () => {
     button.disabled = true; button.textContent = 'Generando PDF…';
     try {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      await html2pdf().set({ margin: [4, 4, 4, 4], filename: `Reporte-comparativo-ventas-${state.anioConsultado}.pdf`, image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: doc.scrollWidth, windowHeight: doc.scrollHeight }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(doc).save();
+      if (document.fonts?.ready) await document.fonts.ready;
+      const opt = {
+        margin: [5, 5, 5, 5],
+        filename: `Reporte-comparativo-ventas-${state.anioConsultado}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+      await html2pdf().set(opt).from(doc).save();
     } catch (error) { console.error('Error al exportar PDF:', error); notify('No fue posible generar el PDF. Inténtalo nuevamente.', true); }
     finally { doc.parentElement?.remove(); button.disabled = false; button.textContent = previous; }
   }

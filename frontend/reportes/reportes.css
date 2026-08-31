@@ -10,9 +10,277 @@ body { background: linear-gradient(135deg, #f8fcff 0%, #eaf9fe 100%); }
 .product-report-table { min-width: 980px; }.report-item-type { display: block; margin-top: 3px; color: #627d8b; font-size: .72rem; font-weight: 600; }
 .comparative-filters { align-items: end; }.comparative-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr); gap: 18px; }.comparative-card { min-height: 420px; padding: 20px; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }.comparative-card header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }.comparative-card header span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #edf1ff; color: #386ff3; font-weight: 800; }.comparative-card h2 { margin: 0; color: #173244; font-size: 1rem; }.chart-wrap { height: 350px; }.sales-bar-chart { display: flex; height: 100%; padding: 8px 2px 26px 0; box-sizing: border-box; }.sales-y-axis { display: flex; flex: 0 0 54px; flex-direction: column; justify-content: space-between; color: #527083; font-size: .68rem; text-align: right; }.sales-y-axis span { transform: translateY(-50%); }.sales-y-axis span:last-child { transform: translateY(50%); }.sales-plot { position: relative; flex: 1; min-width: 0; border-bottom: 1px solid #bdd2dd; }.sales-grid { position: absolute; inset: 0; pointer-events: none; }.sales-grid i { position: absolute; right: 0; left: 0; border-top: 1px dashed #d5e4eb; }.sales-bars { position: absolute; inset: 0 0 0 4px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; }.sales-bar-slot { position: relative; display: flex; align-items: end; justify-content: center; min-width: 0; }.sales-bar { width: min(74%, 38px); height: 0; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, #4d8df7, #5138df); box-shadow: 0 5px 12px rgba(65, 82, 220, .2); transition: height 850ms cubic-bezier(.2,.8,.2,1); }.sales-bar-chart.is-loaded .sales-bar { height: var(--bar-height); }.sales-bar-month { position: absolute; bottom: -22px; color: #35586a; font-size: .72rem; }.sales-bar-value { position: absolute; bottom: calc(var(--bar-height) + 6px); display: none; max-width: 76px; color: #244657; font-size: .65rem; font-weight: 700; text-align: center; white-space: nowrap; }.sales-bar-slot:hover .sales-bar-value { display: block; }.detail-card table { min-width: 0; }.detail-card th, .detail-card td { padding: 8px 4px; }.detail-card tbody tr:nth-child(even) td { background: #f7f9fd; }.comparative-pdf-content { display: grid; grid-template-columns: 1.35fr .9fr; gap: 16px; }.comparative-pdf-content h2 { margin: 0 0 8px; color: #075c80; font-size: 12px; }.comparative-pdf-content table { font-size: 8px; }.comparative-pdf-content table th, .comparative-pdf-content table td { padding: 5px; }.comparative-pdf-content table tfoot td { font-size: 8px; }.sales-bar-chart-pdf { height: 270px; padding-bottom: 22px; }.sales-bar-chart-pdf .sales-y-axis { flex-basis: 42px; font-size: 7px; }.sales-bar-chart-pdf .sales-bars { gap: 5px; }.sales-bar-chart-pdf .sales-bar { height: var(--bar-height); width: min(76%, 28px); box-shadow: none; }.sales-bar-chart-pdf .sales-bar-month { bottom: -18px; font-size: 7px; }
 .btn-export { border-color: #087f5b; color: #087f5b; }.btn-export:hover { background: #e9f8f2; }.filter-actions { flex-wrap: wrap; }
-/* Documento temporal usado únicamente para la descarga PDF. */
-.pdf-export-stage { position: fixed; inset: 0; z-index: 2147483647; overflow: auto; padding: 20px; background: #fff; pointer-events: none; }
-.pdf-export-document { box-sizing: border-box; width: 1040px; margin: 0; padding: 24px; background: #fff; color: #173244; font-family: sans-serif; }
-.pdf-export-header { display: flex; justify-content: space-between; gap: 22px; padding: 14px 17px; margin-bottom: 11px; background: linear-gradient(120deg, #062b5c, #075c80); color: #fff; border-radius: 8px; }.pdf-export-brand { display: flex; align-items: center; gap: 12px; }.pdf-export-brand > span { display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid #9be7e4; border-radius: 50%; color: #d9fffd; font-size: 12px; font-weight: 800; letter-spacing: .05em; }.pdf-export-eyebrow { margin: 0 0 3px !important; color: #9be7e4; font-size: 8px !important; font-weight: 800; letter-spacing: .13em; }.pdf-export-header h1 { margin: 0 0 5px; color: #fff; font-size: 21px; }.pdf-export-header p { margin: 2px 0; font-size: 10px; }.pdf-export-meta { min-width: 210px; padding: 9px 11px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.3); border-radius: 6px; color: #f5ffff; font-size: 10px; }.pdf-export-meta strong { color: #9be7e4; }.pdf-export-meta span { color: #fff; font-weight: 700; }.pdf-export-summary { display: grid; grid-template-columns: 1.5fr .8fr 1fr; gap: 9px; margin-bottom: 10px; }.pdf-export-summary div { padding: 8px 11px; border: 1px solid #d8e8ee; border-radius: 6px; background: #f7fbfc; }.pdf-export-summary span { display: block; color: #587384; font-size: 8px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }.pdf-export-summary strong { display: block; margin-top: 3px; color: #07385b; font-size: 13px; }.pdf-export-period { padding: 7px 10px; margin-bottom: 10px; border-left: 4px solid #159a9c; border-radius: 3px; background: #edf8f8; color: #315261; font-size: 10px; line-height: 1.4; }.pdf-export-period strong { color: #075c80; text-transform: uppercase; font-size: 8px; letter-spacing: .07em; }.pdf-export-document table { min-width: 0; width: 100%; border-collapse: separate; border-spacing: 0; font-size: 8px; }.pdf-export-document th, .pdf-export-document td { padding: 6px 5px; border-bottom: 1px solid #d8e5e9; }.pdf-export-document th { color: #fff; background: #0a5f72; font-size: 7px; letter-spacing: .02em; }.pdf-export-document th:first-child { border-radius: 5px 0 0 0; }.pdf-export-document th:last-child { border-radius: 0 5px 0 0; }.pdf-export-document tbody tr:nth-child(even) td { background: #f4f8f9; }.pdf-export-document tbody td:nth-child(2) { color: #074a70; font-weight: 700; }.pdf-export-document tfoot td { background: #dcefea; color: #063f54; font-weight: 800; border-top: 2px solid #159a9c; }.pdf-export-footer { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 8px; border-top: 1px solid #cde0e6; color: #527083; font-size: 8px; }.pdf-export-footer span:first-child { color: #075c80; font-weight: 800; }
+/* Documento temporal usado únicamente para la descarga PDF */
+.pdf-export-stage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1000px;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  z-index: 9999999;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.pdf-export-document {
+  box-sizing: border-box;
+  width: 1000px;
+  max-width: 1000px;
+  margin: 0;
+  padding: 14px 18px;
+  background: #ffffff;
+  color: #173244;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.pdf-export-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: linear-gradient(120deg, #062b5c, #075c80);
+  color: #ffffff;
+  border-radius: 6px;
+}
+
+.pdf-export-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pdf-export-brand > span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #9be7e4;
+  border-radius: 50%;
+  color: #d9fffd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  flex-shrink: 0;
+}
+
+.pdf-export-eyebrow {
+  margin: 0 0 2px !important;
+  color: #9be7e4;
+  font-size: 7.5px !important;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.pdf-export-header h1 {
+  margin: 0 0 2px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.pdf-export-header p {
+  margin: 1px 0;
+  font-size: 8.5px;
+  line-height: 1.3;
+}
+
+.pdf-export-meta {
+  min-width: 190px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: #f5ffff;
+  font-size: 8.5px;
+  line-height: 1.35;
+}
+
+.pdf-export-meta strong {
+  color: #9be7e4;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pdf-export-meta span {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.pdf-export-summary {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr 1.1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pdf-export-summary div {
+  padding: 6px 10px;
+  border: 1px solid #d8e8ee;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.pdf-export-summary span {
+  display: block;
+  color: #587384;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.pdf-export-summary strong {
+  display: block;
+  margin-top: 2px;
+  color: #07385b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pdf-export-period {
+  padding: 5px 9px;
+  margin-bottom: 8px;
+  border-left: 3px solid #159a9c;
+  border-radius: 4px;
+  background: #edf8f8;
+  color: #315261;
+  font-size: 8.5px;
+  line-height: 1.35;
+}
+
+.pdf-export-period strong {
+  color: #075c80;
+  text-transform: uppercase;
+  font-size: 7.5px;
+  letter-spacing: .06em;
+}
+
+.pdf-export-document table {
+  min-width: 0 !important;
+  width: 100% !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 8px;
+  margin-bottom: 6px;
+  table-layout: auto;
+}
+
+.pdf-export-document th,
+.pdf-export-document td {
+  padding: 4.5px 5px;
+  border-bottom: 1px solid #d8e5e9;
+  line-height: 1.25;
+}
+
+.pdf-export-document th {
+  color: #ffffff;
+  background: #0a5f72;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.pdf-export-document th:first-child { border-radius: 4px 0 0 0; }
+.pdf-export-document th:last-child { border-radius: 0 4px 0 0; }
+
+.pdf-export-document tbody tr:nth-child(even) td {
+  background: #f4f8f9;
+}
+
+.pdf-export-document tbody td:nth-child(2) {
+  color: #074a70;
+  font-weight: 700;
+}
+
+.pdf-export-document tfoot td {
+  background: #dcefea;
+  color: #063f54;
+  font-weight: 800;
+  font-size: 8.5px;
+  border-top: 2px solid #159a9c;
+  border-bottom: none;
+}
+
+.pdf-export-document .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pdf-export-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #cde0e6;
+  color: #527083;
+  font-size: 7.5px;
+}
+
+.pdf-export-footer span:first-child {
+  color: #075c80;
+  font-weight: 800;
+}
+
+.comparative-pdf-content {
+  display: grid;
+  grid-template-columns: 1.35fr .9fr;
+  gap: 12px;
+}
+
+.comparative-pdf-content h2 {
+  margin: 0 0 6px;
+  color: #075c80;
+  font-size: 10.5px;
+}
+
+.comparative-pdf-content table {
+  font-size: 7.5px;
+  width: 100%;
+}
+
+.comparative-pdf-content table th,
+.comparative-pdf-content table td {
+  padding: 4px 5px;
+}
+
+.comparative-pdf-content table tfoot td {
+  font-size: 8px;
+}
+
+.sales-bar-chart-pdf {
+  height: 220px;
+  padding-bottom: 18px;
+}
+
+.sales-bar-chart-pdf .sales-y-axis {
+  flex-basis: 38px;
+  font-size: 6.5px;
+}
+
+.sales-bar-chart-pdf .sales-bars {
+  gap: 4px;
+}
+
+.sales-bar-chart-pdf .sales-bar {
+  height: var(--bar-height);
+  width: min(76%, 24px);
+  box-shadow: none;
+}
+
+.sales-bar-chart-pdf .sales-bar-month {
+  bottom: -16px;
+  font-size: 6.5px;
+}
+
 @media (max-width: 720px) { .reports-page { padding: 20px 14px 35px; }.reports-header h1 { font-size: 1.55rem; }.filters-card { padding: 16px; }.filter-group, .client-filter, .filter-actions { width: 100%; }.filter-actions button { flex: 1; } }
 @media (max-width: 920px) { .comparative-grid { grid-template-columns: 1fr; }.comparative-card { min-height: auto; }.comparative-pdf-content { grid-template-columns: 1fr; } }
+
