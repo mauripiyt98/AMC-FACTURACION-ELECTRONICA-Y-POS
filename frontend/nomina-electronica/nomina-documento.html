@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Documento de nómina electrónica - AMC</title>
   <script src="../js/auth-check.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="nomina-documento.css">
 </head>
 <body>
   <div class="toolbar no-print">
-    <a href="nominas-generadas.html">← Volver a nóminas generadas</a>
-    <button id="btn-pdf" type="button">Descargar PDF</button>
+    <a href="nominas-generadas.html" class="toolbar-back">← Volver a nóminas generadas</a>
+    <button id="btn-pdf" type="button" class="toolbar-pdf">Descargar PDF</button>
   </div>
   <main id="documento-nomina" class="documento">
     <header class="documento-head">
@@ -41,6 +41,7 @@
     <section class="validacion">
       <div><h2>CUDE de demostración</h2><p id="cude"></p><small>Identificador de prueba. No tiene validez fiscal ante la DIAN.</small></div>
       <div class="qr">
+        <canvas id="qr-canvas-nomina" style="width:112px;height:112px;margin:0 auto 5px;display:none;"></canvas>
         <img id="qr-imagen-nomina" src="../../assets/qr.png" alt="Código QR de demostración de nómina" style="width:112px;height:112px;display:block;margin:0 auto 5px;">
         <small>Código QR de demostración</small>
       </div>
@@ -48,5 +49,6 @@
     <footer>Documento generado con AMC Facturación Electrónica y POS. La liquidación y el CUDE se presentan únicamente para demostración mientras se configura el envío a producción.</footer>
   </main>
   <script src="nomina-documento.js"></script>
+  <script src="../js/app-footer.js"></script>
 </body>
 </html>

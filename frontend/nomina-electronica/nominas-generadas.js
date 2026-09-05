@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const nomina = nominas.find((n) => String(n.id) === button.dataset.id);
       if (!nomina) return;
       sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(nomina));
-      window.location.href = 'nomina-documento.html';
+      window.location.href = `nomina-documento.html?id=${encodeURIComponent(nomina.id)}`;
     }));
   }
   $('buscar').addEventListener('input', render);

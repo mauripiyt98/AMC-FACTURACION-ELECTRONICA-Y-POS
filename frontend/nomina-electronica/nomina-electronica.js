@@ -351,7 +351,7 @@ async function liquidarNomina() {
       localStorage.setItem(NOMINAS_DB_KEY, JSON.stringify(nominas));
     }
     sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(nomina));
-    window.location.href = 'nomina-documento.html';
+    window.location.href = `nomina-documento.html?id=${encodeURIComponent(nomina.id)}`;
   } catch (error) {
     mostrarMensaje(error.message || 'Ocurrió un error al generar la nómina.', 'error');
   } finally {
