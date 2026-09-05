@@ -193,6 +193,61 @@ function sincronizarTerceroLocalDesdeFactura(cliente) {
   return tercero;
 }
 
+function descontarInventarioLocal(lineas, referencia) {
+  if (!Array.isArray(lineas) || !lineas.length) return;
+  const MOVIMIENTOS_DB_KEY = isDev ? "amc_inventario_movimientos_v1" : `amc_inventario_movimientos_v1_${activeUserCode}`;
+
+  let productos = [];
+  try {
+    productos = JSON.parse(localStorage.getItem(PRODUCTOS_DB_KEY) || '[]');
+  } catch {
+    productos = [];
+  }
+  if (!productos.length) return;
+
+  let movimientos = [];
+  try {
+    movimientos = JSON.parse(localStorage.getItem(MOVIMIENTOS_DB_KEY) || '[]');
+  } catch {
+    movimientos = [];
+  }
+
+  lineas.forEach((linea) => {
+    const cant = Number(linea.cantidad || 0);
+    if (cant <= 0) return;
+
+    const idx = productos.findIndex((p) =>
+      (linea.producto_id && String(p.id) === String(linea.producto_id)) ||
+      (linea.codigo && normalizarTexto(p.codigo) === normalizarTexto(linea.codigo)) ||
+      (normalizarTexto(p.nombre) === normalizarTexto(linea.producto || linea.nombre))
+    );
+
+    if (idx >= 0) {
+      const p = productos[idx];
+      const stockAnt = Number(p.stock_total ?? p.stockTotal ?? 0);
+      const stockNue = stockAnt - cant;
+
+      p.stock_total = stockNue;
+      p.stockTotal = stockNue;
+
+      movimientos.push({
+        id: "MOV-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase(),
+        producto_id: p.id,
+        tipo_movimiento: "SALIDA_VENTA",
+        cantidad: -cant,
+        stock_anterior: stockAnt,
+        stock_nuevo: stockNue,
+        referencia: referencia || "Factura Electrónica",
+        motivo: `Venta generada ${referencia}`,
+        creado_en: new Date().toISOString(),
+      });
+    }
+  });
+
+  localStorage.setItem(PRODUCTOS_DB_KEY, JSON.stringify(productos));
+  localStorage.setItem(MOVIMIENTOS_DB_KEY, JSON.stringify(movimientos));
+}
+
 function buscarTerceros(query) {
   const q = normalizarTexto(query);
   if (q.length < 3) return [];
@@ -917,6 +972,9 @@ async function generarFactura() {
       const facturas = cargarFacturasGeneradasDB();
       facturas.push(payload);
       guardarFacturasGeneradasDB(facturas);
+
+      // Descontar inventario local
+      descontarInventarioLocal(state.lineas, numeroFactura);
     }
 
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));

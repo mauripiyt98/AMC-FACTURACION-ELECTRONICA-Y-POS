@@ -108,6 +108,61 @@ function cargarTerceros() {
   } catch { return []; }
 }
 
+function descontarInventarioPos(carrito, numeroPos) {
+  if (!Array.isArray(carrito) || !carrito.length) return;
+  const MOVIMIENTOS_DB_KEY = isDev ? 'amc_inventario_movimientos_v1' : `amc_inventario_movimientos_v1_${activeUserCode}`;
+
+  let productos = [];
+  try {
+    productos = JSON.parse(localStorage.getItem(PRODUCTOS_DB_KEY) || '[]');
+  } catch {
+    productos = [];
+  }
+  if (!productos.length) return;
+
+  let movimientos = [];
+  try {
+    movimientos = JSON.parse(localStorage.getItem(MOVIMIENTOS_DB_KEY) || '[]');
+  } catch {
+    movimientos = [];
+  }
+
+  carrito.forEach((item) => {
+    const cant = Number(item.cantidad || 0);
+    if (cant <= 0) return;
+
+    const idx = productos.findIndex((p) =>
+      (item.id && String(p.id) === String(item.id)) ||
+      (item.codigo && normalizarTexto(p.codigo) === normalizarTexto(item.codigo)) ||
+      (normalizarTexto(p.nombre) === normalizarTexto(item.nombre || item.producto))
+    );
+
+    if (idx >= 0) {
+      const p = productos[idx];
+      const stockAnt = Number(p.stock_total ?? p.stockTotal ?? 0);
+      const stockNue = stockAnt - cant;
+
+      p.stock_total = stockNue;
+      p.stockTotal = stockNue;
+
+      movimientos.push({
+        id: 'MOV-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+        producto_id: p.id,
+        tipo_movimiento: 'SALIDA_VENTA',
+        cantidad: -cant,
+        stock_anterior: stockAnt,
+        stock_nuevo: stockNue,
+        referencia: `POS ${numeroPos}`,
+        motivo: `Venta POS ${numeroPos}`,
+        creado_en: new Date().toISOString(),
+      });
+    }
+  });
+
+  localStorage.setItem(PRODUCTOS_DB_KEY, JSON.stringify(productos));
+  localStorage.setItem(MOVIMIENTOS_DB_KEY, JSON.stringify(movimientos));
+}
+
 function cargarProductos() {
   if (useApi && apiData.loaded) return apiData.productos.filter((p) => p.activo !== false);
   try {
@@ -663,6 +718,9 @@ function procesarVenta() {
   const facturas = cargarFacturas();
   facturas.push(venta);
   guardarFacturas(facturas);
+
+  // Descontar existencias contables de los productos vendidos
+  descontarInventarioPos(posState.carrito, numero);
 
   // Guardar en sessionStorage para poder abrir la tirilla
   posState.ventaActual = venta;

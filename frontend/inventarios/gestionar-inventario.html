@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Inventario - AMC Facturación</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="gestionar-inventario.css">
+</head>
+<body>
+  <main class="manage-inventory-page">
+    <header class="manage-header">
+      <div>
+        <a class="back-link" href="inventarios.html">← Volver a Inventarios</a>
+        <div class="title-with-badge">
+          <h1 id="prod-nombre">Cargando producto…</h1>
+          <span id="prod-tipo-badge" class="badge-tipo">Producto</span>
+        </div>
+        <p class="subtitle">Gestión de existencias, ajustes manuales y kardex contable</p>
+      </div>
+    </header>
+
+    <div id="alerta-mensaje" class="alerta-container" aria-live="polite"></div>
+
+    <div class="manage-grid">
+      <!-- Tarjeta 1: Ficha técnica del producto -->
+      <section class="card info-card">
+        <div class="card-header">
+          <h2>Información del producto / servicio</h2>
+          <span id="prod-estado-badge" class="badge-status active">Activo</span>
+        </div>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Código</span>
+            <strong id="prod-codigo" class="detail-value">—</strong>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Unidad de medida</span>
+            <span id="prod-unidad" class="detail-value">—</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Precio base unitario</span>
+            <strong id="prod-precio" class="detail-value price-text">$ 0</strong>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Tarifa IVA</span>
+            <span id="prod-iva" class="detail-value">19%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tarjeta 2: Panel de Stock y Formulario de Ajuste -->
+      <section class="card stock-action-card">
+        <div class="card-header">
+          <h2>Control y ajuste de stock</h2>
+        </div>
+
+        <div class="stock-overview">
+          <div class="stock-highlight-box">
+            <span class="stock-label">Existencias actuales (Stock Total)</span>
+            <div class="stock-number-wrap">
+              <span id="stock-actual-num" class="stock-big-number">0</span>
+              <span id="stock-unidad-tag" class="stock-unit">unidades</span>
+            </div>
+            <div id="stock-level-badge" class="stock-level-badge level-ok">En stock</div>
+          </div>
+
+          <form id="form-ajuste-stock" class="stock-form">
+            <div class="form-group">
+              <label for="tipo-operacion">Tipo de operación</label>
+              <select id="tipo-operacion" class="form-control">
+                <option value="AJUSTE_DIRECTO" selected>Ajuste directo (Fijar nuevo stock total)</option>
+                <option value="ENTRADA">Entrada / Compra (Sumar existencias)</option>
+                <option value="SALIDA_MANUAL">Salida / Merma / Baja (Restar existencias)</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="cantidad-input" id="cantidad-label">Nuevo valor de stock total</label>
+                <input type="number" id="cantidad-input" class="form-control form-control-lg" min="0" step="any" placeholder="0" required>
+              </div>
+              <div class="form-group flex-1">
+                <label for="stock-minimo-input">Stock mínimo de alerta</label>
+                <input type="number" id="stock-minimo-input" class="form-control" min="0" step="any" placeholder="0">
+              </div>
+            </div>
+
+            <div class="preview-box" id="preview-resultado-box">
+              <span>Stock resultante tras guardar:</span>
+              <strong id="preview-stock-nuevo">0</strong>
+            </div>
+
+            <div class="form-group">
+              <label for="motivo-input">Motivo / Observación del movimiento</label>
+              <input type="text" id="motivo-input" class="form-control" placeholder="Ej: Conteo físico, compra a proveedor, merma, inventario inicial" required>
+            </div>
+
+            <button type="submit" id="btn-guardar-stock" class="btn-primary btn-block">
+              💾 Guardar cambios de inventario
+            </button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tarjeta 3: Historial de Movimientos / Kardex -->
+    <section class="card kardex-card">
+      <div class="card-header">
+        <div>
+          <h2>Historial de movimientos contables (Kardex)</h2>
+          <p class="section-hint">Registro inmutable de entradas, salidas por ventas (Facturas / POS) y ajustes manuales.</p>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="kardex-table" aria-label="Historial de movimientos de inventario">
+          <thead>
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Tipo de movimiento</th>
+              <th class="num">Cantidad</th>
+              <th class="num">Stock anterior</th>
+              <th class="num">Stock resultante</th>
+              <th>Referencia / Documento</th>
+              <th>Motivo / Responsable</th>
+            </tr>
+          </thead>
+          <tbody id="kardex-list"></tbody>
+        </table>
+      </div>
+      <p id="kardex-empty" class="kardex-empty" hidden>No hay movimientos registrados para este producto todavía.</p>
+    </section>
+  </main>
+
+  <script src="gestionar-inventario.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

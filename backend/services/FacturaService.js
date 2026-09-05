@@ -2,6 +2,7 @@
 
 const Factura  = require('../models/Factura');
 const Empresa  = require('../models/Empresa');
+const Producto = require('../models/Producto');
 const TerceroService = require('./TerceroService');
 const { NotFoundError, TenantIsolationError, ValidationError } = require('../utils/errors');
 
@@ -122,7 +123,16 @@ class FacturaService {
       observaciones,
     };
 
-    return Factura.create(client, empresaId, facturaData, lineasNormalizadas, usuarioId);
+    const facturaCreada = await Factura.create(client, empresaId, facturaData, lineasNormalizadas, usuarioId);
+
+    // 7. Descontar existencias contables de los productos facturados
+    try {
+      await Producto.descontarStockPorVenta(client, empresaId, lineasNormalizadas, numero_factura, usuarioId);
+    } catch (stockErr) {
+      console.warn('Advertencia al descontar inventario en factura:', stockErr);
+    }
+
+    return facturaCreada;
   }
 
   static async cambiarEstado(client, empresaId, id, estado) {

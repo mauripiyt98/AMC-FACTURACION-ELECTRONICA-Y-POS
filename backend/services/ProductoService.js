@@ -33,6 +33,27 @@ class ProductoService {
     return updated;
   }
 
+  static async ajustarStock(client, empresaId, id, data, usuarioId) {
+    const existing = await Producto.findById(client, empresaId, id);
+    if (!existing) throw new NotFoundError('Producto');
+    if (existing.empresa_id !== empresaId) throw new TenantIsolationError();
+
+    const updated = await Producto.ajustarStock(client, empresaId, id, {
+      ...data,
+      usuarioId
+    });
+    if (!updated) throw new NotFoundError('Producto');
+    return updated;
+  }
+
+  static async obtenerMovimientos(client, empresaId, id, limit = 50) {
+    const existing = await Producto.findById(client, empresaId, id);
+    if (!existing) throw new NotFoundError('Producto');
+    if (existing.empresa_id !== empresaId) throw new TenantIsolationError();
+
+    return Producto.obtenerMovimientos(client, empresaId, id, limit);
+  }
+
   static async eliminar(client, empresaId, id) {
     const existing = await Producto.findById(client, empresaId, id);
     if (!existing) throw new NotFoundError('Producto');

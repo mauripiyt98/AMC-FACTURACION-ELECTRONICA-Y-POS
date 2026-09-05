@@ -64,12 +64,23 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) { mostrar(error.message, true); }
   }
 
+  const GESTIONAR_PROD_KEY = isDev ? 'amc_producto_gestionar_v1' : `amc_producto_gestionar_v1_${activeUserCode}`;
+
   $('buscar-producto').addEventListener('input', render);
   document.querySelectorAll('[data-development]').forEach((button) => button.addEventListener('click', () => mostrar(`${button.dataset.development}: funcionalidad en desarrollo.`)));
   $('inventory-list').addEventListener('click', (event) => {
     const toggle = event.target.closest('[data-toggle]');
     if (toggle) return cambiarEstado(toggle.dataset.toggle);
-    if (event.target.closest('[data-manage]')) mostrar('Gestionar inventario de producto: funcionalidad en desarrollo.');
+    
+    const manageBtn = event.target.closest('[data-manage]');
+    if (manageBtn) {
+      const prodId = manageBtn.dataset.manage;
+      const item = state.productos.find((p) => String(p.id) === String(prodId));
+      if (item) {
+        sessionStorage.setItem(GESTIONAR_PROD_KEY, JSON.stringify(item));
+      }
+      window.location.href = `gestionar-inventario.html?id=${encodeURIComponent(prodId)}`;
+    }
   });
   cargarProductos().then(render);
 });

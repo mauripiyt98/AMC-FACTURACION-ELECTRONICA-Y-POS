@@ -93,6 +93,41 @@ router.patch('/:id', async (req, res, next) => {
 });
 
 /**
+ * PATCH /api/productos/:id/stock
+ */
+router.patch('/:id/stock', async (req, res, next) => {
+  try {
+    const { nuevoStock, stockMinimo, tipoMovimiento, motivo, referencia } = req.body;
+    if (nuevoStock === undefined || isNaN(Number(nuevoStock))) {
+      return res.status(400).json({ success: false, message: 'nuevoStock debe ser un valor numérico válido' });
+    }
+    const producto = await ProductoService.ajustarStock(
+      req.dbClient, req.empresaId, req.params.id,
+      { nuevoStock: Number(nuevoStock), stockMinimo, tipoMovimiento, motivo, referencia },
+      req.usuarioId
+    );
+    res.json({ success: true, producto });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/productos/:id/movimientos
+ */
+router.get('/:id/movimientos', async (req, res, next) => {
+  try {
+    const { limit = 50 } = req.query;
+    const movimientos = await ProductoService.obtenerMovimientos(
+      req.dbClient, req.empresaId, req.params.id, Number(limit)
+    );
+    res.json({ success: true, movimientos });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * DELETE /api/productos/:id  (soft delete)
  */
 router.delete('/:id', async (req, res, next) => {
