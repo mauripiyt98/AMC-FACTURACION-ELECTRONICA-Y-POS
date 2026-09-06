@@ -135,30 +135,22 @@
 
   <div class="migrador-card">
     <h1>Sincronización en la Nube</h1>
-    <p>Hemos detectado que tienes información guardada localmente en este navegador. Para que esta información esté disponible en todos los navegadores (Edge, Chrome, etc.), necesitas sincronizarla con la base de datos.</p>
+    <p>Esta migración replica los productos y servicios guardados en este navegador hacia PostgreSQL, incluyendo precio, estado y existencias. El respaldo local se conserva.</p>
     
     <div class="stats-box">
       <div class="stat-item">
-        <span class="stat-value" id="count-terceros">0</span>
-        <span class="stat-label">Clientes</span>
-      </div>
-      <div class="stat-item">
         <span class="stat-value" id="count-productos">0</span>
-        <span class="stat-label">Productos</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value" id="count-facturas">0</span>
-        <span class="stat-label">Facturas</span>
+        <span class="stat-label">Productos y servicios locales</span>
       </div>
     </div>
 
-    <button type="button" id="btn-iniciar" class="btn-migrar">Migrar datos a la Nube</button>
+    <button type="button" id="btn-iniciar" class="btn-migrar">Migrar productos y servicios a SQL</button>
     
     <div id="logs" class="log-container"></div>
     
     <div id="success-panel" class="success-panel">
       <div class="success-title">¡Sincronización Completa! 🎉</div>
-      <p style="margin-bottom: 0; color: #333;">Toda tu información ya está en la base de datos compartida.</p>
+      <p style="margin-bottom: 0; color: #333;">Los productos y servicios fueron replicados en la base de datos SQL. El respaldo local permanece disponible.</p>
       <a href="index.html" class="btn-volver">Volver al sistema</a>
     </div>
   </div>

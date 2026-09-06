@@ -75,15 +75,15 @@ class Producto {
     const {
       nombre, codigo, tipo = 'PRODUCTO',
       iva = 19, unidad_medida = 'UNIDAD', precio_base,
-      stock_total = 0, stock_minimo = 0,
+      stock_total = 0, stock_minimo = 0, activo = true,
     } = data;
 
     const { rows } = await client.query(
       `INSERT INTO productos
-         (empresa_id, nombre, codigo, tipo, iva, unidad_medida, precio_base, stock_total, stock_minimo)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         (empresa_id, nombre, codigo, tipo, iva, unidad_medida, precio_base, stock_total, stock_minimo, activo)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        RETURNING *`,
-      [empresaId, nombre, codigo, tipo, iva, unidad_medida, precio_base, stock_total, stock_minimo]
+      [empresaId, nombre, codigo, tipo, iva, unidad_medida, precio_base, stock_total, stock_minimo, activo]
     );
     return rows[0];
   }

@@ -1,5 +1,6 @@
 /**
- * migrador.js - Script para enviar datos de localStorage al backend API (PostgreSQL)
+ * migrador.js - Migración segura del catálogo local a PostgreSQL.
+ * Conserva precio, estado y existencias; nunca elimina el respaldo local.
  */
 'use strict';
 
@@ -8,9 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
   const isDev = activeUserCode === "1110591592";
 
-  const TERCEROS_DB_KEY = isDev ? "amc_terceros_db_v1" : `amc_terceros_db_v1_${activeUserCode}`;
   const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
-  const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
 
   const API_BASE = 'http://localhost:3000/api';
   
@@ -22,43 +21,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const token = getToken();
+  const normalizar = (value) => String(value || '').trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const numero = (value, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
 
   // Elementos DOM
-  const elTerceros = document.getElementById('count-terceros');
   const elProductos = document.getElementById('count-productos');
-  const elFacturas = document.getElementById('count-facturas');
   const btnIniciar = document.getElementById('btn-iniciar');
   const logsContainer = document.getElementById('logs');
   const successPanel = document.getElementById('success-panel');
 
   // Datos Locales
-  let terceros = [];
   let productos = [];
-  let facturas = [];
 
   function loadLocalData() {
-    try {
-      terceros = JSON.parse(localStorage.getItem(TERCEROS_DB_KEY) || '[]');
-      if(!Array.isArray(terceros)) terceros = [];
-    } catch(e) { terceros = []; }
-
     try {
       productos = JSON.parse(localStorage.getItem(PRODUCTOS_DB_KEY) || '[]');
       if(!Array.isArray(productos)) productos = [];
     } catch(e) { productos = []; }
-
-    try {
-      facturas = JSON.parse(localStorage.getItem(FACTURAS_GENERADAS_DB_KEY) || '[]');
-      if(!Array.isArray(facturas)) facturas = [];
-    } catch(e) { facturas = []; }
-
-    elTerceros.textContent = terceros.length;
     elProductos.textContent = productos.length;
-    elFacturas.textContent = facturas.length;
 
-    if (terceros.length === 0 && productos.length === 0 && facturas.length === 0) {
+    if (productos.length === 0) {
       btnIniciar.disabled = true;
-      btnIniciar.textContent = "No hay datos para migrar";
+      btnIniciar.textContent = "No hay productos o servicios para migrar";
     }
   }
 
@@ -71,18 +58,32 @@ document.addEventListener("DOMContentLoaded", () => {
     logsContainer.scrollTop = logsContainer.scrollHeight;
   }
 
-  async function apiPost(endpoint, payload) {
+  async function apiFetch(endpoint, options = {}) {
     const res = await fetch(`${API_BASE}${endpoint}`, {
-      method: 'POST',
+      ...options,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        ...(options.headers || {})
       },
-      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
     return data;
+  }
+
+  function productoSql(local) {
+    return {
+      nombre: String(local.nombre || '').trim(),
+      codigo: String(local.codigo || '').trim(),
+      tipo: String(local.tipo || 'PRODUCTO').toUpperCase() === 'SERVICIO' ? 'SERVICIO' : 'PRODUCTO',
+      iva: numero(local.iva, 19),
+      unidad_medida: local.unidad_medida || local.unidadMedida || local.unidad || 'UNIDAD',
+      precio_base: numero(local.precio_base ?? local.precioBase ?? local.precio, 0),
+      stock_total: numero(local.stock_total ?? local.stockTotal ?? local.stock, 0),
+      stock_minimo: numero(local.stock_minimo ?? local.stockMinimo, 0),
+      activo: local.activo !== false,
+    };
   }
 
   async function iniciarMigracion() {
@@ -95,81 +96,53 @@ document.addEventListener("DOMContentLoaded", () => {
     btnIniciar.disabled = true;
     btnIniciar.textContent = "Migrando... Por favor espera";
     
-    // Migrar Terceros
-    log(`Iniciando migración de ${terceros.length} clientes...`, 'info');
-    let okTerceros = 0;
-    for (const t of terceros) {
-      try {
-        await apiPost('/terceros', {
-          nombre: t.nombre,
-          documento: t.documento,
-          tipo_documento: 'NIT',
-          email: t.email,
-          telefono: t.telefono,
-          direccion: t.direccion,
-          ciudad: t.ciudad
-        });
-        okTerceros++;
-      } catch (err) {
-        log(`Error cliente ${t.documento}: ${err.message}`, 'error');
-      }
+    log(`Leyendo ${productos.length} producto(s) y servicio(s) locales...`, 'info');
+    let existentes;
+    try {
+      existentes = (await apiFetch('/productos?limit=1000&soloActivos=false')).productos || [];
+    } catch (err) {
+      log(`No fue posible conectarse a SQL: ${err.message}`, 'error');
+      btnIniciar.disabled = false;
+      btnIniciar.textContent = 'Reintentar migración a SQL';
+      return;
     }
-    if(terceros.length > 0) log(`Clientes migrados: ${okTerceros}/${terceros.length}`, 'success');
-
-    // Migrar Productos
-    log(`Iniciando migración de ${productos.length} productos...`, 'info');
-    let okProductos = 0;
+    const porCodigo = new Map(existentes.map((p) => [normalizar(p.codigo), p]));
+    let creados = 0;
+    let actualizados = 0;
+    let fallidos = 0;
     for (const p of productos) {
+      const item = productoSql(p);
+      if (!item.nombre || !item.codigo) {
+        fallidos++;
+        log(`Omitido: registro local sin nombre o código.`, 'error');
+        continue;
+      }
       try {
-        await apiPost('/productos', {
-          nombre: p.nombre,
-          codigo: p.codigo,
-          tipo: p.tipo,
-          iva: p.iva,
-          unidad_medida: p.unidadMedida
-        });
-        okProductos++;
+        const remoto = porCodigo.get(normalizar(item.codigo));
+        if (remoto) {
+          await apiFetch(`/productos/${encodeURIComponent(remoto.id)}`, { method: 'PATCH', body: JSON.stringify(item) });
+          actualizados++;
+          log(`Actualizado: ${item.codigo} · ${item.nombre}`, 'success');
+        } else {
+          const response = await apiFetch('/productos', { method: 'POST', body: JSON.stringify(item) });
+          porCodigo.set(normalizar(item.codigo), response.producto);
+          creados++;
+          log(`Creado: ${item.codigo} · ${item.nombre}`, 'success');
+        }
       } catch (err) {
-        log(`Error producto ${p.codigo}: ${err.message}`, 'error');
+        fallidos++;
+        log(`Error en ${item.codigo}: ${err.message}`, 'error');
       }
     }
-    if(productos.length > 0) log(`Productos migrados: ${okProductos}/${productos.length}`, 'success');
-
-    // Migrar Facturas
-    log(`Iniciando migración de ${facturas.length} facturas...`, 'info');
-    let okFacturas = 0;
-    for (const f of facturas) {
-      try {
-        await apiPost('/facturas', {
-          cliente: f.cliente,
-          lineas: Array.isArray(f.lineas) ? f.lineas.map(l => ({
-            codigo: l.codigo,
-            nombre: l.producto,
-            unidad_medida: l.unidad,
-            cantidad: l.cantidad,
-            valor_unitario: l.unitario,
-            tarifa_iva: l.tarifaIva,
-            tarifa_retencion: l.tarifaRetencion
-          })) : [],
-          medio_pago: f.medioPago,
-          observaciones: f.observaciones || ''
-        });
-        okFacturas++;
-      } catch (err) {
-        log(`Error factura ${f.numeroFactura}: ${err.message}`, 'error');
-      }
+    if (fallidos) {
+      log(`Migración incompleta: ${creados} creados, ${actualizados} actualizados y ${fallidos} con error. El respaldo local sigue intacto.`, 'warn');
+      btnIniciar.disabled = false;
+      btnIniciar.textContent = 'Reintentar registros con error';
+      return;
     }
-    if(facturas.length > 0) log(`Facturas migradas: ${okFacturas}/${facturas.length}`, 'success');
-
-    // Finalizar
-    log("Migración finalizada con éxito.", 'success');
+    log(`Migración finalizada: ${creados} creados y ${actualizados} actualizados en SQL. El respaldo local se conservó.`, 'success');
     btnIniciar.style.display = 'none';
     successPanel.classList.add('active');
-
-    // Limpiar localStorage local para no volver a migrar
-    localStorage.removeItem(TERCEROS_DB_KEY);
-    localStorage.removeItem(PRODUCTOS_DB_KEY);
-    localStorage.removeItem(FACTURAS_GENERADAS_DB_KEY);
   }
 
   btnIniciar.addEventListener('click', iniciarMigracion);
