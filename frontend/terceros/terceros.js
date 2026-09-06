@@ -12,11 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ── Sesión y Configuración ──────────────────────────────────────────────────
   const SESSION_KEY = 'amc_session_v2';
   const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-  const isDev = activeUserCode === "1110591592";
-
-  const TERCEROS_DB_KEY = isDev ? "amc_terceros_db_v1" : `amc_terceros_db_v1_${activeUserCode}`;
-  const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
-  const CLIENTE_SELECCIONADO_KEY = isDev ? "amc_cliente_seleccionado_v1" : `amc_cliente_seleccionado_v1_${activeUserCode}`;
+  const TERCEROS_DB_KEY = `amc_terceros_db_v1_${activeUserCode}`;
+  const FACTURAS_GENERADAS_DB_KEY = `amc_facturas_generadas_db_v1_${activeUserCode}`;
+  const CLIENTE_SELECCIONADO_KEY = `amc_cliente_seleccionado_v1_${activeUserCode}`;
 
   function getToken() {
     try {
@@ -152,8 +150,19 @@ document.addEventListener("DOMContentLoaded", () => {
         console.warn("Error cargando terceros del API, usando caché local", err);
       }
     }
-    // Fallback Local
-    const raw = localStorage.getItem(TERCEROS_DB_KEY);
+    // Fallback Local (Aislado por tenant)
+    let raw = localStorage.getItem(TERCEROS_DB_KEY);
+
+    // Migración y limpieza de clave global no aislada legado
+    const legacyGlobal = localStorage.getItem('amc_terceros_db_v1');
+    if (legacyGlobal) {
+      if (!raw && activeUserCode === '1110591592') {
+        localStorage.setItem(TERCEROS_DB_KEY, legacyGlobal);
+        raw = legacyGlobal;
+      }
+      localStorage.removeItem('amc_terceros_db_v1');
+    }
+
     if (!raw) { state.list = []; return []; }
     try {
       const arr = JSON.parse(raw);

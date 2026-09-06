@@ -10,11 +10,8 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const SESSION_KEY = 'amc_session_v2';
-  const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-  const isDev = activeUserCode === "1110591592";
-
-  const COTIZACIONES_DB_KEY = isDev ? "amc_cotizaciones_generadas_db_v1" : `amc_cotizaciones_generadas_db_v1_${activeUserCode}`;
-  const FACTURAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
+  const COTIZACIONES_DB_KEY = `amc_cotizaciones_generadas_db_v1_${activeUserCode}`;
+  const FACTURAS_DB_KEY = `amc_facturas_generadas_db_v1_${activeUserCode}`;
   const PROFILE_KEY = `amc_perfil_emisor_v1_${activeUserCode}`;
 
   const RANGO_COTIZACION = {

@@ -16,10 +16,10 @@ const activeUserCode = sessionStorage.getItem('amc_active_user_code') || '111059
 const isDev = activeUserCode === '1110591592';
 
 // ── Keys de localStorage (mismas que app.js) ────────────────────────────────
-const TERCEROS_DB_KEY       = isDev ? 'amc_terceros_db_v1'        : `amc_terceros_db_v1_${activeUserCode}`;
-const PRODUCTOS_DB_KEY      = isDev ? 'amc_productos_db_v1'       : `amc_productos_db_v1_${activeUserCode}`;
-const FACTURAS_DB_KEY       = isDev ? 'amc_facturas_generadas_db_v1' : `amc_facturas_generadas_db_v1_${activeUserCode}`;
-const PREVIEW_KEY           = isDev ? 'amc_factura_preview_v1'    : `amc_factura_preview_v1_${activeUserCode}`;
+const TERCEROS_DB_KEY       = `amc_terceros_db_v1_${activeUserCode}`;
+const PRODUCTOS_DB_KEY      = `amc_productos_db_v1_${activeUserCode}`;
+const FACTURAS_DB_KEY       = `amc_facturas_generadas_db_v1_${activeUserCode}`;
+const PREVIEW_KEY           = `amc_factura_preview_v1_${activeUserCode}`;
 
 // ── Resolución POS ───────────────────────────────────────────────────────────
 const RESOLUCION_POS = {
@@ -110,7 +110,7 @@ function cargarTerceros() {
 
 function descontarInventarioPos(carrito, numeroPos) {
   if (!Array.isArray(carrito) || !carrito.length) return;
-  const MOVIMIENTOS_DB_KEY = isDev ? 'amc_inventario_movimientos_v1' : `amc_inventario_movimientos_v1_${activeUserCode}`;
+  const MOVIMIENTOS_DB_KEY = `amc_inventario_movimientos_v1_${activeUserCode}`;
 
   let productos = [];
   try {

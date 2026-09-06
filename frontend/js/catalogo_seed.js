@@ -1,6 +1,16 @@
-/** Auto-seeded catálogo en LocalStorage **/
+/**
+ * catalogo_seed.js — Catálogo base de productos/servicios para modo offline (localStorage)
+ *
+ * REGLAS DE SEGURIDAD MULTI-TENANT:
+ *  1. NUNCA sobreescribe datos existentes de ningún tenant.
+ *  2. Solo escribe si el tenant NO tiene catálogo previo (primer acceso).
+ *  3. Solo aplica al tenant 1110591592 (propietario de AMC).
+ *  4. Todos los demás tenants empiezan con catálogo vacío.
+ *
+ * En modo API (backend activo), este script NO tiene efecto (los datos
+ * viven en PostgreSQL y no en localStorage).
+ */
 (function() {
-  const KEY = 'amc_productos_db_v1';
   const data = [
   {
     "id": "prod_recuperado_001_1",
@@ -225,8 +235,17 @@
   }
 ];
   const userCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-  if (userCode === "1110591592") {
-    localStorage.setItem(`amc_productos_db_v1_${userCode}`, JSON.stringify(data));
-    console.log(`🌱 Catálogo e inventario respaldado y cargado exclusivamente para el tenant ${userCode} en LocalStorage`);
+  const tenantKey = `amc_productos_db_v1_${userCode}`;
+
+  // ── SOLO insertar el catálogo base si este tenant aún no tiene datos ──────
+  // Esto evita sobreescribir productos/servicios creados por el usuario.
+  const yaExisten = localStorage.getItem(tenantKey);
+  if (!yaExisten && userCode === "1110591592") {
+    localStorage.setItem(tenantKey, JSON.stringify(data));
+    console.log(`🌱 Catálogo base cargado por primera vez para tenant ${userCode}`);
+  } else if (yaExisten) {
+    console.log(`✅ Tenant ${userCode}: catálogo existente preservado (${JSON.parse(yaExisten).length} items).`);
   }
+  // Otros tenants (IPS CNS SAS, etc.) empiezan con catálogo vacío [].
+  // Sus productos se crean y guardan exclusivamente bajo su propia clave.
 })();

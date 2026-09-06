@@ -3,8 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const SESSION_KEY = 'amc_session_v2';
   const activeUserCode = sessionStorage.getItem('amc_active_user_code') || '1110591592';
-  const isDev = activeUserCode === '1110591592';
-  const FACTURAS_DB_KEY = isDev ? 'amc_facturas_generadas_db_v1' : `amc_facturas_generadas_db_v1_${activeUserCode}`;
+  const FACTURAS_DB_KEY = `amc_facturas_generadas_db_v1_${activeUserCode}`;
   const API_BASE = 'http://localhost:3000/api';
   const $ = (id) => document.getElementById(id);
   const state = {

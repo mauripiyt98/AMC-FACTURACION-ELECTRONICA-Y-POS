@@ -1,5 +1,5 @@
-// ── Configuración ──────────────────────────────────────────────────────────
 const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
+const isDev = activeUserCode === "1110591592";
 const STORAGE_KEY = `amc_factura_preview_v1_${activeUserCode}`;
 
 // Cargar perfil del emisor desde localStorage (guardado en «Mi Perfil»)

@@ -199,7 +199,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
 
-    await cargarDB();
+    // state.list ya fue poblado por cargarDB() en el init — no releer
+    if (!state.list.length) await cargarDB();
+
     const item = state.list.find((x) => String(x.id) === String(id));
     if (!item) {
       mostrarMsg("No se encontró el producto o servicio solicitado para editar.", "error");
@@ -275,7 +277,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     lista.querySelectorAll("button[data-action]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const card = btn.closest(".item");
+        // Funciona tanto para div.item (cards) como para <tr> en tabla
+        const card = btn.closest("[data-id]");
         const id = card?.dataset?.id;
         if (!id) return;
         const action = btn.dataset.action;
@@ -299,9 +302,13 @@ document.addEventListener("DOMContentLoaded", () => {
               await apiFetch(`/productos/${id}`, { method: 'DELETE' });
             } else {
               const next = state.list.filter(x => String(x.id) !== String(id));
+              // Guardar lista actualizada SIN el item eliminado
               localStorage.setItem(PRODUCTOS_DB_KEY, JSON.stringify(next));
+              state.list = next;
             }
-            state.list = state.list.filter(x => String(x.id) !== String(id));
+            if (useApi) {
+              state.list = state.list.filter(x => String(x.id) !== String(id));
+            }
             mostrarMsg("Producto/servicio eliminado.", "success");
             await renderLista();
           } catch (err) {
@@ -356,19 +363,41 @@ document.addEventListener("DOMContentLoaded", () => {
         guardado = response.producto;
         mostrarMsg(isUpdate ? "Item actualizado exitosamente en BD." : "Item creado exitosamente en BD.");
       } else {
-        // Fallback Local
+        // ── FALLBACK LOCAL ────────────────────────────────────────────────────
+        // SIEMPRE leer la lista actual del localStorage antes de modificar.
+        // Esto evita que state.list vacío (al entrar directo al formulario
+        // de creación sin pasar por la lista) sobreescriba datos existentes.
+        let listaActual = [];
+        try {
+          const rawActual = localStorage.getItem(PRODUCTOS_DB_KEY);
+          listaActual = rawActual ? (JSON.parse(rawActual) || []) : [];
+          if (!Array.isArray(listaActual)) listaActual = [];
+        } catch { listaActual = []; }
+
         if (isUpdate) {
-          const idx = state.list.findIndex((p) => String(p.id) === String(state.editandoId));
+          // Editar: reemplazar el item con el mismo id en la lista real
+          const idx = listaActual.findIndex((p) => String(p.id) === String(state.editandoId));
           if (idx !== -1) {
-            guardado = { ...state.list[idx], ...datos, actualizadoEn: new Date().toISOString() };
-            state.list[idx] = guardado;
+            guardado = { ...listaActual[idx], ...datos, actualizadoEn: new Date().toISOString() };
+            listaActual[idx] = guardado;
+          } else {
+            // Si por alguna razón no se encuentra en localStorage, usar state.list
+            const idxState = state.list.findIndex((p) => String(p.id) === String(state.editandoId));
+            if (idxState !== -1) {
+              guardado = { ...state.list[idxState], ...datos, actualizadoEn: new Date().toISOString() };
+              listaActual.push(guardado);
+            }
           }
         } else {
+          // Crear: agregar el nuevo item a la lista real existente
           guardado = { id: 'local_' + Date.now().toString(), ...datos, activo: true, creadoEn: new Date().toISOString() };
-          state.list.push(guardado);
+          listaActual.push(guardado);
         }
+
+        // Persistir lista completa (existentes + nuevo/editado)
+        state.list = listaActual;
         localStorage.setItem(PRODUCTOS_DB_KEY, JSON.stringify(state.list));
-        mostrarMsg(isUpdate ? "Item actualizado localmente." : "Item creado localmente.");
+        mostrarMsg(isUpdate ? "Item actualizado y guardado en catálogo." : "Item creado y guardado en catálogo.");
       }
 
       if (!isUpdate) limpiarFormulario();
@@ -427,8 +456,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const buscar = $("buscar");
   if (buscar) buscar.addEventListener("input", renderLista);
 
-  // Init
-  cargarProductoDesdeUrl().then(() => {
+  // ── Inicialización ─────────────────────────────────────────────────────────
+  // Siempre cargar la lista del tenant al iniciar (necesario para:
+  //  - validar códigos duplicados al crear
+  //  - mostrar la lista correctamente
+  //  - evitar que state.list vacío sobreescriba datos al guardar)
+  cargarDB().then(() => {
+    return cargarProductoDesdeUrl();
+  }).then(() => {
     actualizarModoFormulario();
     renderLista();
   });
