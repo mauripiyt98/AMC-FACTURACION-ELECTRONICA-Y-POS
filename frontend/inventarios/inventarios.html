@@ -7,6 +7,8 @@
   <script src="../js/auth-check.js"></script>
   <link rel="stylesheet" href="../css/estilos.css">
   <link rel="stylesheet" href="inventarios.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script>
 </head>
 <body>
   <main class="inventory-page">
@@ -19,16 +21,33 @@
     </header>
 
     <section class="inventory-card" aria-label="Listado de productos y servicios">
-      <div class="inventory-toolbar">
-        <label class="search-box" for="buscar-producto">
-          <span aria-hidden="true">⌕</span>
-          <input id="buscar-producto" type="search" placeholder="Buscar producto o servicio">
-        </label>
-        <button type="button" class="btn-outline" data-development="Filtros">⚙ Filtros</button>
-        <div class="toolbar-spacer"></div>
-        <button type="button" class="btn-outline" data-development="Ver reportes">Ver reportes</button>
+      <section class="inventory-filters" aria-label="Filtros del reporte de inventario">
+        <div class="filter-group product-filter">
+          <label for="buscar-producto">Producto o servicio</label>
+          <input id="buscar-producto" type="search" placeholder="Nombre o código">
+        </div>
+        <div class="filter-group">
+          <label for="filtro-tipo">Tipo</label>
+          <select id="filtro-tipo"><option value="">Todos</option><option value="PRODUCTO">Producto</option><option value="SERVICIO">Servicio</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="filtro-estado">Estado</label>
+          <select id="filtro-estado"><option value="">Todos</option><option value="ACTIVO">Activo</option><option value="INACTIVO">Inactivo</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="filtro-stock">Existencias</label>
+          <select id="filtro-stock"><option value="">Todas</option><option value="DISPONIBLE">Con existencias</option><option value="AGOTADO">Agotado</option><option value="BAJO">Stock bajo</option></select>
+        </div>
+        <div class="filter-actions">
+          <button type="button" id="btn-consultar" class="btn-primary">Consultar reporte</button>
+          <button type="button" id="btn-limpiar" class="btn-outline">Limpiar</button>
+          <button type="button" id="btn-exportar-pdf" class="btn-outline btn-export">Exportar a PDF</button>
+          <button type="button" id="btn-exportar-excel" class="btn-outline btn-export">Exportar a Excel</button>
+        </div>
+        <div class="create-action">
         <a class="btn-primary" href="../productos/crear-producto.html">Crear / Importar</a>
-      </div>
+        </div>
+      </section>
 
       <div id="inventory-message" aria-live="polite"></div>
       <div class="table-scroll">
