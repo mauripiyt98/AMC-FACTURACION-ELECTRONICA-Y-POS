@@ -94,6 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
           iva: p.iva,
           unidadMedida: p.unidad_medida,
           precioBase: p.precio_base || 0,
+          stockTotal: p.stock_total || 0,
+          stockMinimo: p.stock_minimo || 0,
           activo: p.activo !== false
         }));
         return state.list;
@@ -123,6 +125,8 @@ document.addEventListener("DOMContentLoaded", () => {
       iva: parseNumero($("p-iva").value),
       unidadMedida: $("p-unidad").value,
       precioBase: parseNumero($("p-precio").value),
+      stockTotal: parseNumero($("p-stock-total").value),
+      stockMinimo: parseNumero($("p-stock-minimo").value),
     };
   }
 
@@ -134,6 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "p-iva": "19",
       "p-unidad": "UNIDAD",
       "p-precio": "0",
+      "p-stock-total": "0",
+      "p-stock-minimo": "0",
     };
 
     Object.entries(valores).forEach(([id, value]) => {
@@ -174,6 +180,8 @@ document.addEventListener("DOMContentLoaded", () => {
     $("p-iva").value = String(item.iva !== undefined ? item.iva : "19");
     $("p-unidad").value = item.unidadMedida || item.unidad_medida || "UNIDAD";
     $("p-precio").value = item.precioBase ?? item.precio_base ?? 0;
+    $("p-stock-total").value = item.stockTotal ?? item.stock_total ?? 0;
+    $("p-stock-minimo").value = item.stockMinimo ?? item.stock_minimo ?? 0;
     actualizarModoFormulario();
   }
 
@@ -237,6 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lista.innerHTML = items.map((p) => {
       const badgeClass = p.tipo === "PRODUCTO" ? "badge-producto" : "badge-servicio";
       const tipoLabel = p.tipo === "PRODUCTO" ? "Producto" : "Servicio";
+      if (lista.tagName === 'TBODY') return `<tr data-id="${p.id}"><td><span class="badge-tipo ${badgeClass}">${tipoLabel}</span></td><td><strong>${escapeHtml(p.nombre)}</strong></td><td>${escapeHtml(p.codigo)}</td><td>${escapeHtml(p.unidadMedida || p.unidad_medida || 'UNIDAD')}</td><td class="num">${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(Number(p.precioBase ?? p.precio_base) || 0)}</td><td class="num">${Number(p.stockTotal ?? p.stock_total ?? 0).toLocaleString('es-CO')}</td><td>${p.activo !== false ? 'Activo' : 'Inactivo'}</td><td><div class="actions"><button type="button" class="btn-usar" data-action="usar">Usar</button><button type="button" class="btn-edit" data-action="editar">Editar</button><button type="button" class="btn-del" data-action="eliminar">Eliminar</button></div></td></tr>`;
       return `
         <div class="item" data-id="${p.id}">
           <strong>${escapeHtml(p.nombre)}</strong>
@@ -269,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (action === "editar") {
-          window.location.href = `crear-producto.html?id=${encodeURIComponent(id)}`;
+          window.location.href = `productos.html?id=${encodeURIComponent(id)}`;
         }
 
         if (action === "eliminar") {
@@ -282,6 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
               const next = state.list.filter(x => String(x.id) !== String(id));
               localStorage.setItem(PRODUCTOS_DB_KEY, JSON.stringify(next));
             }
+            state.list = state.list.filter(x => String(x.id) !== String(id));
             mostrarMsg("Producto/servicio eliminado.", "success");
             await renderLista();
           } catch (err) {
@@ -316,7 +326,9 @@ document.addEventListener("DOMContentLoaded", () => {
           tipo: datos.tipo,
           iva: datos.iva,
           unidad_medida: datos.unidadMedida,
-          precio_base: datos.precioBase
+          precio_base: datos.precioBase,
+          stock_total: datos.stockTotal,
+          stock_minimo: datos.stockMinimo,
         };
 
         let response;
@@ -365,6 +377,8 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem(PRODUCTO_SELECCIONADO_KEY, JSON.stringify(itemSeleccionado));
         window.location.href = "../index.html?sec=crear-factura";
       }
+
+      if (!opciones.usarEnFactura) window.location.href = `lista-productos.html?guardado=${encodeURIComponent(guardado.id)}`;
 
       return guardado;
 
