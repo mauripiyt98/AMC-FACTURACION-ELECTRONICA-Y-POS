@@ -465,8 +465,14 @@ function aplicarProductoAlFormulario(producto) {
   if (!producto) return;
   $("producto").value = producto.nombre || "";
   if ($("codigo")) $("codigo").value = producto.codigo || "";
-  if ($("unidad")) $("unidad").value = producto.unidadMedida || "UNIDAD";
-  if ($("iva")) $("iva").value = String(producto.iva || "19");
+  if ($("unidad")) $("unidad").value = producto.unidadMedida || producto.unidad_medida || "UNIDAD";
+  if ($("iva")) $("iva").value = String(producto.iva !== undefined ? producto.iva : "19");
+  
+  const precioDef = producto.precioBase ?? producto.precio_base ?? 0;
+  if ($("unitario") && precioDef > 0) {
+    $("unitario").value = formatIntegerWithDots(precioDef);
+  }
+  
   calcularYPrevisualizarLinea();
 }
 
