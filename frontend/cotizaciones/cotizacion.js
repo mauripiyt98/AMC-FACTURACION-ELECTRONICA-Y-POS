@@ -56,6 +56,9 @@ async function cargarTodosLosTercerosApi() {
   return terceros;
 }
 
+const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
+const isDev = activeUserCode === "1110591592";
+
 const TERCEROS_DB_KEY = `amc_terceros_db_v1_${activeUserCode}`;
 const PRODUCTOS_DB_KEY = `amc_productos_db_v1_${activeUserCode}`;
 const COTIZACIONES_DB_KEY = `amc_cotizaciones_generadas_db_v1_${activeUserCode}`;

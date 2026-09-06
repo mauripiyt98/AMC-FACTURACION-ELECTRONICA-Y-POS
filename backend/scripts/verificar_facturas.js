@@ -9,6 +9,8 @@ const filesToTest = [
   'frontend/facturas-generadas/facturas-generadas.js',
   'frontend/js/factura.js',
   'frontend/js/facturas_seed.js',
+  'frontend/js/terceros_seed.js',
+  'frontend/terceros/terceros.js',
   'frontend/reportes/ventas-cliente.js',
   'frontend/reportes/ventas-producto.js',
   'frontend/reportes/comparativo-ventas.js'
