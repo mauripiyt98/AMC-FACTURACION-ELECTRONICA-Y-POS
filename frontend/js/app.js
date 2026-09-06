@@ -49,9 +49,7 @@ async function cargarTodosLosTercerosApi() {
 }
 
 const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-const isDev = activeUserCode === "1110591592";
-
-const STORAGE_KEY = isDev ? "amc_factura_preview_v1" : `amc_factura_preview_v1_${activeUserCode}`;
+const STORAGE_KEY = `amc_factura_preview_v1_${activeUserCode}`;
 
 const MEDIOS_PAGO = [
   { value: "EFECTIVO",       label: "Efectivo" },
@@ -135,11 +133,11 @@ const state = { lineas: [], clienteTercero: null };
 const $ = (id) => document.getElementById(id);
 
 // ── Terceros (base de datos local) ──────────────────────────────────────────
-const TERCEROS_DB_KEY = isDev ? "amc_terceros_db_v1" : `amc_terceros_db_v1_${activeUserCode}`;
-const CLIENTE_SELECCIONADO_KEY = isDev ? "amc_cliente_seleccionado_v1" : `amc_cliente_seleccionado_v1_${activeUserCode}`;
-const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
-const PRODUCTO_SELECCIONADO_KEY = isDev ? "amc_producto_seleccionado_v1" : `amc_producto_seleccionado_v1_${activeUserCode}`;
-const FACTURAS_GENERADAS_DB_KEY = isDev ? "amc_facturas_generadas_db_v1" : `amc_facturas_generadas_db_v1_${activeUserCode}`;
+const TERCEROS_DB_KEY = `amc_terceros_db_v1_${activeUserCode}`;
+const CLIENTE_SELECCIONADO_KEY = `amc_cliente_seleccionado_v1_${activeUserCode}`;
+const PRODUCTOS_DB_KEY = `amc_productos_db_v1_${activeUserCode}`;
+const PRODUCTO_SELECCIONADO_KEY = `amc_producto_seleccionado_v1_${activeUserCode}`;
+const FACTURAS_GENERADAS_DB_KEY = `amc_facturas_generadas_db_v1_${activeUserCode}`;
 const RESOLUCION_FACTURACION_DEMO = {
   prefijo: "FE",
   desde: 1,
@@ -195,7 +193,7 @@ function sincronizarTerceroLocalDesdeFactura(cliente) {
 
 function descontarInventarioLocal(lineas, referencia) {
   if (!Array.isArray(lineas) || !lineas.length) return;
-  const MOVIMIENTOS_DB_KEY = isDev ? "amc_inventario_movimientos_v1" : `amc_inventario_movimientos_v1_${activeUserCode}`;
+  const MOVIMIENTOS_DB_KEY = `amc_inventario_movimientos_v1_${activeUserCode}`;
 
   let productos = [];
   try {

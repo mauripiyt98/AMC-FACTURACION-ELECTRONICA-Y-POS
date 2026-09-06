@@ -225,7 +225,8 @@
   }
 ];
   const userCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-  localStorage.setItem(`amc_productos_db_v1_${userCode}`, JSON.stringify(data));
-  localStorage.setItem('amc_productos_db_v1', JSON.stringify(data));
-  console.log('🌱 Catálogo e inventario respaldado y cargado en LocalStorage');
+  if (userCode === "1110591592") {
+    localStorage.setItem(`amc_productos_db_v1_${userCode}`, JSON.stringify(data));
+    console.log(`🌱 Catálogo e inventario respaldado y cargado exclusivamente para el tenant ${userCode} en LocalStorage`);
+  }
 })();

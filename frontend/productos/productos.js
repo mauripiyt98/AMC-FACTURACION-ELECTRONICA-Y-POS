@@ -12,10 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ── Sesión y Configuración ──────────────────────────────────────────────────
   const SESSION_KEY = 'amc_session_v2';
   const activeUserCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-  const isDev = activeUserCode === "1110591592";
 
-  const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
-  const PRODUCTO_SELECCIONADO_KEY = isDev ? "amc_producto_seleccionado_v1" : `amc_producto_seleccionado_v1_${activeUserCode}`;
+  const PRODUCTOS_DB_KEY = `amc_productos_db_v1_${activeUserCode}`;
+  const PRODUCTO_SELECCIONADO_KEY = `amc_producto_seleccionado_v1_${activeUserCode}`;
 
   function getToken() {
     try {
@@ -103,8 +102,19 @@ document.addEventListener("DOMContentLoaded", () => {
         console.warn("Error cargando productos del API, usando caché local", err);
       }
     }
-    // Fallback Local
-    const raw = localStorage.getItem(PRODUCTOS_DB_KEY);
+    // Fallback Local (Aislado por tenant)
+    let raw = localStorage.getItem(PRODUCTOS_DB_KEY);
+    
+    // Migración y limpieza de clave global no aislada legado
+    const legacyGlobal = localStorage.getItem('amc_productos_db_v1');
+    if (legacyGlobal) {
+      if (!raw && activeUserCode === '1110591592') {
+        localStorage.setItem(PRODUCTOS_DB_KEY, legacyGlobal);
+        raw = legacyGlobal;
+      }
+      localStorage.removeItem('amc_productos_db_v1');
+    }
+
     if (!raw) { state.list = []; return []; }
     try {
       const arr = JSON.parse(raw);

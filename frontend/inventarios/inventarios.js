@@ -3,8 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const SESSION_KEY = 'amc_session_v2';
   const activeUserCode = sessionStorage.getItem('amc_active_user_code') || '1110591592';
-  const isDev = activeUserCode === '1110591592';
-  const PRODUCTOS_DB_KEY = isDev ? 'amc_productos_db_v1' : `amc_productos_db_v1_${activeUserCode}`;
+  const PRODUCTOS_DB_KEY = `amc_productos_db_v1_${activeUserCode}`;
   const API_BASE = 'http://localhost:3000/api';
   const $ = (id) => document.getElementById(id);
   const state = { productos: [], rows: [], useApi: false, empresa: { nombre: 'AMC Facturación Electrónica y POS', identificacion: 'No disponible' } };
@@ -147,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) { mostrar(error.message, true); }
   }
 
-  const GESTIONAR_PROD_KEY = isDev ? 'amc_producto_gestionar_v1' : `amc_producto_gestionar_v1_${activeUserCode}`;
+  const GESTIONAR_PROD_KEY = `amc_producto_gestionar_v1_${activeUserCode}`;
 
   $('buscar-producto').addEventListener('input', render);
   ['filtro-tipo', 'filtro-estado', 'filtro-stock'].forEach((id) => $(id).addEventListener('change', render));

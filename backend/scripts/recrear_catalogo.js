@@ -178,12 +178,12 @@ async function main() {
   const jsInjectionPath = path.join(__dirname, '..', '..', 'frontend', 'js', 'catalogo_seed.js');
   const jsContent = `/** Auto-seeded catálogo en LocalStorage **/
 (function() {
-  const KEY = 'amc_productos_db_v1';
   const data = ${JSON.stringify(localProductsList, null, 2)};
   const userCode = sessionStorage.getItem("amc_active_user_code") || "1110591592";
-  localStorage.setItem(\`amc_productos_db_v1_\${userCode}\`, JSON.stringify(data));
-  localStorage.setItem('amc_productos_db_v1', JSON.stringify(data));
-  console.log('🌱 Catálogo e inventario respaldado y cargado en LocalStorage');
+  if (userCode === "1110591592") {
+    localStorage.setItem(\`amc_productos_db_v1_\${userCode}\`, JSON.stringify(data));
+    console.log(\`🌱 Catálogo e inventario respaldado y cargado exclusivamente para el tenant \${userCode} en LocalStorage\`);
+  }
 })();
 `;
   fs.writeFileSync(jsInjectionPath, jsContent, 'utf-8');
