@@ -90,7 +90,7 @@ async function seed() {
       console.log(`  ✅ Tercero de ejemplo creado`);
     }
 
-    // ── Productos de ejemplo ──────────────────────────────────────────────────
+    // ── Productos y Servicios Recreados ──────────────────────────────────────
     const { rows: productosExistentes } = await client.query(
       `SELECT id FROM productos WHERE empresa_id = $1`,
       [empresaId]
@@ -98,19 +98,28 @@ async function seed() {
 
     if (!productosExistentes.length) {
       const prods = [
-        ['Servicio de Consultoría TI',   'SCON-001', 'SERVICIO', 19, 'UNIDAD'],
-        ['Licencia de Software Anual',   'LIC-001',  'SERVICIO', 19, 'UNIDAD'],
-        ['Computador Portátil',          'HW-001',   'PRODUCTO', 19, 'UNIDAD'],
-        ['Gasolina Corriente',           'GAL-001',  'PRODUCTO',  5, 'GALON'],
+        ['ASESORIA CONTABLE Y TRIBUTARIA MENSUAL',                     '001',        'SERVICIO', 19, 'UNIDAD', 1206667, 485],
+        ['DECLARACION DE RENTA ANUAL',                                 '002',        'SERVICIO', 19, 'UNIDAD',  344444, 491],
+        ['PRESENTACION DE INFORMACION EXOGENA ANUAL',                   '003',        'SERVICIO', 19, 'UNIDAD', 2000000, 498],
+        ["LIBRO ''EL PODER DE LA IA EN CONTABILIDAD",                  '005',        'PRODUCTO',  0, 'UNIDAD',   50000, 500],
+        ['AUDITORIA TRIBUTARIA MENSUAL',                               '006',        'SERVICIO', 19, 'UNIDAD',   66667, 494],
+        ['ASESORIAS EN CONSTITUCION DE EMPRESAS JURIDICAS',            '007',        'SERVICIO', 19, 'UNIDAD',  900000, 499],
+        ['DECLARACION DE IMPUESTO INDUSTRIA Y COMERCIO',               '008',        'SERVICIO',  0, 'UNIDAD',  500000, 499],
+        ['DECLARACION DE IMPUESTO INDUSTRIA Y COMERCIO AG2025',        '008-AG2025', 'SERVICIO', 19, 'UNIDAD',  200000, 499],
+        ['SUSCRIPCION DE FACTURACION ELECTRONICA POR 1 AÑO EN AMC FE', '011',        'SERVICIO',  0, 'UNIDAD',  250000, 499],
+        ['Servicio de Consultoría TI',                                 'SCON-001',   'SERVICIO', 19, 'UNIDAD',  150000, 500],
+        ['Licencia de Software Anual',                                 'LIC-001',    'SERVICIO', 19, 'UNIDAD', 1200000, 500],
+        ['Computador Portátil',                                        'HW-001',     'PRODUCTO', 19, 'UNIDAD', 2800000, 500],
+        ['Gasolina Corriente',                                         'GAL-001',    'PRODUCTO',  5, 'GALON',   15000, 500],
       ];
-      for (const [nombre, codigo, tipo, iva, unidad_medida] of prods) {
+      for (const [nombre, codigo, tipo, iva, unidad_medida, precio_base, stock_total] of prods) {
         await client.query(
-          `INSERT INTO productos (empresa_id, nombre, codigo, tipo, iva, unidad_medida)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [empresaId, nombre, codigo, tipo, iva, unidad_medida]
+          `INSERT INTO productos (empresa_id, nombre, codigo, tipo, iva, unidad_medida, precio_base, stock_total, stock_minimo)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 10)`,
+          [empresaId, nombre, codigo, tipo, iva, unidad_medida, precio_base, stock_total]
         );
       }
-      console.log(`  ✅ ${prods.length} productos de ejemplo creados`);
+      console.log(`  ✅ ${prods.length} productos y servicios creados con su inventario actualizado`);
     }
 
     await client.query('COMMIT');

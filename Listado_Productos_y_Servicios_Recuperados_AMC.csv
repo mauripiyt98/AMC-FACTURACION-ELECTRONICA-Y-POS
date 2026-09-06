@@ -1,0 +1,14 @@
+﻿Código;Nombre del Producto o Servicio;Tipo;Precio Base ($);IVA (%);Unidad de Medida;Origen / Fuente de Recuperación
+001;ASESORIA CONTABLE Y TRIBUTARIA MENSUAL;SERVICIO;18100000;19;UNIDAD;Reporte de ventas de productos
+002;DECLARACION DE RENTA ANUAL;SERVICIO;3100000;19;UNIDAD;Reporte de ventas de productos
+003;PRESENTACION DE INFORMACION EXOGENA ANUAL;SERVICIO;4000000;19;UNIDAD;Reporte de ventas de productos
+005;LIBRO ''EL PODER DE LA IA EN CONTABILIDAD;PRODUCTO;50000;0;UNIDAD;Respaldo Local (Edge LocalStorage)
+006;AUDITORIA TRIBUTARIA MENSUAL;SERVICIO;400000;19;UNIDAD;Reporte de ventas de productos
+007;ASESORIAS EN CONSTITUCION DE EMPRESAS JURIDICAS;SERVICIO;900000;19;UNIDAD;Reporte de ventas de productos
+008;DECLARACION DE IMPUESTO INDUSTRIA Y COMERCIO;SERVICIO;500000;0;UNIDAD;Reporte de ventas de productos
+008;DECLARACION DE IMPUESTO INDUSTRIA Y COMERCIO AG2025;SERVICIO;200000;19;UNIDAD;Reporte de ventas de productos
+011;SUSCRIPCION DE FACTURACION ELECTRONICA POR 1 AÑO EN AMC FE;SERVICIO;250000;0;UNIDAD;Reporte de ventas de productos
+SCON-001;Servicio de Consultoría TI;SERVICIO;0;19;UNIDAD;Semilla base del sistema
+LIC-001;Licencia de Software Anual;SERVICIO;0;19;UNIDAD;Semilla base del sistema
+HW-001;Computador Portátil;PRODUCTO;0;19;UNIDAD;Semilla base del sistema
+GAL-001;Gasolina Corriente;PRODUCTO;0;5;GALON;Semilla base del sistema
