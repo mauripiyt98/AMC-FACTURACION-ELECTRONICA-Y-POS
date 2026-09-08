@@ -54,7 +54,9 @@ async function tenantMiddleware(req, res, next) {
     // Cualquier query posterior en esta conexión verá app.empresa_id seteado.
     // Las políticas RLS de PostgreSQL llaman a current_empresa_id() que lee
     // este valor y filtra automáticamente todas las queries.
-    await client.query(`SET LOCAL app.empresa_id = $1`, [empresaId]);
+    await client.query(`SELECT set_config('app.empresa_id', $1, TRUE)`, [empresaId]);
+    await client.query(`SELECT set_config('app.user_id', $1, TRUE)`, [String(req.user.id)]);
+    await client.query(`SELECT set_config('app.user_role', $1, TRUE)`, [String(req.user.rol || '')]);
 
     // Adjuntar el cliente y empresa_id al request para los servicios
     req.dbClient  = client;

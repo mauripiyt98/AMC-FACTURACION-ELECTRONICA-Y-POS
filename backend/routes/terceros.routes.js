@@ -2,7 +2,7 @@
 
 const router         = require('express').Router();
 const TerceroService = require('../services/TerceroService');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 const { tenantMiddleware } = require('../middleware/tenant');
 const { validateBody, required, minLen, isEmail } = require('../middleware/validate');
 
@@ -52,6 +52,7 @@ router.get('/:id', async (req, res, next) => {
  * POST /api/terceros
  */
 router.post('/',
+  requireRole('ADMIN', 'SUPERADMIN'),
   validateBody({
     nombre   : [required(), minLen(3, 'Nombre mínimo 3 caracteres')],
     documento: [required(), minLen(3, 'Documento mínimo 3 caracteres')],
@@ -71,6 +72,7 @@ router.post('/',
  * PUT /api/terceros/:id
  */
 router.put('/:id',
+  requireRole('ADMIN', 'SUPERADMIN'),
   validateBody({
     nombre   : [required(), minLen(3)],
     documento: [required(), minLen(3)],
@@ -91,7 +93,7 @@ router.put('/:id',
 /**
  * PATCH /api/terceros/:id
  */
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     const tercero = await TerceroService.actualizar(
       req.dbClient, req.empresaId, req.params.id, req.body
@@ -105,7 +107,7 @@ router.patch('/:id', async (req, res, next) => {
 /**
  * DELETE /api/terceros/:id  (soft delete)
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     await TerceroService.eliminar(req.dbClient, req.empresaId, req.params.id);
     res.json({ success: true, message: 'Tercero eliminado correctamente' });

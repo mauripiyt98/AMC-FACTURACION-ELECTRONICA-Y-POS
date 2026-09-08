@@ -2,7 +2,7 @@
 
 const router          = require('express').Router();
 const ProductoService = require('../services/ProductoService');
-const { authMiddleware }  = require('../middleware/auth');
+const { authMiddleware, requireRole }  = require('../middleware/auth');
 const { tenantMiddleware } = require('../middleware/tenant');
 const { validateBody, required, minLen, isIn } = require('../middleware/validate');
 
@@ -43,6 +43,7 @@ router.get('/:id', async (req, res, next) => {
  * POST /api/productos
  */
 router.post('/',
+  requireRole('ADMIN', 'SUPERADMIN'),
   validateBody({
     nombre: [required(), minLen(3, 'Nombre mínimo 3 caracteres')],
     codigo: [required(), minLen(1, 'Código obligatorio')],
@@ -62,6 +63,7 @@ router.post('/',
  * PUT /api/productos/:id
  */
 router.put('/:id',
+  requireRole('ADMIN', 'SUPERADMIN'),
   validateBody({
     nombre: [required(), minLen(3)],
     codigo: [required()],
@@ -81,7 +83,7 @@ router.put('/:id',
 /**
  * PATCH /api/productos/:id
  */
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     const producto = await ProductoService.actualizar(
       req.dbClient, req.empresaId, req.params.id, req.body
@@ -95,7 +97,7 @@ router.patch('/:id', async (req, res, next) => {
 /**
  * PATCH /api/productos/:id/stock
  */
-router.patch('/:id/stock', async (req, res, next) => {
+router.patch('/:id/stock', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     const { nuevoStock, stockMinimo, tipoMovimiento, motivo, referencia } = req.body;
     if (nuevoStock === undefined || isNaN(Number(nuevoStock))) {
@@ -130,7 +132,7 @@ router.get('/:id/movimientos', async (req, res, next) => {
 /**
  * DELETE /api/productos/:id  (soft delete)
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     await ProductoService.eliminar(req.dbClient, req.empresaId, req.params.id);
     res.json({ success: true, message: 'Producto eliminado correctamente' });

@@ -2,7 +2,7 @@
 
 const router              = require('express').Router();
 const CotizacionService   = require('../services/CotizacionService');
-const { authMiddleware }  = require('../middleware/auth');
+const { authMiddleware, requireRole }  = require('../middleware/auth');
 const { tenantMiddleware } = require('../middleware/tenant');
 
 router.use(authMiddleware, tenantMiddleware);
@@ -75,7 +75,7 @@ router.post('/', async (req, res, next) => {
  * POST /api/cotizaciones/:id/convertir
  * Convierte la cotización a factura electrónica.
  */
-router.post('/:id/convertir', async (req, res, next) => {
+router.post('/:id/convertir', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     const result = await CotizacionService.convertirAFactura(
       req.dbClient,
@@ -94,7 +94,7 @@ router.post('/:id/convertir', async (req, res, next) => {
  * Cambiar estado de una cotización.
  * Body: { estado: 'GUARDADA' | 'FACTURADA' | 'ANULADA' }
  */
-router.patch('/:id/estado', async (req, res, next) => {
+router.patch('/:id/estado', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     const { estado } = req.body;
     const cotizacion = await CotizacionService.cambiarEstado(

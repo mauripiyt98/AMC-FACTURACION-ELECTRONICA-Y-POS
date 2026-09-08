@@ -2,7 +2,7 @@
 
 const router         = require('express').Router();
 const FacturaService = require('../services/FacturaService');
-const { authMiddleware }  = require('../middleware/auth');
+const { authMiddleware, requireRole }  = require('../middleware/auth');
 const { tenantMiddleware } = require('../middleware/tenant');
 
 router.use(authMiddleware, tenantMiddleware);
@@ -76,7 +76,7 @@ router.post('/', async (req, res, next) => {
  * Cambiar estado de una factura.
  * Body: { estado: 'ENVIADA' | 'ACEPTADA' | 'RECHAZADA' | 'ANULADA' }
  */
-router.patch('/:id/estado', async (req, res, next) => {
+router.patch('/:id/estado', requireRole('ADMIN', 'SUPERADMIN'), async (req, res, next) => {
   try {
     const { estado } = req.body;
     const factura = await FacturaService.cambiarEstado(

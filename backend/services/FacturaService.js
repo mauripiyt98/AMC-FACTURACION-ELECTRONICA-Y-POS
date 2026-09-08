@@ -125,12 +125,10 @@ class FacturaService {
 
     const facturaCreada = await Factura.create(client, empresaId, facturaData, lineasNormalizadas, usuarioId);
 
-    // 7. Descontar existencias contables de los productos facturados
-    try {
-      await Producto.descontarStockPorVenta(client, empresaId, lineasNormalizadas, numero_factura, usuarioId);
-    } catch (stockErr) {
-      console.warn('Advertencia al descontar inventario en factura:', stockErr);
-    }
+    // 7. Descontar existencias dentro de la misma transacción. Si el kardex no
+    // puede persistirse, el middleware revierte también la factura y evita que
+    // ventas e inventario queden en estados distintos.
+    await Producto.descontarStockPorVenta(client, empresaId, lineasNormalizadas, numero_factura, usuarioId);
 
     return facturaCreada;
   }

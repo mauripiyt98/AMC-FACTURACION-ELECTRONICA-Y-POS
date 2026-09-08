@@ -19,6 +19,7 @@ const nominasRoutes   = require('./routes/nominas.routes');
 const empleadosRoutes = require('./routes/empleados.routes');
 const reportesRoutes  = require('./routes/reportes.routes');
 const cotizacionesRoutes = require('./routes/cotizaciones.routes');
+const auditoriaRoutes = require('./routes/auditoria.routes');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -98,6 +99,7 @@ app.use('/api/nominas',   nominasRoutes);
 app.use('/api/empleados', empleadosRoutes);
 app.use('/api/reportes',      reportesRoutes);
 app.use('/api/cotizaciones',  cotizacionesRoutes);
+app.use('/api/auditoria',     auditoriaRoutes);
 
 // ── Manejo de rutas no encontradas y errores ─────────────
 app.use(notFound);
