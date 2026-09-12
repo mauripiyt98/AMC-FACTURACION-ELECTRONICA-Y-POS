@@ -92,97 +92,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return RESOLUCION_POS_DEMO.prefijo + "-" + String(consecutivo).padStart(3, "0");
   }
 
-  function nombreArchivoSeguro(value) {
-    return String(value || "factura").replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "factura";
-  }
-
-  function normalizarFacturaApi(factura) {
-    return {
-      ...factura,
-      tipo: factura.tipo || "FE",
-      numeroFactura: factura.numeroFactura || factura.numero_factura,
-      generadoEn: factura.generadoEn || factura.generado_en,
-      cliente: factura.cliente || {
-        nombre: factura.cliente_nombre,
-        documento: factura.cliente_documento,
-        email: factura.cliente_email,
-      },
-      emisor: factura.emisor || {},
-      medioPago: factura.medioPago || factura.medio_pago,
-      medioPagoLabel: factura.medioPagoLabel || factura.medio_pago,
-      totales: factura.totales || {
-        base: factura.total_base,
-        iva: factura.total_iva,
-        retencion: factura.total_retencion,
-        total: factura.total_factura,
-      },
-      lineas: Array.isArray(factura.lineas) ? factura.lineas.map((linea) => ({
-        ...linea,
-        producto: linea.producto || linea.nombre,
-        unitario: linea.unitario || linea.valor_unitario,
-      })) : [],
-    };
-  }
-
-  function detalleFacturaParaPdf(factura) {
-    if (!useApi) return Promise.resolve(factura);
-    return apiFetch(`/facturas/${encodeURIComponent(factura.id)}`).then((data) => normalizarFacturaApi(data.factura || factura));
-  }
-
-  function crearDocumentoPdf(factura) {
-    const cliente = factura.cliente || {};
-    const tipo = factura.tipo || "FE";
-    const numero = factura.numeroFactura || (tipo === "POS"
-      ? construirNumeroPos(factura.consecutivo || 0)
-      : construirNumeroFactura(factura.consecutivo || 0));
-    const totales = factura.totales || {};
-    const lineas = Array.isArray(factura.lineas) ? factura.lineas : [];
-    let perfil = {};
-    try { perfil = JSON.parse(localStorage.getItem(`amc_perfil_emisor_v1_${activeUserCode}`) || "{}"); } catch { /* perfil no disponible */ }
-    const emisor = { ...perfil, ...(factura.emisor || {}) };
-    const rows = lineas.length ? lineas.map((linea, index) => `
-      <tr><td>${index + 1}</td><td>${escapeHtml(linea.codigo || "—")}</td><td>${escapeHtml(linea.producto || linea.descripcion || "—")}</td><td>${escapeHtml(linea.unidad || linea.unidad_medida || "UNIDAD")}</td><td class="num">${escapeHtml(String(linea.cantidad || 0))}</td><td class="num">${formatoMoneda(linea.unitario || linea.precio || 0)}</td><td class="num">${formatoMoneda(linea.base || 0)}</td><td class="num">${escapeHtml(String(linea.tarifaIva || linea.tarifa_iva || 0))}%</td><td class="num">${formatoMoneda(linea.valorIva || linea.valor_iva || 0)}</td><td class="num">${formatoMoneda(linea.total || 0)}</td></tr>`).join("")
-      : '<tr><td colspan="10">El detalle de líneas no está disponible para esta factura.</td></tr>';
-    const stage = document.createElement("div");
-    stage.className = "factura-pdf-stage pdf-export-stage";
-    stage.innerHTML = `<article class="factura-doc">
-      <div class="factura-banner">Representación gráfica — Factura electrónica de venta · Demostración académica DIAN Colombia</div>
-      <div class="doc-inner"><header class="factura-header"><div class="emisor" style="margin-left:0"><span class="dian-badge">Documento de demostración</span><h2>${escapeHtml(emisor.razonSocial || "AMC Facturación Electrónica y POS")}</h2><p>NIT: ${escapeHtml(emisor.nit || activeUserCode)}</p><p>${escapeHtml(emisor.regimen || `${emisor.tipoPersona === "JURIDICA" ? "Persona Jurídica" : "Persona Natural"} — ${emisor.ciudad || "Colombia"}`)}</p><p>Resolución DIAN demo N° 18760000001 — Vigencia académica</p></div><div class="factura-meta"><p><strong>FACTURA ELECTRÓNICA DE VENTA</strong></p><p class="numero">${escapeHtml(numero)}</p><p>${escapeHtml(fechaHoraColombia(factura.generadoEn))}</p><p class="cufe">Estado: ${escapeHtml(factura.estado || "EMITIDA")}</p></div></header>
-      <div class="factura-grid-2"><div class="info-block"><h4>Datos del emisor</h4><p><strong>${escapeHtml(emisor.razonSocial || "AMC Facturación Electrónica y POS")}</strong></p><p>NIT ${escapeHtml(emisor.nit || activeUserCode)}</p><p>${escapeHtml(emisor.direccion || emisor.ciudad || "Colombia")}</p><p>${escapeHtml(emisor.email || "")}</p></div><div class="info-block cliente-block"><h4>Datos del adquirente (cliente)</h4><p><strong>${escapeHtml(cliente.nombre || "—")}</strong></p><p><span class="lbl">Documento / NIT:</span> ${escapeHtml(cliente.documento || "—")}</p><p><span class="lbl">Email:</span> ${escapeHtml(cliente.email || "—")}</p><p><span class="lbl">Medio de pago:</span> ${escapeHtml(factura.medioPagoLabel || factura.medioPago || "—")}</p></div></div>
-      <table class="factura-table"><thead><tr><th>#</th><th>Código</th><th>Descripción</th><th>U.M.</th><th>Cant.</th><th>V. unitario</th><th>Base</th><th>IVA %</th><th>Valor IVA</th><th>Total neto</th></tr></thead><tbody>${rows}</tbody></table>
-      <div class="totales-section"><div></div><div></div><div class="totales-box"><div class="row"><span>Subtotal (base gravable)</span><span>${formatoMoneda(totales.base || 0)}</span></div><div class="row"><span>Total impuestos (IVA)</span><span>${formatoMoneda(totales.iva || 0)}</span></div><div class="row" style="color:#d94d6a"><span>Total retención en la fuente (–)</span><span>${formatoMoneda(totales.retencion || 0)}</span></div><div class="row total-final"><span>TOTAL A PAGAR</span><span>${formatoMoneda(totales.total || 0)}</span></div></div></div>
-      <footer class="legal-footer">Documento generado con AMC Facturación Electrónica y POS — Proyecto académico.</footer></div>
-    </article>`;
-    document.body.appendChild(stage);
-    return { stage, documento: stage.firstElementChild, numero, cliente };
-  }
-
-  async function descargarPdfFactura(factura, boton) {
-    if (typeof html2pdf === "undefined") {
-      alert("No se pudo cargar el generador de PDF. Verifica tu conexión e inténtalo nuevamente.");
-      return;
-    }
-    const textoOriginal = boton.textContent;
-    boton.disabled = true;
-    boton.textContent = "Generando PDF…";
-    let stage;
-    try {
-      const detalle = await detalleFacturaParaPdf(factura);
-      const documento = crearDocumentoPdf(detalle);
-      stage = documento.stage;
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      if (document.fonts?.ready) await document.fonts.ready;
-      await html2pdf().set({ margin: [5, 5, 5, 5], filename: `Factura-${nombreArchivoSeguro(documento.numero)}-${nombreArchivoSeguro(documento.cliente.nombre)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["avoid-all", "css", "legacy"] } }).from(documento.documento).save();
-    } catch (error) {
-      console.error("No fue posible generar el PDF.", error);
-      alert("No fue posible generar el PDF. Inténtalo nuevamente.");
-    } finally {
-      if (stage) stage.remove();
-      boton.disabled = false;
-      boton.textContent = textoOriginal;
-    }
-  }
-
   function obtenerSiguienteConsecutivo(facturas) {
     const usados = facturas
       .map((f) => Number(f.consecutivo))
@@ -350,7 +259,9 @@ document.addEventListener("DOMContentLoaded", () => {
     body.querySelectorAll("button[data-pdf-id]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const factura = facturas.find((f) => String(f.id) === String(btn.dataset.pdfId));
-        if (factura) descargarPdfFactura(factura, btn);
+        if (!factura) return;
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(factura));
+        window.open("../prefactura.html?descargarPdf=1", "_blank");
       });
     });
   }

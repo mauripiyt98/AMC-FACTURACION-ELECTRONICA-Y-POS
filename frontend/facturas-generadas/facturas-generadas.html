@@ -6,8 +6,6 @@
   <title>Facturas generadas - AMC Facturacion</title>
   <script src="../js/auth-check.js"></script>
   <link rel="stylesheet" href="../css/estilos.css">
-  <link rel="stylesheet" href="../css/factura.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
   <style>
     .wrap { max-width: 1120px; margin: 0 auto; padding: 18px; }
     .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 10px 0 16px; flex-wrap:wrap; }
@@ -39,23 +37,6 @@
     .badge-fe  { display:inline-block; background:#eaf9fe; color:#0032c8; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
     .table-actions { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; min-width:190px; }
     .table-actions .btn-sec { justify-content:center; min-height:31px; padding:6px 8px; border-radius:6px; font-size:.76rem; line-height:1; white-space:nowrap; }
-    .pdf-export-stage { position:fixed; left:0; top:0; width:900px; background:#fff; color:#172033; padding:0; box-sizing:border-box; z-index:9999999; pointer-events:none; }
-    .pdf-export-document { font:14px/1.45 Arial,sans-serif; }
-    .pdf-export-header { display:flex; justify-content:space-between; gap:24px; padding-bottom:16px; border-bottom:3px solid #001e82; }
-    .pdf-export-header h1 { margin:0; color:#001e82; font-size:24px; }
-    .pdf-export-header p { margin:4px 0; }
-    .pdf-export-meta { text-align:right; font-size:12px; }
-    .pdf-export-section { margin-top:20px; }
-    .pdf-export-section h2 { margin:0 0 8px; color:#001e82; font-size:15px; }
-    .pdf-export-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .pdf-export-box { padding:12px; border:1px solid #cde7f0; background:#f4fbff; border-radius:6px; }
-    .pdf-export-document table { width:100%; border-collapse:collapse; font-size:12px; }
-    .pdf-export-document th { background:#001e82; color:#fff; padding:8px; text-align:left; }
-    .pdf-export-document td { padding:8px; border-bottom:1px solid #d7edf5; }
-    .pdf-export-document .num { text-align:right; }
-    .pdf-export-total { width:290px; margin:18px 0 0 auto; }
-    .pdf-export-total div { display:flex; justify-content:space-between; padding:5px 0; }
-    .pdf-export-total .grand-total { border-top:2px solid #001e82; color:#001e82; font-weight:800; font-size:16px; }
   </style>
 </head>
 <body>

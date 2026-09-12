@@ -422,4 +422,8 @@ window.addEventListener("load", function () {
   }
 
   $("btn-pdf").addEventListener("click", descargarPdf);
+
+  if (new URLSearchParams(window.location.search).get("descargarPdf") === "1") {
+    window.setTimeout(descargarPdf, 250);
+  }
 });
