@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <footer class="legal-footer">Documento generado con AMC Facturación Electrónica y POS — Proyecto académico.</footer></div>
     </article>`;
     document.body.appendChild(stage);
-    return { stage, numero, cliente };
+    return { stage, documento: stage.firstElementChild, numero, cliente };
   }
 
   async function descargarPdfFactura(factura, boton) {
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
       stage = documento.stage;
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       if (document.fonts?.ready) await document.fonts.ready;
-      await html2pdf().set({ margin: [5, 5, 5, 5], filename: `Factura-${nombreArchivoSeguro(documento.numero)}-${nombreArchivoSeguro(documento.cliente.nombre)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["avoid-all", "css", "legacy"] } }).from(stage).save();
+      await html2pdf().set({ margin: [5, 5, 5, 5], filename: `Factura-${nombreArchivoSeguro(documento.numero)}-${nombreArchivoSeguro(documento.cliente.nombre)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["avoid-all", "css", "legacy"] } }).from(documento.documento).save();
     } catch (error) {
       console.error("No fue posible generar el PDF.", error);
       alert("No fue posible generar el PDF. Inténtalo nuevamente.");
@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${lineas}</td>
           <td class="num">${formatoMoneda(total)}</td>
           <td>${estado}</td>
-          <td><button type="button" class="btn-sec" data-id="${escapeHtml(factura.id)}">Ver factura</button><button type="button" class="btn-sec pdf-download" data-pdf-id="${escapeHtml(factura.id)}">Descargar PDF</button></td>
+          <td><div class="table-actions"><button type="button" class="btn-sec" data-id="${escapeHtml(factura.id)}">Ver factura</button><button type="button" class="btn-sec" data-pdf-id="${escapeHtml(factura.id)}">Descargar PDF</button></div></td>
         </tr>`;
     }).join("");
 
