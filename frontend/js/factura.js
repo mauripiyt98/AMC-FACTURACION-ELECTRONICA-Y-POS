@@ -175,17 +175,24 @@ function descargarPdf() {
   btnPdf.disabled = true;
   btnPdf.textContent = "Generando PDF…";
 
-  // Al abrir la aplicación directamente con file://, algunos navegadores no
-  // permiten que html2canvas lea imágenes locales o externas (logo y QR). Se
-  // excluyen solo de la copia temporal de exportación para evitar que el lienzo
-  // quede bloqueado y la descarga falle; la factura mostrada no se modifica.
-  opt.html2canvas.onclone = (documentoClonado) => {
-    const copiaFactura = documentoClonado.getElementById(elemento.id);
-    if (!copiaFactura) return;
-    copiaFactura.querySelectorAll("img").forEach((imagen) => imagen.remove());
-  };
+  const stage = document.createElement("div");
+  stage.className = "factura-pdf-stage";
+  const documentoPdf = elemento.cloneNode(true);
+  documentoPdf.removeAttribute("id");
+  // Evita que imágenes servidas desde file:// bloqueen la conversión. Solo se
+  // excluyen del clon temporal; la representación de datos permanece intacta.
+  documentoPdf.querySelectorAll("img").forEach((imagen) => imagen.remove());
+  stage.appendChild(documentoPdf);
+  document.body.appendChild(stage);
 
-  html2pdf().set(opt).from(elemento).save()
+  Promise.resolve()
+    .then(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    .then(() => document.fonts?.ready)
+    .then(() => html2pdf().set({
+      ...opt,
+      html2canvas: { ...opt.html2canvas, backgroundColor: "#ffffff", logging: false },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    }).from(documentoPdf).save())
     .then(() => {
       btnPdf.disabled = false;
       btnPdf.textContent = "Descargar PDF";
@@ -195,7 +202,8 @@ function descargarPdf() {
       btnPdf.disabled = false;
       btnPdf.textContent = "Descargar PDF";
       alert("No fue posible generar el PDF. Inténtalo nuevamente.");
-    });
+    })
+    .finally(() => stage.remove());
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────

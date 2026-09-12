@@ -137,17 +137,21 @@ document.addEventListener("DOMContentLoaded", () => {
       : construirNumeroFactura(factura.consecutivo || 0));
     const totales = factura.totales || {};
     const lineas = Array.isArray(factura.lineas) ? factura.lineas : [];
-    const emisor = factura.emisor || {};
+    let perfil = {};
+    try { perfil = JSON.parse(localStorage.getItem(`amc_perfil_emisor_v1_${activeUserCode}`) || "{}"); } catch { /* perfil no disponible */ }
+    const emisor = { ...perfil, ...(factura.emisor || {}) };
     const rows = lineas.length ? lineas.map((linea, index) => `
-      <tr><td>${index + 1}</td><td>${escapeHtml(linea.codigo || "—")}</td><td>${escapeHtml(linea.producto || linea.descripcion || "—")}</td><td class="num">${escapeHtml(String(linea.cantidad || 0))}</td><td class="num">${formatoMoneda(linea.unitario || linea.precio || 0)}</td><td class="num">${formatoMoneda(linea.total || 0)}</td></tr>`).join("")
-      : '<tr><td colspan="6">El detalle de líneas no está disponible para esta factura.</td></tr>';
+      <tr><td>${index + 1}</td><td>${escapeHtml(linea.codigo || "—")}</td><td>${escapeHtml(linea.producto || linea.descripcion || "—")}</td><td>${escapeHtml(linea.unidad || linea.unidad_medida || "UNIDAD")}</td><td class="num">${escapeHtml(String(linea.cantidad || 0))}</td><td class="num">${formatoMoneda(linea.unitario || linea.precio || 0)}</td><td class="num">${formatoMoneda(linea.base || 0)}</td><td class="num">${escapeHtml(String(linea.tarifaIva || linea.tarifa_iva || 0))}%</td><td class="num">${formatoMoneda(linea.valorIva || linea.valor_iva || 0)}</td><td class="num">${formatoMoneda(linea.total || 0)}</td></tr>`).join("")
+      : '<tr><td colspan="10">El detalle de líneas no está disponible para esta factura.</td></tr>';
     const stage = document.createElement("div");
-    stage.className = "pdf-export-stage";
-    stage.innerHTML = `<article class="pdf-export-document">
-      <header class="pdf-export-header"><div><h1>Factura ${escapeHtml(tipo)}</h1><p><strong>${escapeHtml(emisor.razonSocial || "AMC Facturación Electrónica y POS")}</strong></p><p>NIT: ${escapeHtml(emisor.nit || "—")}</p></div><div class="pdf-export-meta"><strong>${escapeHtml(numero)}</strong><br>${escapeHtml(fechaHoraColombia(factura.generadoEn))}<br>Estado: ${escapeHtml(factura.estado || "EMITIDA")}</div></header>
-      <section class="pdf-export-section"><h2>Datos del cliente</h2><div class="pdf-export-grid"><div class="pdf-export-box"><strong>${escapeHtml(cliente.nombre || "—")}</strong><br>Documento: ${escapeHtml(cliente.documento || "—")}</div><div class="pdf-export-box">Email: ${escapeHtml(cliente.email || "—")}<br>Medio de pago: ${escapeHtml(factura.medioPagoLabel || factura.medioPago || "—")}</div></div></section>
-      <section class="pdf-export-section"><h2>Detalle de productos y servicios</h2><table><thead><tr><th>#</th><th>Código</th><th>Descripción</th><th class="num">Cant.</th><th class="num">V. unitario</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table></section>
-      <div class="pdf-export-total"><div><span>Subtotal</span><span>${formatoMoneda(totales.base || 0)}</span></div><div><span>IVA</span><span>${formatoMoneda(totales.iva || 0)}</span></div><div><span>Retenciones</span><span>${formatoMoneda(totales.retencion || 0)}</span></div><div class="grand-total"><span>TOTAL</span><span>${formatoMoneda(totales.total || 0)}</span></div></div>
+    stage.className = "factura-pdf-stage pdf-export-stage";
+    stage.innerHTML = `<article class="factura-doc">
+      <div class="factura-banner">Representación gráfica — Factura electrónica de venta · Demostración académica DIAN Colombia</div>
+      <div class="doc-inner"><header class="factura-header"><div class="emisor" style="margin-left:0"><span class="dian-badge">Documento de demostración</span><h2>${escapeHtml(emisor.razonSocial || "AMC Facturación Electrónica y POS")}</h2><p>NIT: ${escapeHtml(emisor.nit || activeUserCode)}</p><p>${escapeHtml(emisor.regimen || `${emisor.tipoPersona === "JURIDICA" ? "Persona Jurídica" : "Persona Natural"} — ${emisor.ciudad || "Colombia"}`)}</p><p>Resolución DIAN demo N° 18760000001 — Vigencia académica</p></div><div class="factura-meta"><p><strong>FACTURA ELECTRÓNICA DE VENTA</strong></p><p class="numero">${escapeHtml(numero)}</p><p>${escapeHtml(fechaHoraColombia(factura.generadoEn))}</p><p class="cufe">Estado: ${escapeHtml(factura.estado || "EMITIDA")}</p></div></header>
+      <div class="factura-grid-2"><div class="info-block"><h4>Datos del emisor</h4><p><strong>${escapeHtml(emisor.razonSocial || "AMC Facturación Electrónica y POS")}</strong></p><p>NIT ${escapeHtml(emisor.nit || activeUserCode)}</p><p>${escapeHtml(emisor.direccion || emisor.ciudad || "Colombia")}</p><p>${escapeHtml(emisor.email || "")}</p></div><div class="info-block cliente-block"><h4>Datos del adquirente (cliente)</h4><p><strong>${escapeHtml(cliente.nombre || "—")}</strong></p><p><span class="lbl">Documento / NIT:</span> ${escapeHtml(cliente.documento || "—")}</p><p><span class="lbl">Email:</span> ${escapeHtml(cliente.email || "—")}</p><p><span class="lbl">Medio de pago:</span> ${escapeHtml(factura.medioPagoLabel || factura.medioPago || "—")}</p></div></div>
+      <table class="factura-table"><thead><tr><th>#</th><th>Código</th><th>Descripción</th><th>U.M.</th><th>Cant.</th><th>V. unitario</th><th>Base</th><th>IVA %</th><th>Valor IVA</th><th>Total neto</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="totales-section"><div></div><div></div><div class="totales-box"><div class="row"><span>Subtotal (base gravable)</span><span>${formatoMoneda(totales.base || 0)}</span></div><div class="row"><span>Total impuestos (IVA)</span><span>${formatoMoneda(totales.iva || 0)}</span></div><div class="row" style="color:#d94d6a"><span>Total retención en la fuente (–)</span><span>${formatoMoneda(totales.retencion || 0)}</span></div><div class="row total-final"><span>TOTAL A PAGAR</span><span>${formatoMoneda(totales.total || 0)}</span></div></div></div>
+      <footer class="legal-footer">Documento generado con AMC Facturación Electrónica y POS — Proyecto académico.</footer></div>
     </article>`;
     document.body.appendChild(stage);
     return { stage, numero, cliente };
@@ -166,7 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const detalle = await detalleFacturaParaPdf(factura);
       const documento = crearDocumentoPdf(detalle);
       stage = documento.stage;
-      await html2pdf().set({ margin: 8, filename: `Factura-${nombreArchivoSeguro(documento.numero)}-${nombreArchivoSeguro(documento.cliente.nombre)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } }).from(stage).save();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (document.fonts?.ready) await document.fonts.ready;
+      await html2pdf().set({ margin: [5, 5, 5, 5], filename: `Factura-${nombreArchivoSeguro(documento.numero)}-${nombreArchivoSeguro(documento.cliente.nombre)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["avoid-all", "css", "legacy"] } }).from(stage).save();
     } catch (error) {
       console.error("No fue posible generar el PDF.", error);
       alert("No fue posible generar el PDF. Inténtalo nuevamente.");

@@ -35,6 +35,25 @@
   color: #f8fcff;
 }
 
+/* Contenedor temporal para la exportación local con html2pdf. */
+.factura-pdf-stage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 900px;
+  margin: 0;
+  padding: 0;
+  background: #f8fcff;
+  z-index: 9999999;
+  pointer-events: none;
+}
+
+.factura-pdf-stage .factura-doc,
+.factura-pdf-stage .tirilla-doc {
+  margin: 0;
+  box-shadow: none;
+}
+
 /* Documento factura */
 .factura-doc {
   max-width: 900px;

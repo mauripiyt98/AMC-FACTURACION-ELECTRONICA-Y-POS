@@ -6,6 +6,7 @@
   <title>Facturas generadas - AMC Facturacion</title>
   <script src="../js/auth-check.js"></script>
   <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="../css/factura.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
   <style>
     .wrap { max-width: 1120px; margin: 0 auto; padding: 18px; }
@@ -37,7 +38,7 @@
     .badge-pos { display:inline-block; background:#ecfdf5; color:#059669; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
     .badge-fe  { display:inline-block; background:#eaf9fe; color:#0032c8; border-radius:999px; padding:3px 8px; font-size:.72rem; font-weight:800; }
     .pdf-download { margin-left:6px; }
-    .pdf-export-stage { position:fixed; left:-10000px; top:0; width:794px; background:#fff; color:#172033; padding:32px; box-sizing:border-box; }
+    .pdf-export-stage { position:fixed; left:0; top:0; width:900px; background:#fff; color:#172033; padding:0; box-sizing:border-box; z-index:9999999; pointer-events:none; }
     .pdf-export-document { font:14px/1.45 Arial,sans-serif; }
     .pdf-export-header { display:flex; justify-content:space-between; gap:24px; padding-bottom:16px; border-bottom:3px solid #001e82; }
     .pdf-export-header h1 { margin:0; color:#001e82; font-size:24px; }
