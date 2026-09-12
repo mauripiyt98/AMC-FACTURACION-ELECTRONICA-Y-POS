@@ -175,6 +175,16 @@ function descargarPdf() {
   btnPdf.disabled = true;
   btnPdf.textContent = "Generando PDF…";
 
+  // Al abrir la aplicación directamente con file://, algunos navegadores no
+  // permiten que html2canvas lea imágenes locales o externas (logo y QR). Se
+  // excluyen solo de la copia temporal de exportación para evitar que el lienzo
+  // quede bloqueado y la descarga falle; la factura mostrada no se modifica.
+  opt.html2canvas.onclone = (documentoClonado) => {
+    const copiaFactura = documentoClonado.getElementById(elemento.id);
+    if (!copiaFactura) return;
+    copiaFactura.querySelectorAll("img").forEach((imagen) => imagen.remove());
+  };
+
   html2pdf().set(opt).from(elemento).save()
     .then(() => {
       btnPdf.disabled = false;
