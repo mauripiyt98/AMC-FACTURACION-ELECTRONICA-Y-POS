@@ -92,6 +92,91 @@ document.addEventListener("DOMContentLoaded", () => {
     return RESOLUCION_POS_DEMO.prefijo + "-" + String(consecutivo).padStart(3, "0");
   }
 
+  function nombreArchivoSeguro(value) {
+    return String(value || "factura").replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "factura";
+  }
+
+  function normalizarFacturaApi(factura) {
+    return {
+      ...factura,
+      tipo: factura.tipo || "FE",
+      numeroFactura: factura.numeroFactura || factura.numero_factura,
+      generadoEn: factura.generadoEn || factura.generado_en,
+      cliente: factura.cliente || {
+        nombre: factura.cliente_nombre,
+        documento: factura.cliente_documento,
+        email: factura.cliente_email,
+      },
+      emisor: factura.emisor || {},
+      medioPago: factura.medioPago || factura.medio_pago,
+      medioPagoLabel: factura.medioPagoLabel || factura.medio_pago,
+      totales: factura.totales || {
+        base: factura.total_base,
+        iva: factura.total_iva,
+        retencion: factura.total_retencion,
+        total: factura.total_factura,
+      },
+      lineas: Array.isArray(factura.lineas) ? factura.lineas.map((linea) => ({
+        ...linea,
+        producto: linea.producto || linea.nombre,
+        unitario: linea.unitario || linea.valor_unitario,
+      })) : [],
+    };
+  }
+
+  function detalleFacturaParaPdf(factura) {
+    if (!useApi) return Promise.resolve(factura);
+    return apiFetch(`/facturas/${encodeURIComponent(factura.id)}`).then((data) => normalizarFacturaApi(data.factura || factura));
+  }
+
+  function crearDocumentoPdf(factura) {
+    const cliente = factura.cliente || {};
+    const tipo = factura.tipo || "FE";
+    const numero = factura.numeroFactura || (tipo === "POS"
+      ? construirNumeroPos(factura.consecutivo || 0)
+      : construirNumeroFactura(factura.consecutivo || 0));
+    const totales = factura.totales || {};
+    const lineas = Array.isArray(factura.lineas) ? factura.lineas : [];
+    const emisor = factura.emisor || {};
+    const rows = lineas.length ? lineas.map((linea, index) => `
+      <tr><td>${index + 1}</td><td>${escapeHtml(linea.codigo || "—")}</td><td>${escapeHtml(linea.producto || linea.descripcion || "—")}</td><td class="num">${escapeHtml(String(linea.cantidad || 0))}</td><td class="num">${formatoMoneda(linea.unitario || linea.precio || 0)}</td><td class="num">${formatoMoneda(linea.total || 0)}</td></tr>`).join("")
+      : '<tr><td colspan="6">El detalle de líneas no está disponible para esta factura.</td></tr>';
+    const stage = document.createElement("div");
+    stage.className = "pdf-export-stage";
+    stage.innerHTML = `<article class="pdf-export-document">
+      <header class="pdf-export-header"><div><h1>Factura ${escapeHtml(tipo)}</h1><p><strong>${escapeHtml(emisor.razonSocial || "AMC Facturación Electrónica y POS")}</strong></p><p>NIT: ${escapeHtml(emisor.nit || "—")}</p></div><div class="pdf-export-meta"><strong>${escapeHtml(numero)}</strong><br>${escapeHtml(fechaHoraColombia(factura.generadoEn))}<br>Estado: ${escapeHtml(factura.estado || "EMITIDA")}</div></header>
+      <section class="pdf-export-section"><h2>Datos del cliente</h2><div class="pdf-export-grid"><div class="pdf-export-box"><strong>${escapeHtml(cliente.nombre || "—")}</strong><br>Documento: ${escapeHtml(cliente.documento || "—")}</div><div class="pdf-export-box">Email: ${escapeHtml(cliente.email || "—")}<br>Medio de pago: ${escapeHtml(factura.medioPagoLabel || factura.medioPago || "—")}</div></div></section>
+      <section class="pdf-export-section"><h2>Detalle de productos y servicios</h2><table><thead><tr><th>#</th><th>Código</th><th>Descripción</th><th class="num">Cant.</th><th class="num">V. unitario</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table></section>
+      <div class="pdf-export-total"><div><span>Subtotal</span><span>${formatoMoneda(totales.base || 0)}</span></div><div><span>IVA</span><span>${formatoMoneda(totales.iva || 0)}</span></div><div><span>Retenciones</span><span>${formatoMoneda(totales.retencion || 0)}</span></div><div class="grand-total"><span>TOTAL</span><span>${formatoMoneda(totales.total || 0)}</span></div></div>
+    </article>`;
+    document.body.appendChild(stage);
+    return { stage, numero, cliente };
+  }
+
+  async function descargarPdfFactura(factura, boton) {
+    if (typeof html2pdf === "undefined") {
+      alert("No se pudo cargar el generador de PDF. Verifica tu conexión e inténtalo nuevamente.");
+      return;
+    }
+    const textoOriginal = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = "Generando PDF…";
+    let stage;
+    try {
+      const detalle = await detalleFacturaParaPdf(factura);
+      const documento = crearDocumentoPdf(detalle);
+      stage = documento.stage;
+      await html2pdf().set({ margin: 8, filename: `Factura-${nombreArchivoSeguro(documento.numero)}-${nombreArchivoSeguro(documento.cliente.nombre)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } }).from(stage).save();
+    } catch (error) {
+      console.error("No fue posible generar el PDF.", error);
+      alert("No fue posible generar el PDF. Inténtalo nuevamente.");
+    } finally {
+      if (stage) stage.remove();
+      boton.disabled = false;
+      boton.textContent = textoOriginal;
+    }
+  }
+
   function obtenerSiguienteConsecutivo(facturas) {
     const usados = facturas
       .map((f) => Number(f.consecutivo))
@@ -242,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${lineas}</td>
           <td class="num">${formatoMoneda(total)}</td>
           <td>${estado}</td>
-          <td><button type="button" class="btn-sec" data-id="${escapeHtml(factura.id)}">Ver factura</button></td>
+          <td><button type="button" class="btn-sec" data-id="${escapeHtml(factura.id)}">Ver factura</button><button type="button" class="btn-sec pdf-download" data-pdf-id="${escapeHtml(factura.id)}">Descargar PDF</button></td>
         </tr>`;
     }).join("");
 
@@ -253,6 +338,13 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(factura));
         // Si usamos API, deberíamos pasar el ID por URL en vez de sessionStorage a futuro
         window.location.href = "../prefactura.html" + (useApi ? `?id=${factura.id}` : '');
+      });
+    });
+
+    body.querySelectorAll("button[data-pdf-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const factura = facturas.find((f) => String(f.id) === String(btn.dataset.pdfId));
+        if (factura) descargarPdfFactura(factura, btn);
       });
     });
   }

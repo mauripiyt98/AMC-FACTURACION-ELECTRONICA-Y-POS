@@ -152,7 +152,8 @@ function descargarPdf() {
   }
 
   if (typeof html2pdf === "undefined") {
-    window.print();
+    console.error("No se pudo cargar el generador de PDF.");
+    alert("No se pudo cargar el generador de PDF. Verifica tu conexión e inténtalo nuevamente.");
     return;
   }
 
@@ -179,10 +180,11 @@ function descargarPdf() {
       btnPdf.disabled = false;
       btnPdf.textContent = "Descargar PDF";
     })
-    .catch(() => {
+    .catch((error) => {
+      console.error("No fue posible generar el PDF.", error);
       btnPdf.disabled = false;
       btnPdf.textContent = "Descargar PDF";
-      window.print();
+      alert("No fue posible generar el PDF. Inténtalo nuevamente.");
     });
 }
 
