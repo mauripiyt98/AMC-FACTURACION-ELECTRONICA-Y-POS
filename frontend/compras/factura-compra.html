@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factura de compra - AMC</title>
+  <script src="../js/auth-check.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="compras.css">
+</head>
+<body>
+  <main class="compras-page">
+    <header class="compras-header">
+      <div><a class="back-link" href="../index.html">← Volver al inicio</a><h1>Registrar factura de compra</h1><p>Documento independiente de las ventas. Registra costos, gastos y compras de inventario.</p></div>
+      <a class="btn-primary" href="facturas-compra-generadas.html">Facturas de compra generadas</a>
+    </header>
+    <div id="mensaje" role="status"></div>
+    <section class="purchase-card">
+      <h2>Datos del documento</h2>
+      <div class="form-grid document-grid">
+        <div class="provider-picker"><label for="tercero-buscar">Proveedor / tercero</label><input id="tercero-buscar" autocomplete="off" placeholder="Buscar por nombre o documento"><div id="tercero-resultados" class="suggestions"></div><small id="tercero-seleccionado">Selecciona un tercero registrado.</small></div>
+        <div><label for="fecha-compra">Fecha de compra</label><input id="fecha-compra" type="date"></div>
+        <div><label for="prefijo-compra">Consecutivo de compra</label><input id="prefijo-compra" readonly></div>
+        <div><label for="numero-proveedor">Prefijo o número de factura del proveedor</label><input id="numero-proveedor" maxlength="60" placeholder="Ej: FV-4587"></div>
+      </div>
+    </section>
+    <section class="purchase-card">
+      <div class="section-heading"><div><h2>Detalle de la compra</h2><p>Las líneas se clasifican como inventario, costo o gasto sin afectar las facturas de venta.</p></div><button type="button" class="btn-outline" id="btn-agregar-linea">+ Agregar línea</button></div>
+      <div class="table-scroll"><table class="purchase-table"><thead><tr><th>Destino</th><th>Producto / detalle</th><th>Cant.</th><th>V. unitario</th><th>Descuento</th><th>IVA</th><th>Retención</th><th class="num">Total</th><th></th></tr></thead><tbody id="lineas-compra"></tbody></table></div>
+    </section>
+    <section class="purchase-card summary-card">
+      <h2>Totales de la compra</h2>
+      <div class="totals-grid"><div><span>Subtotal</span><strong id="total-subtotal">$ 0</strong></div><div><span>Descuentos</span><strong id="total-descuento">$ 0</strong></div><div><span>Impuestos</span><strong id="total-iva">$ 0</strong></div><div><span>Retenciones a cargo</span><strong id="total-retencion">$ 0</strong></div><div class="total-pay"><span>Total a pagar</span><strong id="total-pagar">$ 0</strong></div></div>
+      <label for="observaciones">Observaciones</label><textarea id="observaciones" rows="3" placeholder="Referencia, condiciones de pago o detalle del gasto."></textarea>
+      <div class="form-actions"><button type="button" class="btn-outline" id="btn-limpiar">Limpiar</button><button type="button" class="btn-primary" id="btn-guardar">Guardar factura de compra</button></div>
+    </section>
+  </main>
+  <script src="../js/terceros_seed.js"></script>
+  <script src="factura-compra.js"></script>
+  <script src="../js/app-footer.js"></script>
+</body>
+</html>

@@ -1108,7 +1108,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const btnWelcomeFacturaCompra = $("btn-welcome-factura-compra");
   if (btnWelcomeFacturaCompra) {
     btnWelcomeFacturaCompra.addEventListener("click", () => {
-      abrirModal("Módulo en Desarrollo", "El ingreso de facturas de compra estará disponible próximamente.");
+      window.location.href = "compras/factura-compra.html";
     });
   }
 
