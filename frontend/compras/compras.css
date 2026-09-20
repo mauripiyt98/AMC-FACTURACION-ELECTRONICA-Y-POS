@@ -8,7 +8,7 @@ body { background:linear-gradient(135deg,#f8fcff,#eaf9fe); color:var(--purchase-
 /* Ajustes de usabilidad para las líneas de compra */
 .product-picker{min-width:220px}
 .product-picker small{line-height:1.25}
-.product-suggestions{z-index:30;top:calc(100% + 4px);max-height:240px}
+.product-suggestions{position:fixed;z-index:1000;top:auto;right:auto;max-height:none;overflow:visible;box-sizing:border-box}
 .product-suggestions button:focus{background:#eef8fc;outline:0}
 .table-scroll{overflow-x:auto;overflow-y:visible;padding-bottom:3px}
 .purchase-table{min-width:850px;border-collapse:separate;border-spacing:0}

@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = 'http://localhost:3000/api';
   const $ = id => document.getElementById(id);
   const state = { tercero: null, lineas: [], productos: [] };
+  let productoPickerActivo = null;
   const money = value => '$ ' + Math.round(Number(value) || 0).toLocaleString('es-CO');
   const number = value => Number(String(value ?? '').replace(/[^0-9,.-]/g, '').replace(/\.(?=.*\.)/g, '').replace(',', '.')) || 0;
   const escapeHtml = value => { const el = document.createElement('div'); el.textContent = String(value ?? ''); return el.innerHTML; };
@@ -29,9 +30,63 @@ document.addEventListener('DOMContentLoaded', () => {
   function totalLinea(linea) { const baseBruta = linea.cantidad * linea.unitario; const descuento = baseBruta * linea.descuento / 100; const base = baseBruta - descuento; const iva = base * linea.iva / 100; const retencion = base * linea.retencion / 100; return { baseBruta, descuento, base, iva, retencion, total: base + iva + retencion }; }
   function leerLinea(id) { const row = document.querySelector(`[data-linea="${id}"]`); const producto = state.productos.find(p => String(p.id) === String(row.dataset.productoId)); return { id, productoId: producto?.id || '', productoCodigo: producto?.codigo || '', productoNombre: producto?.nombre || '', destino: row.querySelector('[data-field="destino"]').value, detalle: producto ? productoNombre(producto) : '', cantidad: number(row.querySelector('[data-field="cantidad"]').value), unitario: number(row.querySelector('[data-field="unitario"]').value), descuento: number(row.querySelector('[data-field="descuento"]').value), iva: number(row.querySelector('[data-field="iva"]').value), retencion: number(row.querySelector('[data-field="retencion"]').value) }; }
   function actualizarResumen() { const values = state.lineas.map(totalLinea); const sum = field => values.reduce((n, item) => n + item[field], 0); $('total-subtotal').textContent = money(sum('base')); $('total-descuento').textContent = money(sum('descuento')); $('total-iva').textContent = money(sum('iva')); $('total-retencion').textContent = money(sum('retencion')); $('total-pagar').textContent = money(sum('total')); }
-  function renderLineas() { const body = $('lineas-compra'); body.innerHTML = state.lineas.map(linea => { const calc = totalLinea(linea); const producto = state.productos.find(p => String(p.id) === String(linea.productoId)); return `<tr data-linea="${linea.id}" data-producto-id="${escapeHtml(linea.productoId || '')}"><td><select data-field="destino"><option value="INVENTARIO" ${linea.destino === 'INVENTARIO' ? 'selected' : ''}>Inventario</option><option value="COSTO" ${linea.destino === 'COSTO' ? 'selected' : ''}>Costo</option><option value="GASTO" ${linea.destino === 'GASTO' ? 'selected' : ''}>Gasto</option></select></td><td><div class="product-picker ${producto ? '' : 'invalid'}"><input data-field="detalle" value="${escapeHtml(producto ? productoNombre(producto) : '')}" placeholder="Escribe mínimo 3 caracteres o arrastra"><small>${producto ? `Código: ${escapeHtml(producto.codigo || '—')} · Activo` : 'Escribe mínimo 3 caracteres para buscar o arrastra el producto aquí'}</small><div class="product-suggestions">${state.productos.map(p => `<button type="button" data-producto="${escapeHtml(p.id)}"><strong>${escapeHtml(p.nombre)}</strong><small>${escapeHtml(p.codigo || 'Sin código')} · ${escapeHtml(p.tipo || 'PRODUCTO')} · Stock: ${Number(p.stockTotal ?? p.stock_total ?? 0)}</small></button>`).join('')}<div class="ac-empty product-empty" hidden>No se encontraron productos o servicios activos.</div></div></div></td><td><input data-field="cantidad" type="number" min="0" step="any" value="${linea.cantidad || ''}"></td><td><input data-field="unitario" inputmode="decimal" value="${linea.unitario || ''}"></td><td><input data-field="descuento" type="number" min="0" max="100" step="any" value="${linea.descuento || 0}"></td><td><select data-field="iva"><option value="0" ${linea.iva === 0 ? 'selected' : ''}>0%</option><option value="5" ${linea.iva === 5 ? 'selected' : ''}>5%</option><option value="19" ${linea.iva === 19 ? 'selected' : ''}>19%</option></select></td><td><select data-field="retencion"><option value="0" ${linea.retencion === 0 ? 'selected' : ''}>0%</option><option value="2.5" ${linea.retencion === 2.5 ? 'selected' : ''}>2.5%</option><option value="4" ${linea.retencion === 4 ? 'selected' : ''}>4%</option><option value="11" ${linea.retencion === 11 ? 'selected' : ''}>11%</option></select></td><td class="num" data-total>${money(calc.total)}</td><td><button class="delete-line" type="button" data-delete="${linea.id}" aria-label="Eliminar línea">×</button></td></tr>`; }).join('');
-    body.querySelectorAll('[data-field="detalle"]').forEach(input => { const picker = input.closest('.product-picker'); const helper = input.nextElementSibling; const suggestions = helper.nextElementSibling; const actualizarSugerencias = () => { const query = normalizar(input.value); const row = input.closest('tr'); const line = state.lineas.find(item => item.id === row.dataset.linea); const productoSeleccionado = state.productos.find(item => String(item.id) === String(row.dataset.productoId)); if (productoSeleccionado && input.value !== productoNombre(productoSeleccionado)) { row.dataset.productoId = ''; line.productoId = ''; picker.classList.add('invalid'); } if (query.length < 3) { suggestions.classList.remove('show'); helper.textContent = 'Escribe mínimo 3 caracteres para buscar o arrastra el producto aquí'; return; } const coincidencias = state.productos.filter(p => normalizar(p.codigo).includes(query) || normalizar(p.nombre).includes(query)).sort((a, b) => { const aExacto = normalizar(a.codigo) === query || normalizar(a.nombre) === query; const bExacto = normalizar(b.codigo) === query || normalizar(b.nombre) === query; return Number(bExacto) - Number(aExacto); }); const idsCoincidentes = new Set(coincidencias.map(p => String(p.id))); const sinResultados = suggestions.querySelector('.product-empty'); suggestions.querySelectorAll('[data-producto]').forEach(button => { button.hidden = !idsCoincidentes.has(String(button.dataset.producto)); }); coincidencias.forEach(p => { const button = suggestions.querySelector(`[data-producto="${CSS.escape(String(p.id))}"]`); if (button) suggestions.insertBefore(button, sinResultados); }); sinResultados.hidden = coincidencias.length > 0; helper.textContent = coincidencias.length ? `${coincidencias.length} coincidencia(s). Selecciona o arrastra el producto.` : 'No hay un producto o servicio activo que coincida.'; suggestions.classList.add('show'); }; input.addEventListener('focus', actualizarSugerencias); input.addEventListener('input', actualizarSugerencias); input.addEventListener('dragover', event => { event.preventDefault(); input.classList.add('drop-target'); }); input.addEventListener('dragleave', () => input.classList.remove('drop-target')); input.addEventListener('drop', event => { event.preventDefault(); input.classList.remove('drop-target'); const id = event.dataTransfer.getData('text/plain'); const button = suggestions.querySelector(`[data-producto="${CSS.escape(id)}"]`); if (button) button.click(); }); });
-    body.querySelectorAll('[data-producto]').forEach(button => { button.draggable = true; button.addEventListener('dragstart', event => event.dataTransfer.setData('text/plain', button.dataset.producto)); button.addEventListener('click', () => { const row = button.closest('tr'); const p = state.productos.find(item => String(item.id) === String(button.dataset.producto)); const line = state.lineas.find(item => item.id === row.dataset.linea); line.productoId = p.id; line.unitario = Number(p.precioBase ?? p.precio_base ?? 0); line.iva = Number(p.iva ?? 19); row.dataset.productoId = p.id; renderLineas(); actualizarResumen(); }); });
+  function posicionarSugerencias(input, suggestions) { const rect = input.getBoundingClientRect(); const ancho = Math.min(Math.max(rect.width, 300), window.innerWidth - 24); suggestions.style.left = `${Math.min(rect.left, window.innerWidth - ancho - 12)}px`; suggestions.style.top = `${Math.min(rect.bottom + 4, window.innerHeight - 12)}px`; suggestions.style.width = `${ancho}px`; }
+  function renderLineas() { const body = $('lineas-compra'); body.innerHTML = state.lineas.map(linea => { const calc = totalLinea(linea); const producto = state.productos.find(p => String(p.id) === String(linea.productoId)); return `<tr data-linea="${linea.id}" data-producto-id="${escapeHtml(linea.productoId || '')}"><td><select data-field="destino"><option value="INVENTARIO" ${linea.destino === 'INVENTARIO' ? 'selected' : ''}>Inventario</option><option value="COSTO" ${linea.destino === 'COSTO' ? 'selected' : ''}>Costo</option><option value="GASTO" ${linea.destino === 'GASTO' ? 'selected' : ''}>Gasto</option></select></td><td><div class="product-picker ${producto ? '' : 'invalid'}"><input data-field="detalle" value="${escapeHtml(producto ? productoNombre(producto) : '')}" placeholder="Escribe mínimo 3 caracteres o arrastra"><small>${producto ? `Código: ${escapeHtml(producto.codigo || '—')} · Activo` : 'Escribe al menos 3 caracteres para buscar'}</small><div class="product-suggestions"><div class="ac-empty product-empty">Escribe al menos 3 caracteres para buscar un producto o servicio.</div></div></div></td><td><input data-field="cantidad" type="number" min="0" step="any" value="${linea.cantidad || ''}"></td><td><input data-field="unitario" inputmode="decimal" value="${linea.unitario || ''}"></td><td><input data-field="descuento" type="number" min="0" max="100" step="any" value="${linea.descuento || 0}"></td><td><select data-field="iva"><option value="0" ${linea.iva === 0 ? 'selected' : ''}>0%</option><option value="5" ${linea.iva === 5 ? 'selected' : ''}>5%</option><option value="19" ${linea.iva === 19 ? 'selected' : ''}>19%</option></select></td><td><select data-field="retencion"><option value="0" ${linea.retencion === 0 ? 'selected' : ''}>0%</option><option value="2.5" ${linea.retencion === 2.5 ? 'selected' : ''}>2.5%</option><option value="4" ${linea.retencion === 4 ? 'selected' : ''}>4%</option><option value="11" ${linea.retencion === 11 ? 'selected' : ''}>11%</option></select></td><td class="num" data-total>${money(calc.total)}</td><td><button class="delete-line" type="button" data-delete="${linea.id}" aria-label="Eliminar línea">×</button></td></tr>`; }).join('');
+    body.querySelectorAll('[data-field="detalle"]').forEach(input => {
+      const picker = input.closest('.product-picker');
+      const helper = input.nextElementSibling;
+      const suggestions = helper.nextElementSibling;
+      const seleccionarProducto = producto => {
+        const row = input.closest('tr');
+        const line = state.lineas.find(item => item.id === row.dataset.linea);
+        line.productoId = producto.id;
+        line.unitario = Number(producto.precioBase ?? producto.precio_base ?? 0);
+        line.iva = Number(producto.iva ?? 19);
+        row.dataset.productoId = producto.id;
+        productoPickerActivo = null;
+        renderLineas();
+        actualizarResumen();
+      };
+      const actualizarSugerencias = () => {
+        const query = normalizar(input.value);
+        const caracteresBusqueda = query.replace(/[^a-z0-9]/g, '');
+        const row = input.closest('tr');
+        const line = state.lineas.find(item => item.id === row.dataset.linea);
+        const productoSeleccionado = state.productos.find(item => String(item.id) === String(row.dataset.productoId));
+        if (productoSeleccionado && input.value !== productoNombre(productoSeleccionado)) { row.dataset.productoId = ''; line.productoId = ''; picker.classList.add('invalid'); }
+        if (caracteresBusqueda.length < 3) {
+          suggestions.classList.remove('show');
+          if (productoPickerActivo?.suggestions === suggestions) productoPickerActivo = null;
+          helper.textContent = 'Escribe al menos 3 caracteres para buscar un producto o servicio.';
+          return;
+        }
+        const coincidencias = state.productos
+          .filter(p => normalizar(p.codigo).includes(query) || normalizar(p.nombre).includes(query))
+          .sort((a, b) => Number(normalizar(b.codigo) === query || normalizar(b.nombre) === query) - Number(normalizar(a.codigo) === query || normalizar(a.nombre) === query));
+        suggestions.innerHTML = coincidencias.length
+          ? coincidencias.map(p => `<button type="button" draggable="true" data-producto="${escapeHtml(p.id)}"><strong>${escapeHtml(p.nombre)}</strong><small>${escapeHtml(p.codigo || 'Sin código')} · ${escapeHtml(p.tipo || 'PRODUCTO')} · Stock: ${Number(p.stockTotal ?? p.stock_total ?? 0)}</small></button>`).join('')
+          : '<div class="ac-empty product-empty">No se encontraron productos o servicios activos.</div>';
+        suggestions.querySelectorAll('[data-producto]').forEach(button => {
+          button.addEventListener('dragstart', event => event.dataTransfer.setData('text/plain', button.dataset.producto));
+          button.addEventListener('click', () => seleccionarProducto(state.productos.find(p => String(p.id) === String(button.dataset.producto))));
+        });
+        helper.textContent = coincidencias.length ? `${coincidencias.length} coincidencia(s). Selecciona o arrastra el producto.` : 'No hay un producto o servicio activo que coincida.';
+        document.querySelectorAll('.product-suggestions.show').forEach(menu => { if (menu !== suggestions) menu.classList.remove('show'); });
+        suggestions.classList.add('show');
+        productoPickerActivo = { input, suggestions };
+        posicionarSugerencias(input, suggestions);
+      };
+      input.addEventListener('focus', actualizarSugerencias);
+      input.addEventListener('input', actualizarSugerencias);
+      input.addEventListener('dragover', event => { event.preventDefault(); input.classList.add('drop-target'); });
+      input.addEventListener('dragleave', () => input.classList.remove('drop-target'));
+      input.addEventListener('drop', event => {
+        event.preventDefault();
+        input.classList.remove('drop-target');
+        const producto = state.productos.find(p => String(p.id) === event.dataTransfer.getData('text/plain'));
+        if (producto) seleccionarProducto(producto);
+      });
+    });
     body.querySelectorAll('input,select').forEach(input => input.addEventListener('input', () => { const row = input.closest('tr'); const index = state.lineas.findIndex(linea => linea.id === row.dataset.linea); state.lineas[index] = leerLinea(row.dataset.linea); row.querySelector('[data-total]').textContent = money(totalLinea(state.lineas[index]).total); actualizarResumen(); }));
     body.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () => { state.lineas = state.lineas.filter(linea => linea.id !== button.dataset.delete); renderLineas(); actualizarResumen(); }));
   }
@@ -44,6 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
   async function iniciar() { await cargarProductos(); $('fecha-compra').value = fechaHoy(); formatoConsecutivo(); agregarLinea(); $('tercero-buscar').addEventListener('input', buscarTerceros); $('tercero-buscar').addEventListener('focus', buscarTerceros); $('btn-agregar-linea').addEventListener('click', agregarLinea); $('btn-limpiar').addEventListener('click', limpiar); $('btn-guardar').addEventListener('click', guardar);
     document.addEventListener('keydown', event => { const input = event.target.closest('[data-field="detalle"]'); if (!input) return; const menu = input.closest('.product-picker').querySelector('.product-suggestions'); if (event.key === 'Escape') { menu.classList.remove('show'); return; } if (event.key !== 'Enter' || !menu.classList.contains('show')) return; event.preventDefault(); const first = [...menu.querySelectorAll('[data-producto]')].find(button => !button.hidden); if (first) first.click(); });
     document.addEventListener('click', event => { if (!event.target.closest('.product-picker')) document.querySelectorAll('.product-suggestions.show').forEach(menu => menu.classList.remove('show')); });
+    window.addEventListener('resize', () => { if (productoPickerActivo) posicionarSugerencias(productoPickerActivo.input, productoPickerActivo.suggestions); });
+    window.addEventListener('scroll', () => { if (productoPickerActivo) posicionarSugerencias(productoPickerActivo.input, productoPickerActivo.suggestions); }, true);
   }
   iniciar();
 });
