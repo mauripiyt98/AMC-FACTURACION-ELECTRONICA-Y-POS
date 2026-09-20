@@ -20,7 +20,7 @@ body { background: linear-gradient(135deg, #f8fcff 0%, #eaf9fe 100%); }
 .btn-outline:hover { background: var(--brand-light); }
 .btn-primary { color: #fff; border: 1px solid var(--brand); background: var(--brand); }
 .btn-primary:hover { background: var(--brand-dark); }
-.btn-export { color: #087f5b; border-color: #087f5b; }.btn-export:hover { background: #e9f8f2; }
+.btn-export { color: #087f5b; border-color: #087f5b; }.btn-export:hover { background: #e9f8f2; }#btn-exportar-pdf.btn-export { color: #b42318; border-color: #b42318; }#btn-exportar-pdf.btn-export:hover { background: #fef2f2; }
 .table-scroll { overflow-x: auto; }
 table { width: 100%; min-width: 1030px; border-collapse: collapse; }
 th, td { padding: 15px 18px; border-bottom: 1px solid #d9e8ee; text-align: left; vertical-align: middle; }

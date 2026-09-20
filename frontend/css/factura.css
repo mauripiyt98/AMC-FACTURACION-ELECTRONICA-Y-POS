@@ -31,8 +31,12 @@
 }
 
 .toolbar-pdf {
-  background: #0032c8;
+  background: #b42318;
   color: #f8fcff;
+}
+
+.toolbar-pdf:hover {
+  background: #991b1b;
 }
 
 /* Contenedor temporal para la exportación local con html2pdf. */
