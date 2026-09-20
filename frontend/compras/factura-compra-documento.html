@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factura de compra - AMC</title>
+  <script src="../js/auth-check.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <link rel="stylesheet" href="compras.css">
+</head>
+<body class="purchase-document-page">
+  <main class="purchase-document-wrap">
+    <div class="document-toolbar no-print">
+      <a class="btn-outline" href="facturas-compra-generadas.html">← Volver a compras</a>
+      <button type="button" class="btn-primary" id="btn-descargar-pdf">Descargar PDF</button>
+    </div>
+    <article class="purchase-document" id="factura-compra-documento">
+      <header class="purchase-document-header">
+        <div><p class="document-kicker">AMC Facturación Electrónica y POS</p><h1>Factura de compra</h1><p class="document-subtitle">Registro interno de compra, costo, gasto o inventario</p></div>
+        <div class="document-number"><span>CONSECUTIVO</span><strong id="doc-numero">FC-0001</strong><small id="doc-fecha">Fecha: —</small></div>
+      </header>
+      <section class="document-data-grid">
+        <div class="document-data-box"><h2>Proveedor / tercero</h2><strong id="doc-tercero-nombre">—</strong><p>Documento: <span id="doc-tercero-documento">—</span></p><p>Correo: <span id="doc-tercero-email">—</span></p></div>
+        <div class="document-data-box"><h2>Datos del comprobante</h2><p>Factura del proveedor: <strong id="doc-numero-proveedor">—</strong></p><p>Estado: <strong id="doc-estado">REGISTRADA</strong></p><p>Generada: <span id="doc-generada">—</span></p></div>
+      </section>
+      <table class="document-lines-table">
+        <thead><tr><th>#</th><th>Destino</th><th>Código</th><th>Producto o servicio</th><th class="num">Cant.</th><th class="num">V. unitario</th><th class="num">Desc.</th><th class="num">IVA</th><th class="num">Retención</th><th class="num">Total</th></tr></thead>
+        <tbody id="doc-lineas"></tbody>
+      </table>
+      <section class="document-bottom">
+        <div class="document-observations"><h2>Observaciones</h2><p id="doc-observaciones">Sin observaciones.</p></div>
+        <div class="document-totals"><div><span>Subtotal</span><strong id="doc-subtotal">$ 0</strong></div><div><span>Descuentos</span><strong id="doc-descuento">$ 0</strong></div><div><span>IVA</span><strong id="doc-iva">$ 0</strong></div><div><span>Retención</span><strong id="doc-retencion">$ 0</strong></div><div class="document-total-final"><span>Total a pagar</span><strong id="doc-total">$ 0</strong></div></div>
+      </section>
+      <footer class="purchase-document-footer">Documento generado por AMC Facturación Electrónica y POS. Este comprobante corresponde al registro interno de una factura de compra.</footer>
+    </article>
+  </main>
+  <script src="factura-compra-documento.js"></script>
+</body>
+</html>
