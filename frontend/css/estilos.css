@@ -662,6 +662,15 @@ button:active {
   letter-spacing: 0.02em;
 }
 
+#btn-welcome-reportes h3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  line-height: 1.2;
+  white-space: normal;
+}
+
 .welcome-card-btn p {
   margin: 0;
   font-size: 0.68rem;
