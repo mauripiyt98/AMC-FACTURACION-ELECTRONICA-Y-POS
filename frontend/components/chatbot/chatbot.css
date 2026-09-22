@@ -1,0 +1,137 @@
+:root {
+  --mauro-navy: #001e82;
+  --mauro-blue: #0b46eb;
+  --mauro-green: #14c98b;
+}
+
+.mauro-chat {
+  position: fixed;
+  right: 28px;
+  bottom: 26px;
+  z-index: 900;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.mauro-launcher {
+  width: 64px;
+  height: 64px;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #0e57ee, #001e82);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(0, 30, 130, .35);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.mauro-launcher:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 16px 32px rgba(0, 30, 130, .42); }
+.mauro-launcher svg { width: 29px; height: 29px; }
+.mauro-launcher .mauro-close-icon { display: none; }
+.mauro-chat.is-open .mauro-launcher .mauro-chat-icon { display: none; }
+.mauro-chat.is-open .mauro-launcher .mauro-close-icon { display: block; }
+
+.mauro-chat-window {
+  width: min(365px, calc(100vw - 32px));
+  height: min(530px, calc(100vh - 120px));
+  margin: 0 0 14px auto;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border: 1px solid rgba(117, 193, 255, .45);
+  border-radius: 20px;
+  background: #f8fcff;
+  box-shadow: 0 20px 48px rgba(0, 30, 130, .25);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(.97);
+  transform-origin: bottom right;
+  transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+}
+
+.mauro-chat.is-open .mauro-chat-window { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+
+.mauro-chat-header {
+  min-height: 96px;
+  padding: 66px 17px 15px;
+  color: #fff;
+  background: linear-gradient(125deg, #001e82, #0b46eb);
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.mauro-avatar-float {
+  position: absolute;
+  z-index: 2;
+  top: -112px;
+  left: 30px;
+  width: 145px;
+  height: 174px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: translateZ(0);
+  pointer-events: none;
+}
+
+.mauro-avatar-float::after {
+  content: none;
+}
+
+.mauro-avatar-float img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  margin: 0;
+  display: block;
+  filter: drop-shadow(0 10px 9px rgba(0, 14, 73, .36)) saturate(1.08) contrast(1.04);
+}
+
+.mauro-chat-header h2 { margin: 0; font-size: 1rem; }
+.mauro-chat-header p { margin: 3px 0 0; font-size: .72rem; opacity: .84; }
+.mauro-status { width: 8px; height: 8px; margin-left: auto; border-radius: 50%; background: var(--mauro-green); box-shadow: 0 0 0 4px rgba(20, 201, 139, .18); }
+
+.mauro-messages { flex: 1; overflow-y: auto; padding: 16px; background: linear-gradient(180deg, #f5fbff, #fff); }
+.mauro-message { max-width: 90%; margin-bottom: 12px; padding: 11px 12px; border-radius: 13px; font-size: .82rem; line-height: 1.45; }
+.mauro-message.assistant { color: #18384c; background: #e9f5ff; border-bottom-left-radius: 4px; }
+.mauro-message.user { margin-left: auto; color: #fff; background: #0b46eb; border-bottom-right-radius: 4px; }
+.mauro-message strong { display: block; margin-bottom: 3px; color: var(--mauro-navy); }
+.mauro-message.user strong { color: #fff; }
+.mauro-message small { display: block; margin-top: 7px; color: #527083; font-size: .67rem; }
+.mauro-stock-code { display: block; margin-top: 2px; color: #527083; font-size: .72rem; }
+.mauro-stock-value { display: block; margin: 7px 0 3px; color: #0032c8; font-size: 1.15rem; font-weight: 800; }
+.mauro-stock-status { display: inline-block; border-radius: 999px; padding: 3px 7px; font-size: .66rem; font-weight: 800; }
+.mauro-stock-status.disponible { color: #087443; background: #d9fae9; }
+.mauro-stock-status.bajo { color: #9a5a00; background: #fff1c6; }
+.mauro-stock-status.agotado { color: #b42318; background: #ffebe9; }
+.mauro-thinking { display: flex; align-items: center; gap: 4px; min-height: 37px; }
+.mauro-thinking span { width: 6px; height: 6px; border-radius: 50%; background: #0b46eb; animation: mauro-dot 1s infinite ease-in-out; }
+.mauro-thinking span:nth-child(2) { animation-delay: .15s; }
+.mauro-thinking span:nth-child(3) { animation-delay: .3s; }
+.mauro-thinking em { margin-left: 4px; color: #527083; font-size: .7rem; font-style: normal; }
+@keyframes mauro-dot { 0%, 100% { transform: translateY(0); opacity: .35; } 50% { transform: translateY(-4px); opacity: 1; } }
+
+.mauro-suggestions { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 16px 12px; background: #fff; }
+.mauro-suggestion { border: 1px solid #c7e3f5; border-radius: 999px; padding: 6px 9px; color: #0032c8; background: #f5fbff; font-size: .69rem; font-weight: 700; cursor: pointer; }
+.mauro-suggestion:hover { color: #fff; border-color: #0b46eb; background: #0b46eb; }
+
+.mauro-form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #dcecf5; border-radius: 0 0 20px 20px; background: #fff; }
+.mauro-form input { min-width: 0; flex: 1; border: 1px solid #c7e3f5; border-radius: 10px; padding: 10px 11px; color: #123344; font: inherit; font-size: .78rem; outline: none; }
+.mauro-form input:focus { border-color: #0b46eb; box-shadow: 0 0 0 3px rgba(11, 70, 235, .12); }
+.mauro-form button { width: 39px; border: 0; border-radius: 10px; color: #fff; background: #0b46eb; cursor: pointer; }
+.mauro-form button:hover { background: #001e82; }
+.mauro-form svg { width: 18px; height: 18px; vertical-align: middle; }
+
+@media (max-width: 640px) {
+  .mauro-chat { right: 16px; bottom: 16px; }
+  .mauro-chat-window { height: min(500px, calc(100vh - 98px)); }
+  .mauro-avatar-float { left: 24px; width: 120px; height: 144px; top: -91px; }
+  .mauro-chat-header { min-height: 88px; padding-top: 57px; }
+}
