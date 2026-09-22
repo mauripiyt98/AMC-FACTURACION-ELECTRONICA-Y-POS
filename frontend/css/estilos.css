@@ -656,6 +656,7 @@ button:active {
   box-shadow: 0 4px 14px rgba(11, 70, 235, 0.03);
   position: relative;
   overflow: hidden;
+  text-decoration: none;
 }
 
 .welcome-card-btn::before {
@@ -669,6 +670,7 @@ button:active {
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
+  pointer-events: none;
 }
 
 .welcome-card-btn:hover {

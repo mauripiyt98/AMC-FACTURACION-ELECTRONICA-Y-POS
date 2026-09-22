@@ -1036,17 +1036,21 @@ async function generarFactura() {
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", function () {
   if (useApi) {
-    try {
-      const [tRes, pRes] = await Promise.all([
+    // La navegación no debe depender de la disponibilidad del backend.
+    // Los datos se cargan en segundo plano mientras los controles quedan
+    // listos para usarse de inmediato.
+    Promise.all([
         cargarTodosLosTercerosApi(),
         apiFetch('/productos?limit=1000')
-      ]);
+      ])
+      .then(([tRes, pRes]) => {
       apiData.terceros = tRes || [];
       apiData.productos = pRes.productos || [];
       apiData.loaded = true;
-    } catch(e) { console.warn("API load error", e); }
+      })
+      .catch((e) => console.warn("API load error", e));
   }
 
   renderTablaLineas();

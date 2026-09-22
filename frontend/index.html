@@ -73,7 +73,7 @@
     <nav class="sidebar-menu" aria-label="Opciones del sistema" style="margin-top: 0; border-top: none; padding-top: 0;">
       <h3>Opciones</h3>
       <a href="usuario/perfil.html" id="lnk-mi-perfil"><span>MI PERFIL</span></a>
-      <a href="#" id="lnk-crear-factura"><span>CREAR FACTURA ELECTRÓNICA DE VENTA</span></a>
+      <a href="index.html?sec=crear-factura" id="lnk-crear-factura" onclick="mostrarSeccion('crear-factura'); return false;"><span>CREAR FACTURA ELECTRÓNICA DE VENTA</span></a>
       <a href="cotizaciones/cotizacion.html" id="lnk-crear-cotizacion"><span>CREAR COTIZACIÓN</span></a>
       <a href="productos/productos.html"><span>CREAR PRODUCTOS/SERVICIOS</span></a>
       <a href="productos/lista-productos.html"><span>LISTA DE PRODUCTOS Y/O SERVICIOS</span></a>
@@ -123,7 +123,7 @@
 
         <div class="welcome-grid">
           <!-- Botón Crear Factura -->
-          <div class="welcome-card-btn" id="btn-welcome-crear-factura">
+          <a class="welcome-card-btn" id="btn-welcome-crear-factura" href="index.html?sec=crear-factura" onclick="mostrarSeccion('crear-factura'); return false;">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -134,10 +134,10 @@
             </div>
             <h3>Crear Factura Electrónica de Venta</h3>
             <p>Generar y emitir facturas electrónicas de venta rápidamente.</p>
-          </div>
+          </a>
 
           <!-- Botón Crear una Cotización -->
-          <div class="welcome-card-btn" id="btn-welcome-cotizacion">
+          <a class="welcome-card-btn" id="btn-welcome-cotizacion" href="cotizaciones/cotizacion.html">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -147,10 +147,10 @@
             </div>
             <h3>Crear una Cotización</h3>
             <p>Elabora propuestas comerciales para tus clientes.</p>
-          </div>
+          </a>
 
           <!-- Botón Ingresar Factura de Compra -->
-          <div class="welcome-card-btn" id="btn-welcome-factura-compra">
+          <a class="welcome-card-btn" id="btn-welcome-factura-compra" href="compras/factura-compra.html">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -160,10 +160,10 @@
             </div>
             <h3>Ingresar Factura de Compra</h3>
             <p>Registra compras y documentos recibidos de proveedores.</p>
-          </div>
+          </a>
 
           <!-- Botón Facturación POS -->
-          <div class="welcome-card-btn" id="btn-welcome-pos">
+          <a class="welcome-card-btn" id="btn-welcome-pos" href="pos/pos.html">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
@@ -173,10 +173,10 @@
             </div>
             <h3>Facturación POS</h3>
             <p>Terminal de facturación para punto de venta.</p>
-          </div>
+          </a>
 
           <!-- Botón Reportes Ventas/Productos -->
-          <div class="welcome-card-btn" id="btn-welcome-reportes">
+          <a class="welcome-card-btn" id="btn-welcome-reportes" href="reportes/reportes.html">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -186,10 +186,10 @@
             </div>
             <h3><span>REPORTES</span><span>VENTAS / COMPRAS</span><span>/ IMPUESTOS</span></h3>
             <p>Indicadores de venta y análisis de productos por período.</p>
-          </div>
+          </a>
 
           <!-- Botón Facturas Generadas -->
-          <div class="welcome-card-btn" id="btn-welcome-facturas-generadas">
+          <a class="welcome-card-btn" id="btn-welcome-facturas-generadas" href="facturas-generadas/facturas-generadas.html">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -201,10 +201,10 @@
             </div>
             <h3>Facturas Generadas</h3>
             <p>Historial de facturas generadas e indicadores de venta.</p>
-          </div>
+          </a>
 
           <!-- Botón Nómina Electrónica -->
-          <div class="welcome-card-btn" id="btn-welcome-antony">
+          <a class="welcome-card-btn" id="btn-welcome-antony" href="nomina-electronica/nomina-electronica.html">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 20h9"></path>
@@ -213,10 +213,10 @@
             </div>
             <h3>NOMINA ELECTRONICA</h3>
             <p>Gestión y emisión de nómina electrónica.</p>
-          </div>
+          </a>
 
           <!-- Botón Inventarios / Bodegas -->
-          <div class="welcome-card-btn" id="btn-welcome-inventarios">
+          <a class="welcome-card-btn" id="btn-welcome-inventarios" href="inventarios/inventarios.html">
             <div class="welcome-icon-wrapper">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -226,7 +226,7 @@
             </div>
             <h3>INVENTARIOS / BODEGAS</h3>
             <p>Control y gestión de inventario y bodegas.</p>
-          </div>
+          </a>
 
           <!-- Botón Módulo de Contabilidad -->
           <div class="welcome-card-btn" id="btn-welcome-contabilidad" style="cursor: default;">
