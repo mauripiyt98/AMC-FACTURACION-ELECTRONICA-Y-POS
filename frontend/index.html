@@ -443,19 +443,46 @@
   </main>
 
   <aside class="right-panel">
-    <div class="info-box">
-      <h3>Tarifas IVA</h3>
-      <p>IVA general: 19%</p>
-      <p>IVA reducido: 5%</p>
-      <p>Exento: 0%</p>
-    </div>
-    <div class="info-box">
-      <h3>Información POS</h3>
-      <p>Facturación electrónica</p>
-      <p>Documento soporte</p>
-      <p>POS electrónico</p>
-      <p>Integración DIAN — futura</p>
-    </div>
+    <section class="dashboard-widgets" aria-label="Resumen de indicadores">
+      <div class="dashboard-widgets-heading">
+        <span>Resumen</span>
+        <small id="widgets-periodo">Indicadores de hoy</small>
+      </div>
+
+      <article class="dashboard-widget widget-sales">
+        <div class="widget-icon" aria-hidden="true">$</div>
+        <p>Ventas del día</p>
+        <strong id="widget-ventas-dia">$ 0</strong>
+        <span id="widget-ventas-comparacion">Actualizado hoy</span>
+      </article>
+
+      <article class="dashboard-widget widget-invoices">
+        <div class="widget-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l3 3v17l-3-2-3 2-3-2-3 2V2Z"></path><path d="M9 9h6M9 13h6"></path></svg>
+        </div>
+        <p>Facturas emitidas</p>
+        <strong id="widget-facturas-dia">0</strong>
+        <span>Hoy</span>
+      </article>
+
+      <article class="dashboard-widget widget-portfolio">
+        <div class="widget-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h11l3 3v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z"></path><path d="M4 9h16M15 14h3"></path></svg>
+        </div>
+        <p>Cartera pendiente</p>
+        <strong id="widget-cartera">$ 0</strong>
+        <span>Facturas por cobrar</span>
+      </article>
+
+      <article class="dashboard-widget widget-purchases">
+        <div class="widget-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V7h6v14M11 9h8v12M7 10h2M7 14h2M14 12h2M14 16h2"></path></svg>
+        </div>
+        <p>Compras del mes</p>
+        <strong id="widget-compras-mes">$ 0</strong>
+        <span id="widget-compras-periodo">Este mes</span>
+      </article>
+    </section>
   </aside>
 
 </div>

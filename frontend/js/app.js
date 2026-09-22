@@ -138,6 +138,7 @@ const CLIENTE_SELECCIONADO_KEY = `amc_cliente_seleccionado_v1_${activeUserCode}`
 const PRODUCTOS_DB_KEY = `amc_productos_db_v1_${activeUserCode}`;
 const PRODUCTO_SELECCIONADO_KEY = `amc_producto_seleccionado_v1_${activeUserCode}`;
 const FACTURAS_GENERADAS_DB_KEY = `amc_facturas_generadas_db_v1_${activeUserCode}`;
+const COMPRAS_GENERADAS_DB_KEY = `amc_facturas_compra_db_v1_${activeUserCode}`;
 const RESOLUCION_FACTURACION_DEMO = {
   prefijo: "FE",
   desde: 1,
@@ -410,6 +411,48 @@ function cargarFacturasGeneradasDB() {
 
 function guardarFacturasGeneradasDB(arr) {
   localStorage.setItem(FACTURAS_GENERADAS_DB_KEY, JSON.stringify(arr));
+}
+
+function cargarComprasGeneradasDB() {
+  try {
+    const compras = JSON.parse(localStorage.getItem(COMPRAS_GENERADAS_DB_KEY) || '[]');
+    return Array.isArray(compras) ? compras : [];
+  } catch {
+    return [];
+  }
+}
+
+function fechaEnZonaLocal(value) {
+  const fecha = new Date(value);
+  if (Number.isNaN(fecha.getTime())) return '';
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
+
+function actualizarWidgetsInicio() {
+  const ventasEl = $('widget-ventas-dia');
+  if (!ventasEl) return;
+
+  const hoy = fechaEnZonaLocal(new Date());
+  const mesActual = hoy.slice(0, 7);
+  const facturas = cargarFacturasGeneradasDB();
+  const compras = cargarComprasGeneradasDB();
+  const facturasHoy = facturas.filter((factura) => fechaEnZonaLocal(factura.generadoEn || factura.fecha) === hoy);
+  const ventasHoy = facturasHoy.reduce((total, factura) => total + Number(factura.totales?.total || factura.total || 0), 0);
+  const comprasMes = compras
+    .filter((compra) => String(compra.fecha || fechaEnZonaLocal(compra.generadoEn)).slice(0, 7) === mesActual)
+    .reduce((total, compra) => total + Number(compra.totales?.total || compra.total || 0), 0);
+  const cartera = facturas
+    .filter((factura) => ['PENDIENTE', 'POR_COBRAR', 'VENCIDA'].includes(String(factura.estado || '').toUpperCase()))
+    .reduce((total, factura) => total + Number(factura.totales?.total || factura.total || 0), 0);
+
+  ventasEl.textContent = formatoMoneda(ventasHoy);
+  $('widget-facturas-dia').textContent = String(facturasHoy.length);
+  $('widget-cartera').textContent = formatoMoneda(cartera);
+  $('widget-compras-mes').textContent = formatoMoneda(comprasMes);
+  $('widget-periodo').textContent = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(new Date());
 }
 
 function obtenerSiguienteConsecutivo() {
@@ -1081,6 +1124,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // ── Navegación entre Secciones ─────────────────────────────────────────────
   inicializarMensajeBienvenida();
+  actualizarWidgetsInicio();
 
   // Enlaces y botones de navegación
   const lnkCrearFactura = $("lnk-crear-factura");
