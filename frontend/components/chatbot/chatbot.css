@@ -13,11 +13,12 @@
 }
 
 .mauro-launcher {
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   border: 0;
   border-radius: 50%;
-  background: linear-gradient(145deg, #0e57ee, #001e82);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 38%, #eaf7ff 0 25%, #0e57ee 72%, #001e82 100%);
   color: #fff;
   box-shadow: 0 12px 28px rgba(0, 30, 130, .35);
   cursor: pointer;
@@ -29,8 +30,17 @@
 
 .mauro-launcher:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 16px 32px rgba(0, 30, 130, .42); }
 .mauro-launcher svg { width: 29px; height: 29px; }
+.mauro-launcher-avatar {
+  width: 126%;
+  height: 126%;
+  max-width: none;
+  object-fit: contain;
+  object-position: center 12%;
+  filter: drop-shadow(0 4px 4px rgba(0, 14, 73, .35));
+  pointer-events: none;
+}
 .mauro-launcher .mauro-close-icon { display: none; }
-.mauro-chat.is-open .mauro-launcher .mauro-chat-icon { display: none; }
+.mauro-chat.is-open .mauro-launcher .mauro-launcher-avatar { display: none; }
 .mauro-chat.is-open .mauro-launcher .mauro-close-icon { display: block; }
 
 .mauro-chat-window {
