@@ -77,7 +77,8 @@
 .mauro-avatar-float {
   position: absolute;
   z-index: 2;
-  top: -112px;
+  /* Keep the cutout clear of the viewport edge when the chat is open. */
+  top: -98px;
   left: 30px;
   width: 145px;
   height: 174px;

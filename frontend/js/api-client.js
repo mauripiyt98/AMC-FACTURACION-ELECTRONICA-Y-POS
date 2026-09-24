@@ -73,6 +73,7 @@ async function apiFetch(endpoint, options = {}) {
     const loginPath = window.location.pathname.includes('/productos/') ||
                       window.location.pathname.includes('/terceros/')  ||
                       window.location.pathname.includes('/facturas-generadas/') ||
+                      window.location.pathname.includes('/calendario/') ||
                       window.location.pathname.includes('/usuario/')
       ? '../login.html'
       : 'login.html';
@@ -166,3 +167,11 @@ export const cotizaciones = {
     apiFetch(`/cotizaciones/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) }),
 };
 
+/** Calendario empresarial */
+export const calendario = {
+  listar: (params) => apiFetch(`/calendario?${new URLSearchParams(params).toString()}`),
+  proximos: (limit = 3) => apiFetch(`/calendario/proximos?limit=${limit}`),
+  crear: (data) => apiFetch('/calendario', { method: 'POST', body: JSON.stringify(data) }),
+  actualizar: (id, data) => apiFetch(`/calendario/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  eliminar: (id) => apiFetch(`/calendario/${id}`, { method: 'DELETE' }),
+};

@@ -21,6 +21,7 @@ const reportesRoutes  = require('./routes/reportes.routes');
 const cotizacionesRoutes = require('./routes/cotizaciones.routes');
 const auditoriaRoutes = require('./routes/auditoria.routes');
 const mauroRoutes     = require('./routes/mauro.routes');
+const calendarioRoutes = require('./routes/calendario.routes');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -102,6 +103,7 @@ app.use('/api/reportes',      reportesRoutes);
 app.use('/api/cotizaciones',  cotizacionesRoutes);
 app.use('/api/auditoria',     auditoriaRoutes);
 app.use('/api/mauro',         mauroRoutes);
+app.use('/api/calendario',    calendarioRoutes);
 
 // ── Manejo de rutas no encontradas y errores ─────────────
 app.use(notFound);

@@ -1,0 +1,12 @@
+'use strict';
+const router = require('express').Router();
+const CalendarioService = require('../services/CalendarioService');
+const { authMiddleware } = require('../middleware/auth');
+const { tenantMiddleware } = require('../middleware/tenant');
+router.use(authMiddleware, tenantMiddleware);
+router.get('/', async (req, res, next) => { try { res.json({ success: true, eventos: await CalendarioService.listar(req.dbClient, req.empresaId, req.query) }); } catch (e) { next(e); } });
+router.get('/proximos', async (req, res, next) => { try { res.json({ success: true, eventos: await CalendarioService.proximos(req.dbClient, req.empresaId, req.query.limit) }); } catch (e) { next(e); } });
+router.post('/', async (req, res, next) => { try { res.status(201).json({ success: true, evento: await CalendarioService.crear(req.dbClient, req.empresaId, req.body, req.user.id) }); } catch (e) { next(e); } });
+router.put('/:id', async (req, res, next) => { try { res.json({ success: true, evento: await CalendarioService.actualizar(req.dbClient, req.empresaId, req.params.id, req.body) }); } catch (e) { next(e); } });
+router.delete('/:id', async (req, res, next) => { try { await CalendarioService.eliminar(req.dbClient, req.empresaId, req.params.id); res.status(204).end(); } catch (e) { next(e); } });
+module.exports = router;

@@ -107,6 +107,7 @@
       path.indexOf('/inventarios/')        !== -1 ||
       path.indexOf('/reportes/')           !== -1 ||
       path.indexOf('/nomina-electronica/') !== -1 ||
+      path.indexOf('/calendario/')         !== -1 ||
       path.indexOf('/usuario/')           !== -1;
 
     window.location.replace(isSubdir ? '../login.html' : 'login.html');
