@@ -450,10 +450,10 @@ button:active {
 .business-calendar-head,.calendar-month-nav,.calendar-upcoming-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .calendar-eyebrow { color:#70baff; font-size:.65rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .business-calendar-head h2 { margin:2px 0 0; color:#fff; font-size:1rem; }
-.calendar-manage-link,.calendar-upcoming-head a { color:#38a6ff; font-size:.72rem; font-weight:800; text-decoration:none; }
+.calendar-upcoming-head a { color:#38a6ff; font-size:.72rem; font-weight:800; text-decoration:none; }
 .calendar-month-nav { margin:15px 0 9px; }
 .calendar-month-nav strong { color:#fff; font-size:.83rem; text-transform:capitalize; }
-.calendar-month-nav button { width:27px; height:27px; border:1px solid rgba(86,170,255,.28); border-radius:8px; color:#fff; background:#104584; font-size:1.35rem; line-height:1; cursor:pointer; }
+.calendar-month-nav button { display:grid; place-items:center; width:32px; height:32px; padding:0; border:1px solid rgba(86,170,255,.28); border-radius:8px; color:#fff; background:#104584; font-family:Arial,sans-serif; font-size:1.25rem; line-height:1; cursor:pointer; }
 .calendar-weekdays,.calendar-days { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px; }
 .calendar-weekdays { margin-bottom:4px; color:#9ccaff; font-size:.63rem; font-weight:800; text-align:center; }
 .calendar-days { grid-auto-rows:30px; align-content:start; min-height:166px; }
