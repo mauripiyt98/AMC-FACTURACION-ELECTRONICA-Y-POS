@@ -6,7 +6,16 @@ const LOCAL_EVENTS_KEY = 'amc_calendario_eventos_local';
 const token = () => { try { return JSON.parse(sessionStorage.getItem('amc_session_v2') || '{}').token; } catch { return null; } };
 async function calendarFetch(path) { const response = await fetch(`${API_BASE}${path}`, { headers: token() ? { Authorization: `Bearer ${token()}` } : {} }); if (!response.ok) throw new Error('API no disponible'); return response.json(); }
 const dateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-function localEvents() { try { return JSON.parse(localStorage.getItem(LOCAL_EVENTS_KEY) || '[]'); } catch { return []; } }
+function localEvents() {
+  for (const storageName of ['localStorage', 'sessionStorage']) {
+    try {
+      const storage = window[storageName];
+      const saved = storage.getItem(LOCAL_EVENTS_KEY);
+      if (saved !== null) return JSON.parse(saved);
+    } catch { /* Prueba el siguiente almacenamiento disponible. */ }
+  }
+  return [];
+}
 function mergeEvents(...groups) { const merged = new Map(); groups.flat().forEach((event) => merged.set(event.id || `${event.fecha_inicio}-${event.titulo}`, event)); return [...merged.values()]; }
 const label = (date) => new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' }).format(date);
 const shortDate = (date) => new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
@@ -40,7 +49,7 @@ function daysRemaining(date) { return Math.ceil((new Date(`${date}T12:00:00`) - 
 function renderUpcoming(events) {
   const list = $('calendar-widget-upcoming');
   if (!events.length) { list.innerHTML = '<p class="calendar-empty">No hay vencimientos pendientes.</p>'; return; }
-  list.replaceChildren(...events.map((event) => { const days = daysRemaining(event.fecha_inicio); const item = document.createElement('a'); item.href = './calendario/calendario.html'; item.className = 'calendar-upcoming-item'; const dot = document.createElement('i'); if (/^#[\da-f]{6}$/i.test(event.color || '')) dot.style.background = event.color; const detail = document.createElement('span'); const title = document.createElement('b'); title.textContent = event.titulo; const date = document.createElement('small'); date.textContent = shortDate(event.fecha_inicio); detail.append(title, date); const remaining = document.createElement('em'); remaining.className = days <= 1 ? 'urgent' : ''; remaining.textContent = days === 0 ? 'Hoy' : `${days} día${days === 1 ? '' : 's'}`; item.append(dot, detail, remaining); return item; }));
+  list.replaceChildren(...events.map((event) => { const days = daysRemaining(event.fecha_inicio); const item = document.createElement('a'); item.href = './calendario.html'; item.className = 'calendar-upcoming-item'; const dot = document.createElement('i'); if (/^#[\da-f]{6}$/i.test(event.color || '')) dot.style.background = event.color; const detail = document.createElement('span'); const title = document.createElement('b'); title.textContent = event.titulo; const date = document.createElement('small'); date.textContent = shortDate(event.fecha_inicio); detail.append(title, date); const remaining = document.createElement('em'); remaining.className = days <= 1 ? 'urgent' : ''; remaining.textContent = days === 0 ? 'Hoy' : `${days} día${days === 1 ? '' : 's'}`; item.append(dot, detail, remaining); return item; }));
 }
 
 async function load() {
@@ -51,7 +60,12 @@ async function load() {
   try { const [range, upcoming] = await Promise.all([calendarFetch(`/calendario?desde=${from}&hasta=${to}`), calendarFetch('/calendario/proximos?limit=10')]); if (requestId !== state.loadId) return; const saved = localEvents(); state.events = mergeEvents(range.eventos, saved.filter((event) => event.fecha_inicio >= from && event.fecha_inicio <= to)); renderCalendar(); renderUpcoming(mergeEvents(upcoming.eventos, saved.filter((event) => event.estado !== 'COMPLETADO' && event.fecha_inicio >= dateKey(new Date()))).sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio)).slice(0, 3)); } catch { if (requestId !== state.loadId) return; const saved = localEvents(); state.events = saved.filter((event) => event.fecha_inicio >= from && event.fecha_inicio <= to); renderCalendar(); renderUpcoming(saved.filter((event) => event.estado !== 'COMPLETADO' && event.fecha_inicio >= dateKey(new Date())).sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio)).slice(0, 3)); }
 }
 
-$('calendar-widget-prev').addEventListener('click', () => { state.cursor.setMonth(state.cursor.getMonth() - 1); renderCalendar(); load(); });
-$('calendar-widget-next').addEventListener('click', () => { state.cursor.setMonth(state.cursor.getMonth() + 1); renderCalendar(); load(); });
+function changeMonth(delta) {
+  state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth() + delta, 1);
+  load();
+}
+
+$('calendar-widget-prev').addEventListener('click', () => changeMonth(-1));
+$('calendar-widget-next').addEventListener('click', () => changeMonth(1));
 load();
 })();

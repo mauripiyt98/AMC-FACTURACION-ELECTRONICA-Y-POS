@@ -24,8 +24,23 @@
     } $('calendar-grid').replaceChildren(root); renderUpcoming();
   }
   function renderUpcoming(){const root=$('upcoming-events');if(!state.upcoming.length){root.innerHTML='<p class="calendar-empty-side">No hay vencimientos próximos.</p>';return;}root.replaceChildren(...state.upcoming.map(event=>{const item=document.createElement('article');item.className='calendar-event-item';const bar=document.createElement('i');if(/^#[\da-f]{6}$/i.test(event.color||''))bar.style.background=event.color;const details=document.createElement('div'),title=document.createElement('b'),date=document.createElement('span'),remainingLabel=document.createElement('em');title.textContent=event.titulo;date.textContent=formatted(event.fecha_inicio);const days=remaining(event.fecha_inicio);remainingLabel.textContent=days===0?'Hoy':`${days} d`;details.append(title,date);item.append(bar,details,remainingLabel);item.addEventListener('click',()=>openEvent(event));return item;}));}
-  const localEvents = () => { try { return JSON.parse(localStorage.getItem(localKey) || '[]'); } catch { return []; } };
-  const saveLocalEvents = (events) => { try { localStorage.setItem(localKey, JSON.stringify(events)); return true; } catch { return false; } };
+  const localEvents = () => {
+    for (const storageName of ['localStorage', 'sessionStorage']) {
+      try {
+        const storage = window[storageName];
+        const saved = storage.getItem(localKey);
+        if (saved !== null) return JSON.parse(saved);
+      } catch { /* Prueba el siguiente almacenamiento disponible. */ }
+    }
+    return [];
+  };
+  const saveLocalEvents = (events) => {
+    const serialized = JSON.stringify(events);
+    for (const storageName of ['localStorage', 'sessionStorage']) {
+      try { window[storageName].setItem(localKey, serialized); return true; } catch { /* Prueba el siguiente almacenamiento disponible. */ }
+    }
+    return false;
+  };
   const mergeEvents = (...groups) => { const merged = new Map(); groups.flat().forEach(event => merged.set(event.id || `${event.fecha_inicio}-${event.titulo}`, event)); return [...merged.values()]; };
   async function load(){const saved=localEvents();try{const [events,upcoming]=await Promise.all([fetchApi(`/calendario?desde=${state.year}-01-01&hasta=${state.year}-12-31`),fetchApi('/calendario/proximos?limit=10')]);state.events=mergeEvents(events.eventos,saved.filter(event=>event.fecha_inicio.startsWith(`${state.year}-`)));state.upcoming=mergeEvents(upcoming.eventos,saved.filter(event=>event.estado==='PENDIENTE'&&event.fecha_inicio>=dayKey(new Date()))).sort((a,b)=>a.fecha_inicio.localeCompare(b.fecha_inicio)).slice(0,5);render();}catch{state.events=saved.filter(event=>event.fecha_inicio.startsWith(`${state.year}-`));state.upcoming=saved.filter(event=>event.estado==='PENDIENTE'&&event.fecha_inicio>=dayKey(new Date())).sort((a,b)=>a.fecha_inicio.localeCompare(b.fecha_inicio)).slice(0,5);render();}}
   function reset(){ $('event-form').reset();$('event-id').value='';$('event-color').value='#0b46eb';$('delete-event').hidden=true;$('form-kicker').textContent='NUEVO REGISTRO';$('form-title').textContent='Programar evento';$('form-message').textContent='';}

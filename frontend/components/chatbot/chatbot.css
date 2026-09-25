@@ -10,6 +10,7 @@
   bottom: 26px;
   z-index: 900;
   font-family: "Segoe UI", system-ui, sans-serif;
+  pointer-events: none;
 }
 
 .mauro-launcher {
@@ -26,6 +27,7 @@
   place-items: center;
   margin-left: auto;
   transition: transform .2s ease, box-shadow .2s ease;
+  pointer-events: auto;
 }
 
 .mauro-launcher:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 16px 32px rgba(0, 30, 130, .42); }
@@ -59,9 +61,10 @@
   transform: translateY(12px) scale(.97);
   transform-origin: bottom right;
   transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+  pointer-events: none;
 }
 
-.mauro-chat.is-open .mauro-chat-window { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+.mauro-chat.is-open .mauro-chat-window { opacity: 1; visibility: visible; transform: translateY(0) scale(1); pointer-events: auto; }
 
 .mauro-chat-header {
   min-height: 96px;
