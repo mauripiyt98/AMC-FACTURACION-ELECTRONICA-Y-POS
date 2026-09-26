@@ -8,39 +8,51 @@
   const form = document.getElementById('mauro-form');
   const input = document.getElementById('mauro-input');
   const messages = document.getElementById('mauro-messages');
-  const API_BASE = 'http://localhost:3000/api';
+  const suggestions = document.getElementById('mauro-suggestions');
+  const API_BASE = window.AMC_API_BASE || 'http://localhost:3000/api';
+  const CONVERSATION_KEY = 'amc_mauro_conversation_v1';
 
-  const escapeHtml = (value) => {
-    const element = document.createElement('div');
-    element.textContent = String(value || '');
-    return element.innerHTML;
-  };
-
-  const normalizar = (value) => String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
+  // Rutas permitidas en el frontend. El backend solo devuelve moduleKey; no se
+  // ejecutan URLs arbitrarias recibidas en el contenido del chat.
   const moduleRoutes = {
-    factura: { label: 'Crear factura electrónica', action: () => window.mostrarSeccion ? window.mostrarSeccion('crear-factura') : window.location.assign('index.html?sec=crear-factura') },
-    cliente: { label: 'Abrir clientes', action: () => window.location.assign('terceros/terceros.html') },
-    producto: { label: 'Abrir productos', action: () => window.location.assign('productos/productos.html') },
-    inventario: { label: 'Abrir inventarios', action: () => window.location.assign('inventarios/inventarios.html') },
-    compra: { label: 'Registrar compra', action: () => window.location.assign('compras/factura-compra.html') },
-    pos: { label: 'Abrir Facturación POS', action: () => window.location.assign('pos/pos.html') },
-    reporte: { label: 'Ver reportes', action: () => window.location.assign('reportes/reportes.html') },
-    nomina: { label: 'Abrir nómina', action: () => window.location.assign('nomina-electronica/nomina-electronica.html') }
+    facturacion: { label: 'Facturación electrónica', path: 'index.html?sec=crear-factura', run: () => window.mostrarSeccion ? window.mostrarSeccion('crear-factura') : window.location.assign('index.html?sec=crear-factura') },
+    facturas: { label: 'Facturas generadas', path: 'facturas-generadas/facturas-generadas.html' },
+    clientes: { label: 'Clientes y terceros', path: 'terceros/terceros.html' },
+    productos: { label: 'Productos y servicios', path: 'productos/productos.html' },
+    inventario: { label: 'Inventarios y bodegas', path: 'inventarios/inventarios.html' },
+    compras: { label: 'Compras', path: 'compras/factura-compra.html' },
+    pos: { label: 'Facturación POS', path: 'pos/pos.html' },
+    nomina: { label: 'Nómina electrónica', path: 'nomina-electronica/nomina-electronica.html' },
+    reportes: { label: 'Reportes', path: 'reportes/reportes.html' },
+    calendario: { label: 'Calendario empresarial', path: 'calendario/calendario.html' },
+    cotizaciones: { label: 'Cotizaciones', path: 'cotizaciones/cotizacion.html' },
+    configuracion: { label: 'Usuarios y configuración', path: 'usuario/usuario.html' },
+    mauro: { label: 'Mauro IA', run: openChat },
   };
 
-  function addMessage(text, type = 'assistant') {
-    const message = document.createElement('div');
-    message.className = `mauro-message ${type}`;
-    message.innerHTML = text;
+  function openChat() {
+    chat.classList.add('is-open');
+    launcher.setAttribute('aria-expanded', 'true');
+    input.focus();
+  }
+
+  function node(tag, className, text) {
+    const item = document.createElement(tag);
+    if (className) item.className = className;
+    if (text !== undefined && text !== null) item.textContent = String(text);
+    return item;
+  }
+
+  function addUserMessage(text) {
+    const message = node('div', 'mauro-message user', text);
     messages.appendChild(message);
     messages.scrollTop = messages.scrollHeight;
   }
 
   function addThinking() {
-    const message = document.createElement('div');
-    message.className = 'mauro-message assistant mauro-thinking';
-    message.innerHTML = '<span></span><span></span><span></span><em>Consultando inventario…</em>';
+    const message = node('div', 'mauro-message assistant mauro-thinking');
+    message.setAttribute('role', 'status');
+    message.append(node('span'), node('span'), node('span'), node('em', '', 'Revisando tu consulta…'));
     messages.appendChild(message);
     messages.scrollTop = messages.scrollHeight;
     return message;
@@ -54,141 +66,186 @@
     }
   }
 
-  function extraerCodigo(mensaje) {
-    const texto = normalizar(mensaje);
-    const match = texto.match(/(?:codigo|cod\.?|referencia)\s*(?:del?\s*)?(?:producto\s*)?[:#-]?\s*["'“”]?([a-z0-9][a-z0-9._/-]{0,63})/i)
-      || texto.match(/producto\s+([a-z0-9][a-z0-9._/-]{0,63})/i);
-    return match ? match[1] : null;
-  }
-
-  function esConsultaInventario(mensaje) {
-    return /stock|existencia|inventario|disponible|unidades/i.test(mensaje) && !!extraerCodigo(mensaje);
-  }
-
-  function mostrarStock(producto, fuente) {
-    const stock = Number(producto.stock || producto.stock_total || producto.stockTotal || 0);
-    const minimo = Number(producto.stockMinimo || producto.stock_minimo || producto.stockMin || 0);
-    const estado = producto.estado || (stock <= 0 ? 'AGOTADO' : stock <= minimo ? 'BAJO' : 'DISPONIBLE');
-    const etiqueta = estado === 'DISPONIBLE' ? 'Inventario suficiente' : estado === 'BAJO' ? 'Stock bajo' : 'Producto agotado';
-    addMessage(`<strong>${escapeHtml(producto.nombre || 'Producto')}</strong><span class="mauro-stock-code">Código: ${escapeHtml(producto.codigo || '—')}</span><span class="mauro-stock-value">${stock.toLocaleString('es-CO')} ${escapeHtml(producto.unidadMedida || producto.unidad_medida || 'unidades')}</span><span class="mauro-stock-status ${estado.toLowerCase()}">${etiqueta}</span><small>${fuente}</small>`);
-    addAction('inventario');
-  }
-
-  async function consultarInventarioEnApi(mensaje) {
-    const token = obtenerToken();
-    if (!token) return false;
-    const response = await fetch(`${API_BASE}/mauro/consultar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ mensaje })
+  function crearUuid() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    if (window.crypto?.getRandomValues) {
+      const bytes = window.crypto.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+      const random = Math.random() * 16 | 0;
+      return (character === 'x' ? random : (random & 0x3 | 0x8)).toString(16);
     });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.message || 'No fue posible consultar el inventario.');
-    if (body.respuesta?.tipo === 'inventory_stock') {
-      mostrarStock(body.respuesta.data, 'Datos consultados en tiempo real.');
-      return true;
+  }
+
+  function obtenerConversationId() {
+    let id = sessionStorage.getItem(CONVERSATION_KEY);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id || '')) {
+      id = crearUuid();
+      sessionStorage.setItem(CONVERSATION_KEY, id);
     }
-    addMessage(`<strong>Consulta de inventario</strong>${escapeHtml(body.respuesta?.mensaje || 'No encontré ese producto en tu empresa.')}`);
-    return true;
+    return id;
   }
 
-  function consultarInventarioLocal(mensaje) {
-    const codigo = extraerCodigo(mensaje);
-    if (!codigo) return false;
-    const userCode = sessionStorage.getItem('amc_active_user_code') || '1110591592';
-    try {
-      const productos = JSON.parse(localStorage.getItem(`amc_productos_db_v1_${userCode}`) || '[]');
-      const producto = Array.isArray(productos) && productos.find((item) => String(item.codigo || '').trim().toLowerCase() === codigo.toLowerCase() && item.activo !== false);
-      if (producto) {
-        mostrarStock(producto, 'Datos del catálogo local de esta sesión.');
-      } else {
-        addMessage(`<strong>Consulta de inventario</strong>No encontré un producto activo con el código ${escapeHtml(codigo)} en esta empresa.`);
-      }
-      return true;
-    } catch {
-      return false;
+  function formatearMoneda(value) {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(value || 0));
+  }
+
+  function renderCard(response, container) {
+    const data = response.data || {};
+    if (response.tarjeta) {
+      const card = node('section', 'mauro-data-card');
+      card.append(node('small', 'mauro-data-eyebrow', response.tarjeta.etiqueta || 'Resumen'));
+      card.append(node('strong', '', response.tarjeta.valor || ''));
+      container.append(card);
+      return;
     }
-  }
+    if (!['inventory_stock', 'product_details', 'client_lookup'].includes(response.tipo)) return;
 
-  function addAction(module) {
-    const target = moduleRoutes[module];
-    if (!target) return;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'mauro-suggestion';
-    button.textContent = target.label;
-    button.addEventListener('click', target.action);
-    document.getElementById('mauro-suggestions').appendChild(button);
-  }
-
-  function answer(question) {
-    const text = question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (/(factura|facturar|venta|cufe|dian|iva)/.test(text)) {
-      addMessage('<strong>Facturación electrónica</strong>Para crear una factura, completa los datos del cliente, agrega los productos y selecciona “Generar factura”.');
-      addAction('factura');
-    } else if (/(cliente|tercero|nit)/.test(text)) {
-      addMessage('<strong>Clientes y terceros</strong>Registra primero la información del cliente: nombre o razón social, documento, correo y ciudad.');
-      addAction('cliente');
-    } else if (/(producto|servicio|precio)/.test(text)) {
-      addMessage('<strong>Productos y servicios</strong>Desde este módulo puedes crear productos, definir precios, IVA y controlar existencias.');
-      addAction('producto');
-    } else if (/(inventario|bodega|stock)/.test(text)) {
-      addMessage('<strong>Inventarios</strong>Consulta existencias, movimientos y el control de tus bodegas desde Inventarios.');
-      addAction('inventario');
-    } else if (/(compra|proveedor|gasto)/.test(text)) {
-      addMessage('<strong>Compras</strong>Registra la factura del proveedor para actualizar costos, gastos o inventario.');
-      addAction('compra');
-    } else if (/(pos|caja|punto de venta)/.test(text)) {
-      addMessage('<strong>Facturación POS</strong>Abre el punto de venta para registrar y gestionar ventas de mostrador.');
-      addAction('pos');
-    } else if (/(reporte|informe|ventas del mes)/.test(text)) {
-      addMessage('<strong>Reportes</strong>Consulta indicadores de ventas, compras e impuestos por período.');
-      addAction('reporte');
-    } else if (/(nomina|empleado)/.test(text)) {
-      addMessage('<strong>Nómina electrónica</strong>En este módulo podrás gestionar la nómina electrónica de tu empresa.');
-      addAction('nomina');
+    const card = node('section', 'mauro-data-card');
+    card.append(node('small', 'mauro-data-eyebrow', response.tipo === 'inventory_stock' ? 'Inventario en tiempo real' : response.tipo === 'product_details' ? 'Ficha del producto' : 'Tercero de tu empresa'));
+    const rows = [];
+    if (response.tipo === 'inventory_stock') {
+      rows.push(['Código', data.codigo], ['Existencias', `${Number(data.stock || 0).toLocaleString('es-CO')} ${data.unidadMedida || 'unidades'}`], ['Estado', data.etiquetaEstado || data.estado]);
+      rows.push(['Stock mínimo', Number(data.stockMinimo || 0).toLocaleString('es-CO')]);
+    } else if (response.tipo === 'product_details') {
+      rows.push(['Código', data.codigo], ['Tipo', data.tipo], ['Precio', formatearMoneda(data.precio)], ['IVA', `${Number(data.iva || 0)}%`], ['Existencias', `${Number(data.stock || 0).toLocaleString('es-CO')} ${data.unidadMedida || 'unidades'}`]);
     } else {
-      addMessage('<strong>Estoy para ayudarte</strong>Puedo guiarte con facturación, clientes, productos, compras, inventarios, POS, nómina y reportes. ¿Sobre qué módulo deseas consultar?');
+      rows.push(['Documento', data.documento], ['Tipo', data.tipoDocumento], ['Correo', data.correo], ['Teléfono', data.telefono], ['Ciudad', data.ciudad]);
     }
+    rows.forEach(([label, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      const row = node('div', 'mauro-data-row');
+      row.append(node('span', '', label), node('strong', '', value));
+      card.append(row);
+    });
+    if (data.fuente) card.append(node('small', 'mauro-data-source', data.fuente));
+    if (data.etiquetaEstado) card.append(node('span', `mauro-badge ${String(data.estado || '').toLowerCase()}`, data.etiquetaEstado));
+    container.append(card);
+  }
+
+  function renderTable(table, container) {
+    if (!table || !Array.isArray(table.columnas) || !Array.isArray(table.filas)) return;
+    const wrapper = node('div', 'mauro-table-wrap');
+    const element = document.createElement('table');
+    const head = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    table.columnas.forEach((column) => headerRow.append(node('th', '', column)));
+    head.append(headerRow);
+    element.append(head);
+    const body = document.createElement('tbody');
+    table.filas.slice(0, 20).forEach((row) => {
+      const line = document.createElement('tr');
+      row.slice(0, table.columnas.length).forEach((value) => line.append(node('td', '', value)));
+      body.append(line);
+    });
+    element.append(body);
+    wrapper.append(element);
+    container.append(wrapper);
+  }
+
+  function ejecutarAccion(action) {
+    const target = moduleRoutes[action?.moduleKey];
+    if (!target) return;
+    if (typeof target.run === 'function') {
+      target.run();
+      return;
+    }
+    if (target.path) window.location.assign(target.path);
+  }
+
+  function renderAssistant(response) {
+    const message = node('article', `mauro-message assistant${response.tipo === 'security' ? ' mauro-security-message' : ''}`);
+    if (response.titulo) message.append(node('strong', '', response.titulo));
+    message.append(node('p', 'mauro-answer-text', response.mensaje || 'Con gusto te ayudo.'));
+    renderCard(response, message);
+    renderTable(response.tabla, message);
+
+    if (Array.isArray(response.badges) && response.badges.length) {
+      const badges = node('div', 'mauro-badges');
+      response.badges.slice(0, 8).forEach((badge) => badges.append(node('span', 'mauro-badge', badge.label || badge)));
+      message.append(badges);
+    }
+    if (response.seguimiento) message.append(node('small', 'mauro-follow-up', response.seguimiento));
+
+    const actions = (Array.isArray(response.acciones) ? response.acciones : []).filter((action) => moduleRoutes[action?.moduleKey]);
+    if (actions.length) {
+      const actionGroup = node('div', 'mauro-response-actions');
+      actions.slice(0, 3).forEach((action) => {
+        const button = node('button', 'mauro-action-button');
+        button.type = 'button';
+        const icon = node('span', 'mauro-action-icon', '↗');
+        icon.setAttribute('aria-hidden', 'true');
+        button.append(icon, node('span', '', action.label || `Abrir ${moduleRoutes[action.moduleKey].label}`));
+        button.addEventListener('click', () => ejecutarAccion(action));
+        actionGroup.append(button);
+      });
+      message.append(actionGroup);
+    }
+    messages.append(message);
+    messages.scrollTop = messages.scrollHeight;
   }
 
   async function responder(question) {
-    if (!esConsultaInventario(question)) {
-      answer(question);
+    const token = obtenerToken();
+    if (!token) {
+      renderAssistant({
+        tipo: 'help', titulo: 'Conexión segura requerida',
+        mensaje: 'Esta sesión inició en modo local y no recibió un token seguro. Por eso no puedo consultar memoria ni datos empresariales. Revisa que el backend de AMC esté conectado a PostgreSQL, cierra sesión e ingresa de nuevo cuando la autenticación esté disponible.',
+        seguimiento: 'No compartas contraseñas ni tokens en el chat.',
+      });
       return;
     }
 
     const thinking = addThinking();
     try {
-      const atendidoPorApi = await consultarInventarioEnApi(question);
-      if (!atendidoPorApi) consultarInventarioLocal(question);
+      const response = await fetch(`${API_BASE}/mauro/consultar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ mensaje: question, conversationId: obtenerConversationId() }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.message || 'No fue posible consultar a Mauro en este momento.');
+      if (body.conversationId) sessionStorage.setItem(CONVERSATION_KEY, body.conversationId);
+      renderAssistant(body.respuesta || {});
     } catch (error) {
-      addMessage(`<strong>No pude consultar el inventario en este momento.</strong>${escapeHtml(error.message)} Puedes intentarlo nuevamente.`);
+      renderAssistant({
+        tipo: 'error', titulo: 'No pude completar la consulta',
+        mensaje: error.message || 'Revisa tu conexión con AMC e inténtalo de nuevo.',
+        seguimiento: '¿Quieres intentarlo nuevamente?',
+      });
     } finally {
       thinking.remove();
     }
   }
 
+  function submitQuestion(question) {
+    const text = String(question || '').trim().slice(0, 300);
+    if (!text) return;
+    addUserMessage(text);
+    if (input) input.value = '';
+    void responder(text);
+  }
+
   launcher.addEventListener('click', () => {
-    chat.classList.toggle('is-open');
-    launcher.setAttribute('aria-expanded', String(chat.classList.contains('is-open')));
-    if (chat.classList.contains('is-open')) input.focus();
+    const open = !chat.classList.contains('is-open');
+    chat.classList.toggle('is-open', open);
+    launcher.setAttribute('aria-expanded', String(open));
+    if (open) input.focus();
   });
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const question = input.value.trim().slice(0, 300);
-    if (!question) return;
-    addMessage(escapeHtml(question), 'user');
-    input.value = '';
-    void responder(question);
+    submitQuestion(input.value);
   });
 
-  document.querySelectorAll('[data-mauro-question]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const question = button.dataset.mauroQuestion;
-      addMessage(escapeHtml(question), 'user');
-      void responder(question);
+  if (suggestions) {
+    suggestions.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-mauro-question]');
+      if (button) submitQuestion(button.dataset.mauroQuestion);
     });
-  });
+  }
 })();

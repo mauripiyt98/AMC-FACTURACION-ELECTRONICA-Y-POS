@@ -118,6 +118,27 @@
 .mauro-message.user { margin-left: auto; color: #fff; background: #0b46eb; border-bottom-right-radius: 4px; }
 .mauro-message strong { display: block; margin-bottom: 3px; color: var(--mauro-navy); }
 .mauro-message.user strong { color: #fff; }
+.mauro-answer-text { margin: 0; white-space: pre-line; }
+.mauro-follow-up { display: block; margin-top: 8px; color: #46677a; font-size: .72rem; }
+.mauro-security-message { border: 1px solid #f3c1c1; background: #fff4f3 !important; }
+.mauro-data-card { display: grid; gap: 6px; margin-top: 10px; padding: 10px; border: 1px solid #c7e3f5; border-radius: 10px; background: #fff; }
+.mauro-data-eyebrow { color: #527083; font-size: .67rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.mauro-data-card > strong { margin: 0; color: #001e82; font-size: .9rem; }
+.mauro-data-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: #527083; font-size: .72rem; }
+.mauro-data-row strong { margin: 0; color: #173e52; font-size: .74rem; text-align: right; overflow-wrap: anywhere; }
+.mauro-data-source { color: #638092; font-size: .66rem; }
+.mauro-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.mauro-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 8px; color: #087443; background: #d9fae9; font-size: .66rem; font-weight: 800; }
+.mauro-badge.bajo { color: #9a5a00; background: #fff1c6; }
+.mauro-badge.agotado { color: #b42318; background: #ffebe9; }
+.mauro-response-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.mauro-action-button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #0b46eb; border-radius: 8px; padding: 7px 10px; color: #fff; background: #0b46eb; font: inherit; font-size: .7rem; font-weight: 800; cursor: pointer; }
+.mauro-action-icon { font-size: .9rem; line-height: 1; }
+.mauro-action-button:hover { background: #001e82; }
+.mauro-table-wrap { max-width: 100%; margin-top: 9px; overflow-x: auto; border: 1px solid #c7e3f5; border-radius: 8px; background: #fff; }
+.mauro-table-wrap table { width: 100%; border-collapse: collapse; font-size: .68rem; }
+.mauro-table-wrap th, .mauro-table-wrap td { padding: 6px 8px; border-bottom: 1px solid #e5f1f7; text-align: left; white-space: nowrap; }
+.mauro-table-wrap th { color: #001e82; background: #eef7ff; }
 .mauro-message small { display: block; margin-top: 7px; color: #527083; font-size: .67rem; }
 .mauro-stock-code { display: block; margin-top: 2px; color: #527083; font-size: .72rem; }
 .mauro-stock-value { display: block; margin: 7px 0 3px; color: #0032c8; font-size: 1.15rem; font-weight: 800; }

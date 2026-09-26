@@ -1,0 +1,12 @@
+**/node_modules/
+.pnpm-store/
+**/.pnpm-store/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+pnpm-debug.log*

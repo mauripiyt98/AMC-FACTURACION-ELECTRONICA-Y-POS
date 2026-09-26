@@ -10,7 +10,9 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'amc_app') THEN
-        CREATE ROLE amc_app LOGIN PASSWORD 'CAMBIAR_EN_PRODUCCION';
+        -- El runner establece la contraseña desde backend/.env al completar
+        -- todas las migraciones; no se almacena una clave de ejemplo en SQL.
+        CREATE ROLE amc_app LOGIN;
     END IF;
 END
 $$;

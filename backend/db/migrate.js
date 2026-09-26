@@ -11,6 +11,11 @@ const { Client } = require('pg');
  * Utiliza la tabla migrations_log como registro.
  */
 async function runMigrations() {
+  const appPassword = process.env.DB_PASSWORD;
+  if (!appPassword || appPassword === 'CAMBIAR_EN_PRODUCCION') {
+    throw new Error('Configure DB_PASSWORD en backend/.env con una clave propia para el rol amc_app antes de ejecutar migraciones.');
+  }
+
   const superClient = new Client({
     host    : process.env.DB_HOST       || 'localhost',
     port    : Number(process.env.DB_PORT) || 5432,
@@ -70,6 +75,21 @@ async function runMigrations() {
       console.log(`  ✅ [ok]        ${filename}`);
       ejecutadas++;
     }
+
+    // La contraseña nunca queda fija en una migración versionada. Al terminar,
+    // se sincroniza el rol de aplicación con el secreto local de backend/.env.
+    const { rows: roleRows } = await superClient.query(
+      "SELECT 1 FROM pg_roles WHERE rolname = 'amc_app'"
+    );
+    if (!roleRows.length) {
+      throw new Error('No existe el rol amc_app después de aplicar las migraciones.');
+    }
+    const { rows: [passwordStatement] } = await superClient.query(
+      "SELECT format('ALTER ROLE amc_app WITH PASSWORD %L', $1) AS statement",
+      [appPassword]
+    );
+    await superClient.query(passwordStatement.statement);
+    console.log('  🔐 Contraseña del rol amc_app actualizada desde backend/.env');
 
     console.log(`\n  Resumen: ${ejecutadas} aplicada(s), ${omitidas} omitida(s)\n`);
 

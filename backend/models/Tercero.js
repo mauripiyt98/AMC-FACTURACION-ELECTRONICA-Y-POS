@@ -65,6 +65,23 @@ class Tercero {
     return rows[0] || null;
   }
 
+  /** Buscar por los dígitos del documento, tolerando puntos y guion de verificación. */
+  static async findByDocumentoNormalizado(client, empresaId, documentoDigitos) {
+    const digitos = String(documentoDigitos || '').replace(/\D/g, '');
+    if (digitos.length < 5 || digitos.length > 20) return null;
+    const { rows } = await client.query(
+      `SELECT id, empresa_id, nombre, documento, tipo_documento,
+              email, telefono, ciudad
+       FROM terceros
+       WHERE empresa_id = $1
+         AND activo = TRUE
+         AND regexp_replace(documento, '[^0-9]', '', 'g') = $2
+       LIMIT 1`,
+      [empresaId, digitos]
+    );
+    return rows[0] || null;
+  }
+
   /**
    * Crear nuevo tercero.
    */
