@@ -402,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (opciones.usarEnFactura && guardado) {
         localStorage.setItem(CLIENTE_SELECCIONADO_KEY, JSON.stringify(guardado));
-        window.location.href = "../index.html?sec=crear-factura";
+        window.location.href = "../crear-factura.html";
       }
 
       return guardado;
@@ -484,7 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ── Eventos Iniciales ──────────────────────────────────────────────────────
   const btnVolver = $("btn-volver");
-  if (btnVolver) btnVolver.addEventListener("click", () => (window.location.href = "../index.html?sec=crear-factura"));
+  if (btnVolver) btnVolver.addEventListener("click", () => (window.location.href = "../crear-factura.html"));
 
   const btnGuardar = $("btn-guardar");
   if (btnGuardar) btnGuardar.addEventListener("click", () => guardarTercero());

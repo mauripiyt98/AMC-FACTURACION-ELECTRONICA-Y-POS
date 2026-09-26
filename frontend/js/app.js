@@ -1135,14 +1135,15 @@ document.addEventListener("DOMContentLoaded", function () {
   if (lnkCrearFactura) {
     lnkCrearFactura.addEventListener("click", (e) => {
       e.preventDefault();
-      mostrarSeccion("crear-factura");
+      window.location.href = "crear-factura.html";
     });
   }
 
   const btnWelcomeCrearFactura = $("btn-welcome-crear-factura");
   if (btnWelcomeCrearFactura) {
-    btnWelcomeCrearFactura.addEventListener("click", () => {
-      mostrarSeccion("crear-factura");
+    btnWelcomeCrearFactura.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "crear-factura.html";
     });
   }
 
@@ -1171,14 +1172,14 @@ document.addEventListener("DOMContentLoaded", function () {
   if (lnkInicio) {
     lnkInicio.addEventListener("click", (e) => {
       e.preventDefault();
-      mostrarSeccion("inicio");
+      window.location.href = "index.html";
     });
   }
 
   const btnFacturaIrInicio = $("btn-factura-ir-inicio");
   if (btnFacturaIrInicio) {
     btnFacturaIrInicio.addEventListener("click", () => {
-      mostrarSeccion("inicio");
+      window.location.href = "index.html";
     });
   }
 
@@ -1236,14 +1237,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Ruteo Automático al Iniciar
-  const urlParams = new URLSearchParams(window.location.search);
-  const secParam = urlParams.get("sec");
-  const tieneClienteSeleccionado = localStorage.getItem(CLIENTE_SELECCIONADO_KEY) !== null;
-  const tieneProductoSeleccionado = localStorage.getItem(PRODUCTO_SELECCIONADO_KEY) !== null;
-
-  if (secParam === "crear-factura" || tieneClienteSeleccionado || tieneProductoSeleccionado) {
-    mostrarSeccion("crear-factura");
-  } else {
+  const esPaginaCrearFactura = document.body.dataset.page === "crear-factura";
+  if (!esPaginaCrearFactura) {
     mostrarSeccion("inicio");
   }
 

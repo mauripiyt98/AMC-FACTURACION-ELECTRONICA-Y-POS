@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
            unidadMedida: guardado.unidad_medida || guardado.unidadMedida
         };
         localStorage.setItem(PRODUCTO_SELECCIONADO_KEY, JSON.stringify(itemSeleccionado));
-        window.location.href = "../index.html?sec=crear-factura";
+        window.location.href = "../crear-factura.html";
       }
 
       if (!opciones.usarEnFactura) window.location.href = `lista-productos.html?guardado=${encodeURIComponent(guardado.id)}`;
@@ -431,7 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnVolver = $("btn-volver");
   if (btnVolver) {
     btnVolver.addEventListener("click", () => {
-      window.location.href = "../index.html?sec=crear-factura";
+      window.location.href = "../crear-factura.html";
     });
   }
 

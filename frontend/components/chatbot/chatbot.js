@@ -15,7 +15,7 @@
   // Rutas permitidas en el frontend. El backend solo devuelve moduleKey; no se
   // ejecutan URLs arbitrarias recibidas en el contenido del chat.
   const moduleRoutes = {
-    facturacion: { label: 'Facturación electrónica', path: 'index.html?sec=crear-factura', run: () => window.mostrarSeccion ? window.mostrarSeccion('crear-factura') : window.location.assign('index.html?sec=crear-factura') },
+    facturacion: { label: 'Facturación electrónica', path: 'crear-factura.html', run: () => window.location.assign('crear-factura.html') },
     facturas: { label: 'Facturas generadas', path: 'facturas-generadas/facturas-generadas.html' },
     clientes: { label: 'Clientes y terceros', path: 'terceros/terceros.html' },
     productos: { label: 'Productos y servicios', path: 'productos/productos.html' },
