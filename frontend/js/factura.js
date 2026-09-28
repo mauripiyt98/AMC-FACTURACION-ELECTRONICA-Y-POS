@@ -179,13 +179,21 @@ function descargarPdf() {
   stage.className = "factura-pdf-stage";
   const documentoPdf = elemento.cloneNode(true);
   documentoPdf.removeAttribute("id");
-  // Evita que imágenes servidas desde file:// bloqueen la conversión. Solo se
-  // excluyen del clon temporal; la representación de datos permanece intacta.
-  documentoPdf.querySelectorAll("img").forEach((imagen) => imagen.remove());
+  // Se excluyen las imágenes auxiliares del clon temporal, pero se conserva el
+  // logo del emisor para que el PDF refleje la misma identidad de la factura.
+  documentoPdf.querySelectorAll("img:not(#logo-emisor)").forEach((imagen) => imagen.remove());
   stage.appendChild(documentoPdf);
   document.body.appendChild(stage);
 
   Promise.resolve()
+    .then(() => {
+      const logo = documentoPdf.querySelector("#logo-emisor");
+      if (!logo || logo.complete) return undefined;
+      return new Promise((resolve) => {
+        logo.addEventListener("load", resolve, { once: true });
+        logo.addEventListener("error", resolve, { once: true });
+      });
+    })
     .then(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
     .then(() => document.fonts?.ready)
     .then(() => html2pdf().set({
