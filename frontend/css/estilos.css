@@ -613,6 +613,7 @@ button:active {
 .welcome-header-text {
   flex: 1;
   min-width: 0;
+  text-align: center;
 }
 
 .welcome-header-card h2 {
@@ -621,10 +622,9 @@ button:active {
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .welcome-header-card p {

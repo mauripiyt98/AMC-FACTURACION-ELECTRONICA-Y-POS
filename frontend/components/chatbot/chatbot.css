@@ -108,7 +108,14 @@
   filter: drop-shadow(0 10px 9px rgba(0, 14, 73, .36)) saturate(1.08) contrast(1.04);
 }
 
-.mauro-chat-header h2 { margin: 0; font-size: 1rem; }
+.mauro-chat-identity {
+  flex: 1;
+  min-width: 0;
+  margin-left: 145px;
+  text-align: center;
+}
+
+.mauro-chat-header h2 { margin: 0; font-size: 1rem; white-space: nowrap; }
 .mauro-chat-header p { margin: 3px 0 0; font-size: .72rem; opacity: .84; }
 .mauro-status { width: 8px; height: 8px; margin-left: auto; border-radius: 50%; background: var(--mauro-green); box-shadow: 0 0 0 4px rgba(20, 201, 139, .18); }
 
@@ -169,4 +176,5 @@
   .mauro-chat-window { height: min(500px, calc(100vh - 98px)); }
   .mauro-avatar-float { left: 24px; width: 120px; height: 144px; top: -91px; }
   .mauro-chat-header { min-height: 88px; padding-top: 57px; }
+  .mauro-chat-identity { margin-left: 120px; }
 }

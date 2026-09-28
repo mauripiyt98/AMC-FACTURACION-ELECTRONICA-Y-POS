@@ -189,14 +189,59 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
+  // Cuando la aplicación se abre como archivo local no hay una sesión JWT para
+  // consultar datos privados. Mauro sigue pudiendo orientar sobre el uso de la
+  // aplicación con respuestas estáticas y enlaces seguros a sus módulos.
+  function responderEnModoLocal(question) {
+    const texto = String(question || '')
+      .toLocaleLowerCase('es-CO')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    if (/factura|facturacion|venta/.test(texto)) {
+      return {
+        tipo: 'help',
+        titulo: 'Cómo crear una factura',
+        mensaje: 'Abre Crear factura electrónica, selecciona o registra el cliente, agrega los productos o servicios, revisa los totales y pulsa “Generar factura”.',
+        acciones: [{ moduleKey: 'facturacion', label: 'Crear factura' }],
+        seguimiento: 'Para consultar datos empresariales o inventario en tiempo real, inicia sesión con el backend conectado.',
+      };
+    }
+    if (/cliente|tercero|nit|contacto/.test(texto)) {
+      return {
+        tipo: 'help',
+        titulo: 'Crear cliente o tercero',
+        mensaje: 'En el módulo Clientes y terceros registra el nombre o razón social, documento, contacto y dirección. Luego podrás buscarlo desde el formulario de factura.',
+        acciones: [{ moduleKey: 'clientes', label: 'Abrir clientes y terceros' }],
+      };
+    }
+    if (/producto|servicio|inventario|stock/.test(texto)) {
+      return {
+        tipo: 'help',
+        titulo: 'Productos, servicios e inventario',
+        mensaje: 'Crea o actualiza primero el producto o servicio con su código, precio, impuesto y existencias. Después podrás agregarlo a una factura o consultar el inventario.',
+        acciones: [{ moduleKey: 'productos', label: 'Abrir productos y servicios' }, { moduleKey: 'inventario', label: 'Abrir inventario' }],
+      };
+    }
+    if (/cotizacion|propuesta/.test(texto)) {
+      return {
+        tipo: 'help', titulo: 'Crear una cotización',
+        mensaje: 'Desde Cotizaciones selecciona el cliente, añade productos o servicios y guarda la propuesta para compartirla o convertirla después en una venta.',
+        acciones: [{ moduleKey: 'cotizaciones', label: 'Abrir cotizaciones' }],
+      };
+    }
+    return {
+      tipo: 'help',
+      titulo: 'Mauro IA en modo local',
+      mensaje: 'Puedo orientarte sobre facturación, clientes, productos, inventario, cotizaciones, POS, nómina y reportes. Las consultas de datos privados requieren iniciar sesión con el backend conectado.',
+      acciones: [{ moduleKey: 'facturacion', label: 'Crear factura' }, { moduleKey: 'clientes', label: 'Crear cliente' }],
+    };
+  }
+
   async function responder(question) {
     const token = obtenerToken();
     if (!token) {
-      renderAssistant({
-        tipo: 'help', titulo: 'Conexión segura requerida',
-        mensaje: 'Esta sesión inició en modo local y no recibió un token seguro. Por eso no puedo consultar memoria ni datos empresariales. Revisa que el backend de AMC esté conectado a PostgreSQL, cierra sesión e ingresa de nuevo cuando la autenticación esté disponible.',
-        seguimiento: 'No compartas contraseñas ni tokens en el chat.',
-      });
+      renderAssistant(responderEnModoLocal(question));
       return;
     }
 
