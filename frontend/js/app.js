@@ -8,7 +8,9 @@ function getToken() {
 }
 const token = getToken();
 const useApi = !!token;
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+  ? 'http://localhost:3000/api'
+  : `${window.location.origin}/api`);
 const apiData = { terceros: [], productos: [], loaded: false };
 
 async function apiFetch(endpoint, options = {}) {
@@ -1270,7 +1272,7 @@ function mostrarSeccion(seccionId) {
   }
 }
 
-function inicializarMensajeBienvenida() {
+async function inicializarMensajeBienvenida() {
   const welcomeTitle = document.getElementById("welcome-user-title");
   const welcomeLogo = document.getElementById("welcome-logo");
   const welcomeLogoBox = welcomeLogo ? welcomeLogo.closest(".welcome-logo-box") : null;
@@ -1279,16 +1281,28 @@ function inicializarMensajeBienvenida() {
   let userName = "";
   let userLogo = "";
 
-  // Intentar cargar la razón social / nombre desde el perfil del emisor
+  // La fuente de verdad es la empresa del tenant, incluida la URL persistente
+  // del logo. El localStorage solo queda como compatibilidad para datos antiguos.
+  if (useApi) {
+    try {
+      const { empresa } = await apiFetch('/empresas/me');
+      userName = empresa?.razon_social || '';
+      userLogo = empresa?.logo_url || '';
+    } catch (err) {
+      console.warn('No fue posible cargar la empresa para la bienvenida:', err.message);
+    }
+  }
+
+  // Intentar cargar la razón social / nombre desde el perfil local legado
   try {
     const profileKey = `amc_perfil_emisor_v1_${activeUserCode}`;
     const rawProfile = localStorage.getItem(profileKey);
     if (rawProfile) {
       const profile = JSON.parse(rawProfile);
-      if (profile && profile.razonSocial) {
+      if (!userName && profile && profile.razonSocial) {
         userName = profile.razonSocial;
       }
-      if (profile && profile.logo) {
+      if (!userLogo && profile && profile.logo) {
         userLogo = profile.logo;
       }
     }
@@ -1318,7 +1332,8 @@ function inicializarMensajeBienvenida() {
 
   if (welcomeLogo && welcomeLogoBox) {
     if (userLogo) {
-      welcomeLogo.src = userLogo;
+      const apiOrigin = API_BASE.replace(/\/api\/?$/, '/');
+      welcomeLogo.src = /^https?:\/\//i.test(userLogo) ? userLogo : new URL(userLogo.replace(/^\//, ''), apiOrigin).href;
       welcomeLogoBox.style.display = "";
     } else {
       welcomeLogo.removeAttribute("src");

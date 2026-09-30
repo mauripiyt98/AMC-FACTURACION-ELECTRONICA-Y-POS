@@ -44,7 +44,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   const profileKey = `amc_perfil_emisor_v1_${activeUserCode}`;
 
   // ── API helper ───────────────────────────────────────────────────────────────
-  const API_BASE = 'http://localhost:3000/api';
+  // En VPS se usa la misma origin (Nginx publica /api). Para un frontend
+  // separado se puede definir window.AMC_API_BASE_URL antes de este script.
+  const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+    ? 'http://localhost:3000/api'
+    : `${window.location.origin}/api`);
+
+  function mediaUrl(value) {
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value;
+    const apiOrigin = API_BASE.replace(/\/api\/?$/, '/');
+    return new URL(value.replace(/^\//, ''), apiOrigin).href;
+  }
+
+  function fileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('No fue posible leer la imagen seleccionada'));
+      reader.readAsDataURL(file);
+    });
+  }
 
   async function apiFetch(endpoint, options = {}) {
     const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -82,7 +102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logoPreview      = document.getElementById('logo-preview');
   const msgDiv           = document.getElementById('msg');
 
-  let base64Logo = '';
+  let logoUrl = '';
+  let selectedLogoFile = null;
+  let removeLogo = false;
   const DEFAULT_LOGO = '../assets/logo.png';
 
   // ── Cargar datos del perfil ───────────────────────────────────────────────────
@@ -94,16 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await apiFetch('/empresas/me');
       const empresa = data.empresa;
       if (empresa) {
-        // Intentar cargar logo desde localStorage (más eficiente que guardar base64 en DB)
-        let savedLogo = '';
-        try {
-          const cached = localStorage.getItem(profileKey);
-          if (cached) {
-            const cachedData = JSON.parse(cached);
-            savedLogo = cachedData.logo || '';
-          }
-        } catch { /* sin caché */ }
-
         currentProfile = {
           tipoPersona: empresa.tipo_persona || 'NATURAL',
           nit        : empresa.nit          || '',
@@ -111,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           direccion  : empresa.direccion    || '',
           ciudad     : empresa.ciudad       || '',
           email      : empresa.email        || '',
-          logo       : savedLogo,
+          logo       : empresa.logo_url || '',
         };
       }
     } catch (err) {
@@ -139,8 +151,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (emailInput)     emailInput.value     = currentProfile.email       || '';
 
     if (currentProfile.logo) {
-      base64Logo = currentProfile.logo;
-      if (logoPreview) logoPreview.src = base64Logo;
+      logoUrl = currentProfile.logo;
+      if (logoPreview) logoPreview.src = mediaUrl(logoUrl);
       if (btnRemoveLogo) btnRemoveLogo.style.display = 'inline-block';
     } else {
       if (logoPreview) logoPreview.src = DEFAULT_LOGO;
@@ -181,20 +193,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        base64Logo = event.target.result;
-        if (logoPreview) logoPreview.src = base64Logo;
-        if (btnRemoveLogo) btnRemoveLogo.style.display = 'inline-block';
-        mostrarMensaje('Logo cargado correctamente. Recuerde guardar los cambios.', 'success');
-      };
-      reader.readAsDataURL(file);
+      // No se serializa a Base64: el archivo se enviará multipart al VPS al guardar.
+      selectedLogoFile = file;
+      removeLogo = false;
+      if (logoPreview) logoPreview.src = URL.createObjectURL(file);
+      if (btnRemoveLogo) btnRemoveLogo.style.display = 'inline-block';
+      mostrarMensaje('Logo cargado correctamente. Recuerde guardar los cambios.', 'success');
     });
   }
 
   if (btnRemoveLogo) {
     btnRemoveLogo.addEventListener('click', () => {
-      base64Logo = '';
+      selectedLogoFile = null;
+      removeLogo = true;
       if (logoPreview) logoPreview.src = DEFAULT_LOGO;
       btnRemoveLogo.style.display = 'none';
       if (logoFileInput) logoFileInput.value = '';
@@ -214,11 +225,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         direccion  : direccionInput?.value?.trim() || '',
         ciudad     : ciudadInput?.value?.trim()    || '',
         email      : emailInput?.value?.trim()     || '',
-        logo       : base64Logo || '',
+        logo       : logoUrl || '',
       };
 
       if (useApi) {
-        // Guardar en el backend (sin el logo base64, que va en localStorage)
         try {
           await apiFetch('/empresas/me', {
             method: 'PATCH',
@@ -230,23 +240,42 @@ document.addEventListener('DOMContentLoaded', async () => {
               email       : perfil.email,
             }),
           });
-          // Guardar logo y datos en localStorage como caché local
-          try { localStorage.setItem(profileKey, JSON.stringify(perfil)); } catch { /* sin espacio */ }
+          if (selectedLogoFile) {
+            const body = new FormData();
+            body.append('logo', selectedLogoFile);
+            const response = await fetch(`${API_BASE}/empresas/me/logo`, {
+              method: 'POST', headers: { Authorization: `Bearer ${token}` }, body,
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'No fue posible subir el logo');
+            logoUrl = result.logo_url || '';
+            selectedLogoFile = null;
+          } else if (removeLogo) {
+            const result = await apiFetch('/empresas/me/logo', { method: 'DELETE' });
+            logoUrl = result.empresa?.logo_url || '';
+            removeLogo = false;
+          }
+          // Caché sin binarios: solo facilita las pantallas legadas durante transición.
+          try { localStorage.setItem(profileKey, JSON.stringify({ ...perfil, logo: logoUrl })); } catch { /* sin espacio */ }
           mostrarMensaje('¡Perfil de facturación guardado exitosamente!', 'success');
         } catch (err) {
           mostrarMensaje(`Error al guardar: ${err.message}`, 'error');
         }
       } else {
-        // Fallback: solo localStorage (sesión legada)
+        // Permite continuar probando la aplicación desde file://. Este modo no
+        // sustituye el guardado remoto: en el VPS siempre se usa el flujo JWT.
         try {
-          localStorage.setItem(profileKey, JSON.stringify(perfil));
-          mostrarMensaje('¡Perfil de facturación guardado exitosamente!', 'success');
-        } catch (err) {
-          if (err.name === 'QuotaExceededError' || err.code === 22) {
-            mostrarMensaje('No hay suficiente espacio para guardar esta imagen. Use un logo más ligero.', 'error');
-          } else {
-            mostrarMensaje('Error al guardar los datos.', 'error');
+          if (selectedLogoFile) {
+            logoUrl = await fileAsDataUrl(selectedLogoFile);
+            selectedLogoFile = null;
+          } else if (removeLogo) {
+            logoUrl = '';
+            removeLogo = false;
           }
+          localStorage.setItem(profileKey, JSON.stringify({ ...perfil, logo: logoUrl }));
+          mostrarMensaje('Perfil guardado localmente para desarrollo. Inicie sesión en el servidor para hacerlo persistente.', 'success');
+        } catch (err) {
+          mostrarMensaje(`No fue posible guardar localmente: ${err.message}`, 'error');
         }
       }
     });

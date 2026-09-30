@@ -10,3 +10,7 @@
 # Logs
 *.log
 pnpm-debug.log*
+
+# Archivos de usuarios: se mantienen en el volumen persistente del servidor,
+# nunca en el repositorio ni en los artefactos de despliegue.
+backend/data/uploads/

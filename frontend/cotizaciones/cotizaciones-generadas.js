@@ -40,7 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const token = getToken();
   const useApi = !!token;
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+    ? 'http://localhost:3000/api'
+    : `${window.location.origin}/api`);
 
   let cotizacionesGlobal = [];
   let cotizacionAConvertir = null;

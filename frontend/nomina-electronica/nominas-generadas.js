@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const isDev = activeUserCode === '1110591592';
   const DB_KEY = isDev ? 'amc_nominas_generadas_db_v1' : `amc_nominas_generadas_db_v1_${activeUserCode}`;
   const PREVIEW_KEY = isDev ? 'amc_nomina_preview_v1' : `amc_nomina_preview_v1_${activeUserCode}`;
+  const API_BASE = window.AMC_API_BASE_URL || (location.protocol === 'file:' ? 'http://localhost:3000/api' : `${location.origin}/api`);
   const $ = (id) => document.getElementById(id);
 
   function token() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}').token || null; } catch { return null; } }
@@ -26,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function cargar() {
     const jwt = token();
     if (jwt) {
-      const res = await fetch('http://localhost:3000/api/nominas?limit=1000', { headers: { Authorization: `Bearer ${jwt}` } });
+      const res = await fetch(`${API_BASE}/nominas?limit=1000`, { headers: { Authorization: `Bearer ${jwt}` } });
       if (res.ok) {
         const data = await res.json();
         return (data.nominas || []).map((n) => ({

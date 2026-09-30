@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const token = getToken();
   const useApi = !!token;
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || (location.protocol === 'file:' ? 'http://localhost:3000/api' : `${location.origin}/api`);
 
   // ── API Helper ──────────────────────────────────────────────────────────────
   async function apiFetch(endpoint, options = {}) {

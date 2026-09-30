@@ -1,7 +1,9 @@
 (() => {
 const state = { cursor: new Date(), events: [], loadId: 0 };
 const $ = (id) => document.getElementById(id);
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+  ? 'http://localhost:3000/api'
+  : `${window.location.origin}/api`);
 const LOCAL_EVENTS_KEY = 'amc_calendario_eventos_local';
 const token = () => { try { return JSON.parse(sessionStorage.getItem('amc_session_v2') || '{}').token; } catch { return null; } };
 async function calendarFetch(path) { const response = await fetch(`${API_BASE}${path}`, { headers: token() ? { Authorization: `Bearer ${token()}` } : {} }); if (!response.ok) throw new Error('API no disponible'); return response.json(); }

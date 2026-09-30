@@ -7,7 +7,9 @@
  */
 
 // URL base de la API — cambiar en producción
-export const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+  ? 'http://localhost:3000/api'
+  : `${window.location.origin}/api`);
 
 // Claves para sessionStorage (solo sesión, no datos de negocio)
 export const SESSION_KEY   = 'amc_session_v2';

@@ -11,7 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const PRODUCTOS_DB_KEY = isDev ? "amc_productos_db_v1" : `amc_productos_db_v1_${activeUserCode}`;
 
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+    ? 'http://localhost:3000/api'
+    : `${window.location.origin}/api`);
   
   function getToken() {
     try {

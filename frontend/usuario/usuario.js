@@ -55,7 +55,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     ? ['ADMIN', 'SUPERADMIN'].includes(jwtUser?.rol)
     : (activeUserCode === '1110591592');
 
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+    ? 'http://localhost:3000/api'
+    : `${window.location.origin}/api`);
 
   // ── API helper ───────────────────────────────────────────────────────────────
   async function apiFetch(endpoint, options = {}) {

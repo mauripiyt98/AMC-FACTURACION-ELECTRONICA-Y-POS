@@ -39,7 +39,9 @@ const DEFAULT_CREDENTIALS = {
 };
 
 // ── URL del backend (intento opcional) ────────────────────────────────────────
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+  ? 'http://localhost:3000/api'
+  : `${window.location.origin}/api`);
 
 // ─────────────────────────────────────────────────────────────────────────────
 

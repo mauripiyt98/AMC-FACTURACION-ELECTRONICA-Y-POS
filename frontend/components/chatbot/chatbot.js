@@ -9,7 +9,7 @@
   const input = document.getElementById('mauro-input');
   const messages = document.getElementById('mauro-messages');
   const suggestions = document.getElementById('mauro-suggestions');
-  const API_BASE = window.AMC_API_BASE || 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || window.AMC_API_BASE || (location.protocol === 'file:' ? 'http://localhost:3000/api' : `${location.origin}/api`);
   const CONVERSATION_KEY = 'amc_mauro_conversation_v1';
 
   // Rutas permitidas en el frontend. El backend solo devuelve moduleKey; no se

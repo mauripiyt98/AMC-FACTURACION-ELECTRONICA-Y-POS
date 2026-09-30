@@ -15,7 +15,7 @@ try {
 }
 
 // Fallback con datos del desarrollador únicamente para el usuario dev
-const EMISOR = emisorData || {
+let EMISOR = emisorData || {
   tipoPersona: "NATURAL",
   razonSocial: isDev ? "ANDRES MAURICIO CAMPOS FIERRO" : "Mi Empresa",
   nit: isDev ? "1.110.591.592-3" : "—",
@@ -24,6 +24,32 @@ const EMISOR = emisorData || {
   email: isDev ? "dev@amc.com" : "",
   logo: "",   // sin logo por defecto para usuarios nuevos; lo establece el perfil
 };
+
+const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+  ? 'http://localhost:3000/api'
+  : `${window.location.origin}/api`);
+
+async function cargarEmisorDesdeApi() {
+  try {
+    const session = JSON.parse(sessionStorage.getItem('amc_session_v2') || '{}');
+    if (!session.token) return;
+    const response = await fetch(`${API_BASE}/empresas/me`, { headers: { Authorization: `Bearer ${session.token}` } });
+    const result = await response.json();
+    if (!response.ok || !result.empresa) return;
+    const empresa = result.empresa;
+    EMISOR = {
+      ...EMISOR,
+      tipoPersona: empresa.tipo_persona || EMISOR.tipoPersona,
+      razonSocial: empresa.razon_social || EMISOR.razonSocial,
+      nit: empresa.nit || EMISOR.nit,
+      direccion: empresa.direccion || '', ciudad: empresa.ciudad || '',
+      email: empresa.email || '', telefono: empresa.telefono || '',
+      logo: empresa.logo_url || '',
+    };
+  } catch (error) {
+    console.warn('No fue posible cargar el emisor desde el servidor:', error);
+  }
+}
 
 // ── Utilidades ──────────────────────────────────────────────────────────────
 function formatoMoneda(valor) {
@@ -215,7 +241,8 @@ function descargarPdf() {
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
-window.addEventListener("load", function () {
+window.addEventListener("load", async function () {
+  await cargarEmisorDesdeApi();
   const raw = sessionStorage.getItem(STORAGE_KEY);
   if (!raw) {
     document.querySelector(".preview-page").innerHTML = `
@@ -360,9 +387,15 @@ window.addEventListener("load", function () {
     const regimenTexto = EMISOR.regimen || 
       `${EMISOR.tipoPersona === "JURIDICA" ? "Persona Jurídica" : "Persona Natural"} — ${EMISOR.ciudad || "Colombia"}`;
     $("emisor-regimen").textContent = regimenTexto;
-    const logoSrc = EMISOR.logo || (isDev ? "../assets/logo.png" : "");
+    const apiOrigin = API_BASE.replace(/\/api\/?$/, '/');
+    const logoSrc = EMISOR.logo
+      ? (/^https?:\/\//i.test(EMISOR.logo) ? EMISOR.logo : new URL(EMISOR.logo.replace(/^\//, ''), apiOrigin).href)
+      : (isDev ? "../assets/logo.png" : "");
     const logoEl = $("logo-emisor");
     if (logoSrc) {
+      // Permite que html2canvas incluya el logo cuando API y frontend están en
+      // subdominios distintos y CORS_ORIGIN autoriza el frontend.
+      logoEl.crossOrigin = "anonymous";
       logoEl.src = logoSrc;
       logoEl.style.display = "";
     } else {

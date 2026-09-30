@@ -1,6 +1,6 @@
 'use strict';
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   const activeUserCode = sessionStorage.getItem('amc_active_user_code') || '1110591592';
   const isDev = activeUserCode === '1110591592';
   const previewKey = isDev ? 'amc_nomina_preview_v1' : `amc_nomina_preview_v1_${activeUserCode}`;
@@ -53,7 +53,27 @@ window.addEventListener('load', () => {
     }
   }
 
-  const emisorGuardado = perfil();
+  let emisorGuardado = perfil();
+  const API_BASE = window.AMC_API_BASE_URL || (window.location.protocol === 'file:'
+    ? 'http://localhost:3000/api'
+    : `${window.location.origin}/api`);
+  try {
+    const session = JSON.parse(sessionStorage.getItem('amc_session_v2') || '{}');
+    if (session.token) {
+      const response = await fetch(`${API_BASE}/empresas/me`, { headers: { Authorization: `Bearer ${session.token}` } });
+      const result = await response.json();
+      if (response.ok && result.empresa) {
+        const row = result.empresa;
+        emisorGuardado = {
+          tipoPersona: row.tipo_persona, razonSocial: row.razon_social, nit: row.nit,
+          direccion: row.direccion, ciudad: row.ciudad, email: row.email,
+          telefono: row.telefono, logo: row.logo_url,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('No fue posible cargar el emisor para la nómina:', error);
+  }
   const empresa = emisorGuardado || {
     razonSocial: isDev ? 'ANDRES MAURICIO CAMPOS FIERRO' : 'Mi Empresa',
     nit: isDev ? '1.110.591.592-3' : '—',
@@ -67,8 +87,12 @@ window.addEventListener('load', () => {
   // Logo emisor
   const logoEl = $('logo-emisor');
   if (logoEl) {
-    const logoSrc = empresa.logo || (isDev ? '../../assets/logo.png' : '');
+    const apiOrigin = API_BASE.replace(/\/api\/?$/, '/');
+    const logoSrc = empresa.logo
+      ? (/^https?:\/\//i.test(empresa.logo) ? empresa.logo : new URL(empresa.logo.replace(/^\//, ''), apiOrigin).href)
+      : (isDev ? '../../assets/logo.png' : '');
     if (logoSrc) {
+      logoEl.crossOrigin = 'anonymous';
       logoEl.src = logoSrc;
       logoEl.style.display = 'block';
     } else {
@@ -197,4 +221,3 @@ window.addEventListener('load', () => {
 
   $('btn-pdf').addEventListener('click', descargarPdf);
 });
-

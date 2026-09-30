@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const PRODUCTOS_DB_KEY = isDev ? 'amc_productos_db_v1' : `amc_productos_db_v1_${activeUserCode}`;
   const MOVIMIENTOS_DB_KEY = isDev ? 'amc_inventario_movimientos_v1' : `amc_inventario_movimientos_v1_${activeUserCode}`;
   const GESTIONAR_PROD_KEY = isDev ? 'amc_producto_gestionar_v1' : `amc_producto_gestionar_v1_${activeUserCode}`;
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || (location.protocol === 'file:' ? 'http://localhost:3000/api' : `${location.origin}/api`);
   const $ = (id) => document.getElementById(id);
 
   let state = {

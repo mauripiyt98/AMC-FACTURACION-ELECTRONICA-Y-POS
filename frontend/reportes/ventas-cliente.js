@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeUserCode = sessionStorage.getItem('amc_active_user_code') || '1110591592';
   const TERCEROS_DB_KEY = `amc_terceros_db_v1_${activeUserCode}`;
   const FACTURAS_DB_KEY = `amc_facturas_generadas_db_v1_${activeUserCode}`;
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || (location.protocol === 'file:' ? 'http://localhost:3000/api' : `${location.origin}/api`);
   const $ = (id) => document.getElementById(id);
   const state = {
     tercero: null,

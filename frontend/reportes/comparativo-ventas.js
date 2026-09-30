@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const SESSION_KEY = 'amc_session_v2';
   const activeUserCode = sessionStorage.getItem('amc_active_user_code') || '1110591592';
   const FACTURAS_DB_KEY = `amc_facturas_generadas_db_v1_${activeUserCode}`;
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.AMC_API_BASE_URL || (location.protocol === 'file:' ? 'http://localhost:3000/api' : `${location.origin}/api`);
   const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const $ = (id) => document.getElementById(id);
   const state = { rows: [], empresa: { nombre: 'AMC Facturación Electrónica y POS', identificacion: 'No disponible' }, anioConsultado: null };

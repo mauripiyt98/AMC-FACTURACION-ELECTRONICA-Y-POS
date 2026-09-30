@@ -5,6 +5,7 @@ const express    = require('express');
 const helmet     = require('helmet');
 const cors       = require('cors');
 const rateLimit  = require('express-rate-limit');
+const LogoService = require('./services/LogoService');
 
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
@@ -66,6 +67,17 @@ app.use(cors({
 // ── Body parsing ─────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
+
+// Los logos son datos persistentes de los tenants. En producción UPLOADS_DIR
+// debe ser un volumen fuera del repositorio y respaldado junto a PostgreSQL.
+app.use(LogoService.publicPath, express.static(LogoService.uploadsRoot, {
+  fallthrough: false,
+  index: false,
+  maxAge: '1h',
+  setHeaders(res) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  },
+}));
 
 // ── Rate limiting global ──────────────────────────────────
 const globalLimiter = rateLimit({

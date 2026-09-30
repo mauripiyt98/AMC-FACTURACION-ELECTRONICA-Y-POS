@@ -4,7 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const state = { year: new Date().getFullYear(), events: [], upcoming: [], selectedDate: null };
   const colors = { IMPUESTO:'#e05768', NOMINA:'#7b4df2', COBRO:'#e99a16', REUNION:'#0b8ede', TAREA:'#0dbb75', GENERAL:'#0b46eb' };
-  const api = 'http://localhost:3000/api';
+  const api = window.AMC_API_BASE_URL || (location.protocol === 'file:' ? 'http://localhost:3000/api' : `${location.origin}/api`);
   const localKey = 'amc_calendario_eventos_local';
   const token = () => { try { return JSON.parse(sessionStorage.getItem('amc_session_v2') || '{}').token; } catch { return null; } };
   const fetchApi = async (path, options = {}) => { const response = await fetch(`${api}${path}`, { ...options, headers: { 'Content-Type':'application/json', ...(token() ? { Authorization:`Bearer ${token()}` } : {}) } }); if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.message || 'No fue posible conectar con el calendario'); } return response.status === 204 ? null : response.json(); };
