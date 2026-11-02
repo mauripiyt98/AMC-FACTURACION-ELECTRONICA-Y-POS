@@ -20,6 +20,20 @@ Para habilitar memoria persistente, aplicar la migración aditiva `010_mauro_mem
 - Navegación: solo rutas AMC existentes; configuración exige ADMIN/SUPERADMIN.
 - Contabilidad y backups: reconocidos por el catálogo, pero sin pantalla o herramienta activa; Mauro lo informa y no crea enlaces rotos.
 
+## Información tributaria colombiana
+
+`taxCatalog.js` contiene el catálogo global, versionado y verificable de UVT,
+SMLMV, auxilio de transporte y fichas orientativas de retención en la fuente.
+No es información de un tenant ni genera nuevas consultas SQL: las respuestas
+se resuelven de forma determinística en `tools/tax.tool.js` antes de las
+herramientas empresariales.
+
+Cada valor incluye vigencia, acto normativo, fuente oficial y estado de
+verificación. Al cambiar un valor normativo, actualice el registro, la fuente y
+las pruebas correspondientes; no se deben inferir cifras ni tarifas. Las
+consultas de retención solicitan aclaración cuando la calidad del beneficiario o
+la naturaleza del pago impiden determinar una tarifa aplicable.
+
 Mauro no ejecuta altas, anulaciones, SQL recibido del usuario ni transmisiones DIAN desde el chat. La capa conversacional es determinística y local; no requiere ni transmite datos a un proveedor de modelos externo. Para agregar una integración generativa futura, debe configurarse explícitamente un proveedor, credenciales fuera del repositorio y permisos/herramientas revisados por servidor.
 
 ## Pruebas

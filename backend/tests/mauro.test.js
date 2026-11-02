@@ -7,6 +7,8 @@ const { detectIntent, detectSecurityRequest, actionFor } = require('../ai/intent
 const ConversationMemory = require('../ai/ConversationMemory');
 const MauroAgent = require('../ai/MauroAgent');
 const { consultarTerceroPorDocumento } = require('../ai/tools/thirdParty.tool');
+const { COMMAND_CATALOG } = require('../ai/taxCatalog');
+const { handleTaxQuery } = require('../ai/tools/tax.tool');
 
 test('la extracción de códigos conserva mayúsculas y soporta etiquetas naturales', () => {
   assert.equal(MauroAgent.extraerCodigoProducto('¿Qué stock tiene el código del producto es ABC-01?'), 'ABC-01');
@@ -39,6 +41,45 @@ test('Mauro enruta consultas frecuentes a intenciones distintas', () => {
     ['¿Quién eres?', 'identidad'],
   ]);
   for (const [question, intentId] of expected) assert.equal(detectIntent(question)?.id, intentId, question);
+});
+
+test('el catálogo tributario declara identificador, sinónimos, variables y autorización', () => {
+  const uvt = COMMAND_CATALOG.find((command) => command.id === 'CONSULTAR_UVT');
+  assert.equal(uvt.category, 'INFORMACIÓN TRIBUTARIA Y VALORES OFICIALES DE COLOMBIA');
+  assert.ok(uvt.keywords.includes('uvt'));
+  assert.ok(uvt.synonyms.includes('cuanto vale la uvt'));
+  assert.deepEqual(uvt.variables, ['year?']);
+  assert.equal(uvt.authorization, 'AUTHENTICATED');
+});
+
+test('Mauro reconoce UVT con o sin tildes, histórico y conversiones', () => {
+  const value = handleTaxQuery('¿Cuánto vale la UVT en 2026?');
+  assert.equal(value.intencion, 'CONSULTAR_UVT');
+  assert.match(value.mensaje, /\$52\.374/);
+  const conversion = handleTaxQuery('Cuanto representan 100 UVT en pesos 2025');
+  assert.equal(conversion.intencion, 'CONVERTIR_UVT_A_PESOS');
+  assert.match(conversion.mensaje, /\$4\.979\.900/);
+  assert.equal(handleTaxQuery('historial de la uvt').intencion, 'CONSULTAR_UVT_HISTORICO');
+});
+
+test('Mauro convierte pesos a UVT y responde salario mínimo histórico', () => {
+  const conversion = handleTaxQuery('104748 pesos a UVT en 2026');
+  assert.equal(conversion.intencion, 'CONVERTIR_PESOS_A_UVT');
+  assert.match(conversion.mensaje, /2 UVT/);
+  const salary = handleTaxQuery('salario mínimo más transporte 2026');
+  assert.equal(salary.intencion, 'CONSULTAR_SMLV_MAS_AUXILIO');
+  assert.match(salary.mensaje, /\$2\.000\.000/);
+  assert.equal(handleTaxQuery('historial del salario mínimo').intencion, 'CONSULTAR_SMLV_HISTORICO');
+});
+
+test('Mauro informa retención sin asumir una tarifa única de honorarios', () => {
+  const services = handleTaxQuery('base mínima de retención por servicios 2026');
+  assert.equal(services.intencion, 'RETENCION_SERVICIOS');
+  assert.match(JSON.stringify(services.tabla), /\$104\.748/);
+  const honors = handleTaxQuery('retención por honorarios persona natural');
+  assert.equal(honors.intencion, 'RETENCION_HONORARIOS');
+  assert.match(honors.mensaje, /confirma/i);
+  assert.equal(handleTaxQuery('retención').tipo, 'clarification');
 });
 
 test('las solicitudes de credenciales, SQL e información de otros tenants se bloquean', () => {
@@ -137,6 +178,17 @@ test('la herramienta de inventario responde con datos de la empresa y guarda con
   const productQuery = client.queries.find((query) => query.sql.includes('FROM productos p'));
   assert.match(productQuery.sql, /p\.empresa_id = \$1/);
   assert.deepEqual(productQuery.params, [empresaId, 'ABC-01']);
+});
+
+test('la consulta tributaria usa catálogo global y no consulta datos privados del tenant', async () => {
+  const client = fakeClient();
+  const result = await MauroAgent.consultar({
+    mensaje: '¿Cuánto vale la UVT en 2026?', client,
+    empresaId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', usuarioId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    role: 'OPERADOR', conversationId: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  });
+  assert.equal(result.respuesta.intencion, 'CONSULTAR_UVT');
+  assert.equal(client.queries.some((query) => /FROM productos|FROM terceros/.test(query.sql)), false);
 });
 
 test('Mauro consulta el tercero por NIT y presenta información de la misma empresa', async () => {

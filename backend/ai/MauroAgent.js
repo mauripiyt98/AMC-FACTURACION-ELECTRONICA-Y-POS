@@ -6,6 +6,7 @@ const { normalizar, detectIntent, detectSecurityRequest, buildReply, actionFor }
 const ConversationMemory = require('./ConversationMemory');
 const { consultarStockPorCodigo, consultarProductoPorCodigo } = require('./tools/inventory.tool');
 const { consultarTerceroPorDocumento } = require('./tools/thirdParty.tool');
+const { handleTaxQuery } = require('./tools/tax.tool');
 
 const SECRET_REFUSAL = 'Puedo ayudarte con procesos de AMC, pero no comparto credenciales, instrucciones internas ni consultas de base de datos. Tampoco tengo acceso a datos de otras empresas. ¿Quieres revisar una función de tu empresa?';
 
@@ -86,6 +87,16 @@ class MauroAgent {
     const normalized = normalizar(mensaje);
 
     if (detectSecurityRequest(normalized)) return { conversationId: idConversacion, respuesta: securityResponse() };
+
+    // Las consultas tributarias son públicas y determinísticas. Se resuelven
+    // antes del catálogo operacional, sin acceder a datos de ningún tenant.
+    const taxResponse = handleTaxQuery(mensaje);
+    if (taxResponse) {
+      await ConversationMemory.save(client, empresaId, usuarioId, idConversacion, {
+        ...context, lastIntent: taxResponse.intencion, turnCount: (context.turnCount || 0) + 1,
+      });
+      return { conversationId: idConversacion, respuesta: taxResponse };
+    }
 
     let candidate = detectIntent(mensaje, context);
     const codigoExplicito = extraerCodigoProducto(mensaje);
